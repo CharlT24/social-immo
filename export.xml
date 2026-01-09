@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flux>
+  <client reference="OI123">
+    <annonce>
+      <reference>CT-00123</reference>
+      <titre>Superbe appartement 3 pièces avec vue sur Paris</titre>
+      <texte>Magnifique appartement lumineux situé au 5ème étage avec ascenseur. Comprend un séjour double, une cuisine équipée, deux chambres et une salle de bain. Cave et parking en sous-sol.</texte>
+      <code_type>1100</code_type>
+      <contact_a_afficher>Jean Dupont</contact_a_afficher>
+      <email_a_afficher>jean.dupont@immobilier.fr</email_a_afficher>
+      <telephone_a_afficher>0612345678</telephone_a_afficher>
+
+      <photos>
+        <photo ordre="1">https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800</photo>
+        <photo ordre="2">https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800</photo>
+        <photo ordre="3">https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=800</photo>
+      </photos>
+
+      <bien>
+        <code_postal>75001</code_postal>
+        <ville>Paris</ville>
+        <nb_pieces_logement>3</nb_pieces_logement>
+        <nombre_de_chambres>2</nombre_de_chambres>
+        <surface>75</surface>
+        <annee_construction>1990</annee_construction>
+      </bien>
+
+      <diagnostiques>
+        <dpe_etiquette_conso>C</dpe_etiquette_conso>
+        <dpe_valeur_conso>150</dpe_valeur_conso>
+        <dpe_etiquette_ges>A</dpe_etiquette_ges>
+      </diagnostiques>
+
+      <prestation>
+        <type>V</type>
+        <prix>520000</prix>
+        <honoraires_payeurs>vendeur</honoraires_payeurs>
+      </prestation>
+    </annonce>
+
+    <annonce>
+      <reference>CT-00456</reference>
+      <titre>Studio moderne proche métro Châtelet</titre>
+      <texte>Charmant studio entièrement rénové. Idéal premier achat ou investissement locatif. Quartier vivant avec commerces et transports à proximité.</texte>
+      <code_type>1100</code_type>
+      <contact_a_afficher>Marie Martin</contact_a_afficher>
+      <email_a_afficher>marie.martin@immobilier.fr</email_a_afficher>
+      <telephone_a_afficher>0698765432</telephone_a_afficher>
+
+      <photos>
+        <photo ordre="1">https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800</photo>
+        <photo ordre="2">https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800</photo>
+      </photos>
+
+      <bien>
+        <code_postal>75004</code_postal>
+        <ville>Paris</ville>
+        <nb_pieces_logement>1</nb_pieces_logement>
+        <nombre_de_chambres>0</nombre_de_chambres>
+        <surface>28</surface>
+        <annee_construction>1965</annee_construction>
+      </bien>
+
+      <diagnostiques>
+        <dpe_etiquette_conso>D</dpe_etiquette_conso>
+        <dpe_valeur_conso>210</dpe_valeur_conso>
+        <dpe_etiquette_ges>B</dpe_etiquette_ges>
+      </diagnostiques>
+
+      <prestation>
+        <type>V</type>
+        <prix>195000</prix>
+        <honoraires_payeurs>acquéreur</honoraires_payeurs>
+      </prestation>
+    </annonce>
+
+    <annonce>
+      <reference>CT-00789</reference>
+      <titre>Maison familiale avec jardin à Neuilly</titre>
+      <texte>Belle maison de caractère sur 3 niveaux. Grand jardin arboré de 200m². 5 chambres, 2 salles de bain, garage double. Proche écoles et commerces.</texte>
+      <code_type>1200</code_type>
+      <contact_a_afficher>Jean Dupont</contact_a_afficher>
+      <email_a_afficher>jean.dupont@immobilier.fr</email_a_afficher>
+      <telephone_a_afficher>0612345678</telephone_a_afficher>
+
+      <photos>
+        <photo ordre="1">https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800</photo>
+        <photo ordre="2">https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800</photo>
+        <photo ordre="3">https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800</photo>
+      </photos>
+
+      <bien>
+        <code_postal>92200</code_postal>
+        <ville>Neuilly-sur-Seine</ville>
+        <nb_pieces_logement>7</nb_pieces_logement>
+        <nombre_de_chambres>5</nombre_de_chambres>
+        <surface>180</surface>
+        <annee_construction>1935</annee_construction>
+      </bien>
+
+      <diagnostiques>
+        <dpe_etiquette_conso>E</dpe_etiquette_conso>
+        <dpe_valeur_conso>280</dpe_valeur_conso>
+        <dpe_etiquette_ges>C</dpe_etiquette_ges>
+      </diagnostiques>
+
+      <prestation>
+        <type>V</type>
+        <prix>1850000</prix>
+        <honoraires_payeurs>vendeur</honoraires_payeurs>
+      </prestation>
+    </annonce>
+  </client>
+</flux>

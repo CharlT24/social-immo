@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ImmoSocial{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Dashboard</h1>
+            <p class="text-apple-gray mt-1">Vue d'ensemble de votre portefeuille</p>
+        </div>
+        <a href="{% url 'listings:run_import' %}"
+           class="inline-flex items-center gap-2 bg-apple-blue text-white font-medium px-5 py-3 rounded-xl hover:bg-blue-600 transition-colors shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Lancer l'import XML
+        </a>
+    </div>
+
+    <!-- Messages Flash -->
+    {% if messages %}
+    <div class="mb-8 space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
+            <div class="flex items-center gap-3">
+                {% if message.tags == 'success' %}
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                {% else %}
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {% endif %}
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        <!-- Total Biens -->
+        <div class="bg-white rounded-2xl p-6 shadow-apple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-apple-gray font-medium">Total Biens</p>
+                    <p class="text-4xl font-semibold tracking-tight mt-2">{{ total_annonces }}</p>
+                    <p class="text-sm text-apple-gray mt-1">annonces actives</p>
+                </div>
+                <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valeur Portefeuille -->
+        <div class="bg-white rounded-2xl p-6 shadow-apple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-apple-gray font-medium">Valeur Portefeuille</p>
+                    <p class="text-4xl font-semibold tracking-tight mt-2">{{ valeur_totale|floatformat:0|default:"0" }}</p>
+                    <p class="text-sm text-apple-gray mt-1">euros (total)</p>
+                </div>
+                <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nouveaux Messages -->
+        <div class="bg-white rounded-2xl p-6 shadow-apple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-apple-gray font-medium">Nouveaux Messages</p>
+                    <p class="text-4xl font-semibold tracking-tight mt-2">{{ nouveaux_commentaires }}</p>
+                    <p class="text-sm text-apple-gray mt-1">dernières 24h</p>
+                </div>
+                <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Two Columns Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Left Column - Annonces Table -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-lg font-semibold">Dernières Annonces</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-apple-bg">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-apple-gray uppercase tracking-wider">Référence</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-apple-gray uppercase tracking-wider">Titre</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-apple-gray uppercase tracking-wider">Prix</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-apple-gray uppercase tracking-wider">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for annonce in dernieres_annonces %}
+                            <tr class="hover:bg-apple-bg/50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <a href="{% url 'listings:detail' annonce.reference %}" class="text-apple-blue font-medium hover:underline">
+                                        {{ annonce.reference }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-apple-text">{{ annonce.titre|truncatechars:40 }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="font-semibold text-apple-text">{{ annonce.prix_format }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-apple-gray">{{ annonce.created_at|date:"d/m/Y" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-apple-gray">
+                                    Aucune annonce
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Annonces Aujourd'hui -->
+            {% if annonces_aujourdhui %}
+            <div class="bg-green-50 border border-green-200 rounded-2xl p-6 mt-6">
+                <h3 class="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Importées aujourd'hui ({{ annonces_aujourdhui.count }})
+                </h3>
+                <div class="space-y-2">
+                    {% for annonce in annonces_aujourdhui %}
+                    <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3">
+                        <div>
+                            <span class="font-medium text-green-800">{{ annonce.reference }}</span>
+                            <span class="text-green-600 ml-2">{{ annonce.titre|truncatechars:30 }}</span>
+                        </div>
+                        <span class="text-sm font-semibold text-green-700">{{ annonce.prix_format }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Recent Comments -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-lg font-semibold">Derniers Commentaires</h2>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    {% for commentaire in derniers_commentaires %}
+                    <div class="p-4 hover:bg-apple-bg/50 transition-colors">
+                        <div class="flex items-start gap-3">
+                            <!-- Avatar -->
+                            <div class="flex-shrink-0 w-10 h-10 {% if commentaire.auteur.is_staff %}bg-apple-blue{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center">
+                                <span class="text-xs font-bold text-white">
+                                    {{ commentaire.auteur.username|slice:":2"|upper }}
+                                </span>
+                            </div>
+                            <!-- Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-medium text-sm text-apple-text">{{ commentaire.auteur.username }}</span>
+                                    {% if commentaire.auteur.is_staff %}
+                                    <span class="text-xs bg-apple-blue text-white px-1.5 py-0.5 rounded">PRO</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-sm text-apple-gray line-clamp-2">{{ commentaire.texte|truncatechars:80 }}</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <a href="{% url 'listings:detail' commentaire.annonce.reference %}" class="text-xs text-apple-blue hover:underline">
+                                        {{ commentaire.annonce.reference }}
+                                    </a>
+                                    <span class="text-xs text-apple-gray">{{ commentaire.created_at|timesince }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-apple-gray">
+                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        <p>Aucun commentaire</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="bg-white rounded-2xl shadow-apple p-6 mt-6">
+                <h3 class="text-lg font-semibold mb-4">Prix Moyen</h3>
+                <div class="text-3xl font-semibold text-apple-blue">
+                    {{ prix_moyen|floatformat:0|default:"0" }} €
+                </div>
+                <p class="text-sm text-apple-gray mt-1">par bien</p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

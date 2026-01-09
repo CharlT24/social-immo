@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}Nos biens - ImmoSocial{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+
+    <!-- Hero Section -->
+    <div class="text-center mb-10">
+        <h1 class="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
+            Trouvez votre bien idéal
+        </h1>
+        <p class="text-xl text-apple-gray max-w-2xl mx-auto">
+            Une sélection de biens d'exception, choisis avec soin.
+        </p>
+    </div>
+
+    <!-- Search Bar - Spotlight Style -->
+    <div class="max-w-4xl mx-auto mb-12">
+        <form method="get" class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-apple p-6 border border-gray-200/50">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+
+                <!-- Ville -->
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-medium text-apple-gray mb-2">Ville</label>
+                    <select name="ville"
+                            class="w-full px-4 py-3 bg-apple-bg border-0 rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                        <option value="">Toutes les villes</option>
+                        {% for ville in villes_disponibles %}
+                        <option value="{{ ville }}" {% if current_ville == ville %}selected{% endif %}>{{ ville }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Type -->
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-medium text-apple-gray mb-2">Type</label>
+                    <select name="type"
+                            class="w-full px-4 py-3 bg-apple-bg border-0 rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                        <option value="">Tous</option>
+                        <option value="V" {% if current_type == 'V' %}selected{% endif %}>Vente</option>
+                        <option value="L" {% if current_type == 'L' %}selected{% endif %}>Location</option>
+                    </select>
+                </div>
+
+                <!-- Prix Max -->
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-medium text-apple-gray mb-2">Prix max</label>
+                    <div class="relative">
+                        <input type="number"
+                               name="prix_max"
+                               value="{{ current_prix_max }}"
+                               placeholder="500000"
+                               class="w-full px-4 py-3 bg-apple-bg border-0 rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray text-sm">€</span>
+                    </div>
+                </div>
+
+                <!-- Surface Min -->
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-medium text-apple-gray mb-2">Surface min</label>
+                    <div class="relative">
+                        <input type="number"
+                               name="surface_min"
+                               value="{{ current_surface_min }}"
+                               placeholder="50"
+                               class="w-full px-4 py-3 bg-apple-bg border-0 rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray text-sm">m²</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="lg:col-span-1 flex items-end">
+                    <button type="submit"
+                            class="w-full bg-apple-blue text-white font-medium py-3 px-6 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Rechercher
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Active Filters & Reset -->
+            {% if current_ville or current_prix_max or current_surface_min or current_type %}
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                <div class="flex flex-wrap gap-2">
+                    {% if current_ville %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-apple-blue/10 text-apple-blue text-sm rounded-full">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                        {{ current_ville }}
+                    </span>
+                    {% endif %}
+                    {% if current_type %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-apple-blue/10 text-apple-blue text-sm rounded-full">
+                        {% if current_type == 'V' %}Vente{% else %}Location{% endif %}
+                    </span>
+                    {% endif %}
+                    {% if current_prix_max %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-apple-blue/10 text-apple-blue text-sm rounded-full">
+                        Max {{ current_prix_max }} €
+                    </span>
+                    {% endif %}
+                    {% if current_surface_min %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-apple-blue/10 text-apple-blue text-sm rounded-full">
+                        Min {{ current_surface_min }} m²
+                    </span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'listings:list' %}" class="text-sm text-apple-gray hover:text-red-500 transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Effacer les filtres
+                </a>
+            </div>
+            {% endif %}
+
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="flex items-center justify-between mb-8">
+        <p class="text-apple-gray">
+            <span class="font-semibold text-apple-text">{{ annonces|length }}</span> bien{% if annonces|length > 1 %}s{% endif %} trouvé{% if annonces|length > 1 %}s{% endif %}
+        </p>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for annonce in annonces %}
+        <div class="group bg-white rounded-3xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1 relative">
+
+            <!-- Image avec coeur -->
+            <div class="aspect-[4/3] overflow-hidden relative">
+                <a href="{% url 'listings:detail' annonce.reference %}">
+                    {% if annonce.photo_principale %}
+                    <img src="{{ annonce.photo_principale.url }}"
+                         alt="{{ annonce.titre }}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </a>
+
+                <!-- Bouton Coeur -->
+                <button type="button"
+                        class="favorite-btn absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 {% if annonce.id in user_favorites %}is-liked{% endif %}"
+                        data-annonce-id="{{ annonce.id }}"
+                        {% if not user.is_authenticated %}data-login-url="{% url 'login' %}"{% endif %}>
+                    <svg class="w-5 h-5 heart-icon transition-colors duration-200" viewBox="0 0 24 24" fill="{% if annonce.id in user_favorites %}#EF4444{% else %}none{% endif %}" stroke="{% if annonce.id in user_favorites %}#EF4444{% else %}#6B7280{% endif %}" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <a href="{% url 'listings:detail' annonce.reference %}" class="block p-6">
+                <!-- Price -->
+                <div class="text-2xl font-semibold tracking-tight mb-2">
+                    {{ annonce.prix_format }}
+                </div>
+
+                <!-- Title -->
+                <h3 class="text-base text-apple-gray font-medium mb-3 line-clamp-2">
+                    {{ annonce.titre }}
+                </h3>
+
+                <!-- Details -->
+                <div class="flex items-center gap-4 text-sm text-apple-gray">
+                    {% if annonce.surface %}
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                        </svg>
+                        {{ annonce.surface }} m²
+                    </span>
+                    {% endif %}
+                    {% if annonce.nb_pieces %}
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        {{ annonce.nb_pieces }} pièces
+                    </span>
+                    {% endif %}
+                    {% if annonce.nb_chambres %}
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        {{ annonce.nb_chambres }} ch.
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Location & DPE -->
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <span class="text-sm text-apple-gray">
+                        {{ annonce.ville }} ({{ annonce.code_postal }})
+                    </span>
+                    {% if annonce.dpe_etiquette_conso %}
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold
+                        {% if annonce.dpe_etiquette_conso == 'A' %}bg-green-100 text-green-700
+                        {% elif annonce.dpe_etiquette_conso == 'B' %}bg-lime-100 text-lime-700
+                        {% elif annonce.dpe_etiquette_conso == 'C' %}bg-yellow-100 text-yellow-700
+                        {% elif annonce.dpe_etiquette_conso == 'D' %}bg-orange-100 text-orange-700
+                        {% elif annonce.dpe_etiquette_conso == 'E' %}bg-red-100 text-red-600
+                        {% elif annonce.dpe_etiquette_conso == 'F' %}bg-red-200 text-red-700
+                        {% else %}bg-red-300 text-red-800{% endif %}">
+                        {{ annonce.dpe_etiquette_conso }}
+                    </span>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-20">
+            <div class="w-20 h-20 bg-apple-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <p class="text-xl font-medium text-apple-text mb-2">Aucun bien trouvé</p>
+            <p class="text-apple-gray mb-6">Essayez de modifier vos critères de recherche.</p>
+            <a href="{% url 'listings:list' %}" class="inline-flex items-center gap-2 text-apple-blue font-medium hover:underline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Voir tous les biens
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des favoris
+    document.querySelectorAll('.favorite-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const loginUrl = this.dataset.loginUrl;
+            if (loginUrl) {
+                // Utilisateur non connecté -> redirection vers login
+                window.location.href = loginUrl;
+                return;
+            }
+
+            const annonceId = this.dataset.annonceId;
+            const heartIcon = this.querySelector('.heart-icon');
+            const button = this;
+
+            // Animation de click
+            button.classList.add('scale-125');
+            setTimeout(() => button.classList.remove('scale-125'), 150);
+
+            // Appel AJAX
+            fetch('{% url "listings:toggle_favorite" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ annonce_id: annonceId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.liked) {
+                    // Liked -> coeur rouge plein
+                    heartIcon.setAttribute('fill', '#EF4444');
+                    heartIcon.setAttribute('stroke', '#EF4444');
+                    button.classList.add('is-liked');
+                } else {
+                    // Unliked -> coeur vide gris
+                    heartIcon.setAttribute('fill', 'none');
+                    heartIcon.setAttribute('stroke', '#6B7280');
+                    button.classList.remove('is-liked');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

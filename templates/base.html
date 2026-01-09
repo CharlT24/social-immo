@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Immo Social{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'apple-bg': '#F5F5F7',
+                        'apple-card': '#FFFFFF',
+                        'apple-text': '#1D1D1F',
+                        'apple-gray': '#86868B',
+                        'apple-blue': '#0071E3',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px -1px rgba(0, 0, 0, 0.06), 0 2px 8px -1px rgba(0, 0, 0, 0.04)',
+                        'apple-hover': '0 12px 40px -4px rgba(0, 0, 0, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-apple-bg text-apple-text font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-200/50">
+        <nav class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{% url 'listings:list' %}" class="text-xl font-semibold tracking-tight">
+                    Immo<span class="text-apple-blue">Social</span>
+                </a>
+
+                <!-- Navigation -->
+                <div class="flex items-center gap-6">
+                    <a href="{% url 'listings:list' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                        Acheter
+                    </a>
+                    <a href="#" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                        Louer
+                    </a>
+                    <a href="#" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                        Estimer
+                    </a>
+
+                    <!-- Separator -->
+                    <div class="w-px h-5 bg-gray-200"></div>
+
+                    {% if user.is_authenticated %}
+                    <!-- Logged In -->
+                    <div class="flex items-center gap-4">
+                        {% if user.is_staff %}
+                        <a href="{% url 'listings:dashboard' %}"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium text-apple-blue hover:text-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Dashboard
+                        </a>
+                        {% endif %}
+                        <span class="text-sm text-apple-gray">
+                            Bonjour, <span class="font-medium text-apple-text">{{ user.username }}</span>
+                        </span>
+                        <a href="{% url 'logout' %}"
+                           class="text-sm font-medium text-apple-gray hover:text-red-500 transition-colors">
+                            Déconnexion
+                        </a>
+                    </div>
+                    {% else %}
+                    <!-- Logged Out -->
+                    <a href="{% url 'login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                        Se connecter
+                    </a>
+                    <a href="{% url 'listings:signup' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors">
+                        S'inscrire
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200/50 mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-apple-gray text-sm">
+                    &copy; 2025 ImmoSocial. Tous droits réservés.
+                </div>
+                <div class="flex items-center gap-6 text-sm text-apple-gray">
+                    <a href="#" class="hover:text-apple-text transition-colors">Mentions légales</a>
+                    <a href="#" class="hover:text-apple-text transition-colors">Confidentialité</a>
+                    <a href="#" class="hover:text-apple-text transition-colors">CGU</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

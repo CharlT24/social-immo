@@ -8,9 +8,19 @@ class Annonce(models.Model):
     # Types de transaction
     TYPE_VENTE = 'V'
     TYPE_LOCATION = 'L'
+    TYPE_SAISONNIER = 'S'
+    TYPE_FONDS = 'F'
+    TYPE_BAIL = 'B'
+    TYPE_VIAGER = 'W'
+    TYPE_NEUF = 'G'
     TYPE_CHOICES = [
         (TYPE_VENTE, 'Vente'),
         (TYPE_LOCATION, 'Location'),
+        (TYPE_SAISONNIER, 'Saisonnier'),
+        (TYPE_FONDS, 'Fonds de commerce'),
+        (TYPE_BAIL, 'Bail commercial'),
+        (TYPE_VIAGER, 'Viager'),
+        (TYPE_NEUF, 'Neuf (VEFA)'),
     ]
 
     # Références
@@ -21,6 +31,7 @@ class Annonce(models.Model):
     titre = models.CharField(max_length=255)
     texte = models.TextField(blank=True)
     code_type = models.CharField(max_length=10, blank=True)
+    libelle_type = models.CharField(max_length=100, blank=True)
 
     # Contact
     contact_nom = models.CharField(max_length=100, blank=True)
@@ -28,24 +39,37 @@ class Annonce(models.Model):
     contact_telephone = models.CharField(max_length=20, blank=True)
 
     # Localisation
-    code_postal = models.CharField(max_length=10)
-    ville = models.CharField(max_length=100)
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    ville = models.CharField(max_length=100, blank=True, default='')
 
     # Caractéristiques du bien
     nb_pieces = models.PositiveIntegerField(null=True, blank=True)
     nb_chambres = models.PositiveIntegerField(null=True, blank=True)
     surface = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    surface_sejour = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    surface_terrain = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     annee_construction = models.PositiveIntegerField(null=True, blank=True)
 
-    # Diagnostics énergétiques
-    dpe_etiquette_conso = models.CharField(max_length=1, blank=True)  # A, B, C, D, E, F, G
+    # Diagnostics énergétiques (DPE 2021+)
+    dpe_etiquette_conso = models.CharField(max_length=1, blank=True)
     dpe_valeur_conso = models.PositiveIntegerField(null=True, blank=True)
     dpe_etiquette_ges = models.CharField(max_length=1, blank=True)
+    dpe_valeur_ges = models.PositiveIntegerField(null=True, blank=True)
+    dpe_date_realisation = models.CharField(max_length=20, blank=True)
+    montant_depenses_energies_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    montant_depenses_energies_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # Prix et transaction
     type_transaction = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TYPE_VENTE)
-    prix = models.DecimalField(max_digits=12, decimal_places=2)
+    prix = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    frais_agence = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     honoraires_payeurs = models.CharField(max_length=50, blank=True)
+
+    # Champs spécifiques location
+    loyer_mensuel = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    charges_locatives = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    depot_garantie = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    honoraires_location = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)

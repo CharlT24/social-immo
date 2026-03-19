@@ -166,13 +166,16 @@ def dashboard(request):
 
 @login_required
 def run_import(request):
-    """Lance l'import XML manuellement"""
+    """Lance l'import XML manuellement depuis le flux HTTP"""
     if not request.user.is_staff:
         return HttpResponseForbidden("Accès réservé aux administrateurs.")
 
     try:
-        call_command('import_xml')
-        messages.success(request, "Import XML terminé avec succès !")
+        from io import StringIO
+        out = StringIO()
+        call_command('import_xml', stdout=out)
+        output = out.getvalue()
+        messages.success(request, f"Import XML terminé ! {output.split(chr(10))[-2] if output.strip() else ''}")
     except Exception as e:
         messages.error(request, f"Erreur lors de l'import : {str(e)}")
 

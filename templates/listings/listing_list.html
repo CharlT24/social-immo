@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Nos biens - ImmoSocial{% endblock %}
+{% block title %}Nos biens - Social Immo{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-12">
@@ -152,7 +152,7 @@
                 <button type="button"
                         class="favorite-btn absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 {% if annonce.id in user_favorites %}is-liked{% endif %}"
                         data-annonce-id="{{ annonce.id }}"
-                        {% if not user.is_authenticated %}data-login-url="{% url 'login' %}"{% endif %}>
+                        {% if not user.is_authenticated %}data-login-url="{% url 'account_login' %}"{% endif %}>
                     <svg class="w-5 h-5 heart-icon transition-colors duration-200" viewBox="0 0 24 24" fill="{% if annonce.id in user_favorites %}#EF4444{% else %}none{% endif %}" stroke="{% if annonce.id in user_favorites %}#EF4444{% else %}#6B7280{% endif %}" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>

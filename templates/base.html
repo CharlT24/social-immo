@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Immo Social{% endblock %}</title>
+    <title>{% block title %}Social Immo{% endblock %}</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,7 +51,7 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <a href="{% url 'listings:list' %}" class="text-xl font-semibold tracking-tight">
-                    Immo<span class="text-apple-blue">Social</span>
+                    Social<span class="text-apple-blue">Immo</span>
                 </a>
 
                 <!-- Navigation -->
@@ -84,14 +84,14 @@
                         <span class="text-sm text-apple-gray">
                             Bonjour, <span class="font-medium text-apple-text">{{ user.username }}</span>
                         </span>
-                        <a href="{% url 'logout' %}"
+                        <a href="{% url 'account_logout' %}"
                            class="text-sm font-medium text-apple-gray hover:text-red-500 transition-colors">
                             Déconnexion
                         </a>
                     </div>
                     {% else %}
                     <!-- Logged Out -->
-                    <a href="{% url 'login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                    <a href="{% url 'account_login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
                         Se connecter
                     </a>
                     <a href="{% url 'listings:signup' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors">
@@ -113,7 +113,7 @@
         <div class="max-w-7xl mx-auto px-6 py-12">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="text-apple-gray text-sm">
-                    &copy; 2025 ImmoSocial. Tous droits réservés.
+                    &copy; 2025 Social Immo. Tous droits réservés.
                 </div>
                 <div class="flex items-center gap-6 text-sm text-apple-gray">
                     <a href="#" class="hover:text-apple-text transition-colors">Mentions légales</a>

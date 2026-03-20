@@ -266,12 +266,12 @@ class Command(BaseCommand):
         if photos_xml is not None:
             annonce.photos.all().delete()
             for photo_xml in photos_xml.findall('photo'):
-                url = photo_xml.text
-                if url:
+                url = (photo_xml.text or '').strip()
+                if url and url.startswith('http'):
                     ordre = int(photo_xml.get('ordre', 1))
                     Photo.objects.create(
                         annonce=annonce,
-                        url=url.strip(),
+                        url=url,
                         ordre=ordre
                     )
 

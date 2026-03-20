@@ -382,6 +382,7 @@
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Prix</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Type</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Statut</th>
+                                        <th class="px-4 py-3 text-center text-[11px] font-bold text-lbc-gray uppercase tracking-wider" title="Afficher dans Inspirations">Inspi</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider"></th>
                                     </tr>
                                 </thead>
@@ -417,6 +418,21 @@
                                             </span>
                                             {% endif %}
                                         </td>
+                                        <!-- Inspiration toggle -->
+                                        <td class="px-4 py-3 text-center">
+                                            {% if annonce.is_active and annonce.photos.first %}
+                                            <button type="button"
+                                                    class="inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 {% if annonce.is_inspiration %}bg-purple-100 text-purple-600{% else %}bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50{% endif %}"
+                                                    data-annonce-id="{{ annonce.id }}"
+                                                    title="{% if annonce.is_inspiration %}Retirer des inspirations{% else %}Ajouter aux inspirations{% endif %}">
+                                                <svg class="w-5 h-5" fill="{% if annonce.is_inspiration %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                            </button>
+                                            {% else %}
+                                            <span class="text-gray-200">-</span>
+                                            {% endif %}
+                                        </td>
                                         <td class="px-4 py-3">
                                             <a href="{% url 'listings:detail' annonce.reference %}" class="text-lbc-blue hover:text-lbc-blue-dark transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -425,7 +441,7 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="8" class="px-6 py-16 text-center">
+                                        <td colspan="9" class="px-6 py-16 text-center">
                                             <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                             <p class="font-bold text-lbc-text">Aucune annonce</p>
                                             <p class="text-sm text-lbc-gray mt-1">Lancez un import XML pour ajouter vos biens.</p>
@@ -571,5 +587,40 @@
 
     </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.inspi-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const annonceId = this.dataset.annonceId;
+            const button = this;
+            const icon = button.querySelector('svg');
+
+            fetch('/api/toggle-inspiration/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ annonce_id: annonceId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.is_inspiration) {
+                    button.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-purple-100 text-purple-600';
+                    icon.setAttribute('fill', 'currentColor');
+                    button.title = 'Retirer des inspirations';
+                } else {
+                    button.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50';
+                    icon.setAttribute('fill', 'none');
+                    button.title = 'Ajouter aux inspirations';
+                }
+                button.classList.add('scale-110');
+                setTimeout(() => button.classList.remove('scale-110'), 200);
+            })
+            .catch(err => console.error('Erreur:', err));
+        });
+    });
+});
+</script>
 </body>
 </html>

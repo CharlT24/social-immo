@@ -1,91 +1,83 @@
 {% extends 'base.html' %}
 
-{% block title %}Inspirations Deco - Social Immo{% endblock %}
+{% block title %}Inspirations - Social Immo{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-12">
 
-    <!-- Hero Section -->
+    <!-- Hero -->
     <div class="text-center mb-10">
         <h1 class="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
-            Inspirations Deco
+            Inspirations
         </h1>
         <p class="text-xl text-apple-gray max-w-2xl mx-auto">
-            Trouvez l'inspiration pour sublimer votre interieur.
+            Des interieurs qui donnent envie.
         </p>
     </div>
 
-    <!-- Results Count -->
-    <div class="flex items-center justify-between mb-8">
-        <p class="text-apple-gray">
-            <span class="font-semibold text-apple-text">{{ decorations|length }}</span> inspiration{% if decorations|length > 1 %}s{% endif %}
-        </p>
-    </div>
-
-    <!-- Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {% for deco in decorations %}
-        <a href="#" class="group bg-white rounded-3xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1 relative block">
-
-            <!-- Image -->
-            <div class="aspect-[4/3] overflow-hidden relative">
-                {% if deco.image_url %}
-                <img src="{{ deco.image_url }}"
-                     alt="{{ deco.titre }}"
-                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                {% else %}
-                <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                {% endif %}
-
-                <!-- Comments Badge -->
-                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                    <span class="text-xs font-semibold text-apple-text">{{ deco.commentaires.count|default:"0" }}</span>
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="p-6">
-                <!-- Title -->
-                <h3 class="text-lg font-semibold tracking-tight mb-2 group-hover:text-apple-blue transition-colors">
-                    {{ deco.titre }}
-                </h3>
-
-                <!-- Description -->
-                <p class="text-sm text-apple-gray mb-4 line-clamp-3">
-                    {{ deco.description|truncatewords:25 }}
-                </p>
-
-                <!-- Author & Date -->
-                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span class="text-sm font-medium text-apple-text">
-                        {{ deco.auteur }}
-                    </span>
-                    <span class="text-xs text-apple-gray">
-                        {{ deco.created_at|date:"d M Y" }}
-                    </span>
-                </div>
-            </div>
-
-        </a>
-        {% empty %}
-        <div class="col-span-full text-center py-20">
-            <div class="w-20 h-20 bg-apple-bg rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-10 h-10 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+    <!-- 3 Tabs: Biens / Inspirations / Pros -->
+    <div class="max-w-md mx-auto mb-12">
+        <div class="flex items-center justify-center gap-3">
+            <!-- Biens -->
+            <a href="{% url 'listings:list' %}"
+               class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-white text-apple-gray rounded-2xl shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
-            </div>
-            <p class="text-xl font-medium text-apple-text mb-2">Aucune inspiration pour le moment</p>
-            <p class="text-apple-gray">Revenez bientot pour decouvrir nos dernieres inspirations deco.</p>
+                <span class="text-sm font-semibold">Biens</span>
+            </a>
+            <!-- Inspirations (active) -->
+            <a href="{% url 'listings:decoration_list' %}"
+               class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-apple-blue text-white rounded-2xl shadow-apple transition-all">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-sm font-semibold">Inspirations</span>
+            </a>
+            <!-- Pros -->
+            <a href="{% url 'listings:partenaire_list' %}"
+               class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-white text-apple-gray rounded-2xl shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="text-sm font-semibold">Pros</span>
+            </a>
         </div>
+    </div>
+
+    <!-- Moodboard Grid -->
+    {% if inspirations %}
+    <div class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+        {% for annonce in inspirations %}
+        {% if annonce.photo_principale %}
+        <a href="{% url 'listings:detail' annonce.reference %}"
+           class="block break-inside-avoid group relative overflow-hidden rounded-2xl">
+            <img src="{{ annonce.photo_principale.url }}"
+                 alt=""
+                 class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                 loading="lazy">
+            <!-- Overlay au hover seulement -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="absolute bottom-4 left-4 right-4">
+                    <p class="text-white text-sm font-semibold">Decouvrir ce bien</p>
+                </div>
+            </div>
+        </a>
+        {% endif %}
         {% endfor %}
     </div>
+    {% else %}
+    <!-- Empty state -->
+    <div class="text-center py-20">
+        <div class="w-20 h-20 bg-apple-bg rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+        </div>
+        <p class="text-xl font-medium text-apple-text mb-2">Aucune inspiration pour le moment</p>
+        <p class="text-apple-gray">Les agences selectionnent leurs plus beaux biens pour vous inspirer.</p>
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

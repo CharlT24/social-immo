@@ -212,9 +212,13 @@ def toggle_favorite(request):
 
 
 def decoration_list(request):
-    """Vue liste des inspirations deco"""
-    decorations = Decoration.objects.filter(is_active=True).select_related('auteur').prefetch_related('commentaires')
-    return render(request, 'listings/decoration_list.html', {'decorations': decorations})
+    """Vue inspirations : biens selectionnes par les agences"""
+    inspirations = Annonce.objects.filter(
+        is_active=True, is_inspiration=True
+    ).prefetch_related(
+        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+    ).select_related().order_by('-updated_at')
+    return render(request, 'listings/decoration_list.html', {'inspirations': inspirations})
 
 
 def partenaire_list(request):
@@ -538,3 +542,30 @@ L'equipe Social Immo
         messages.warning(request, f"Erreur d'envoi du mail : {e}. Identifiants: {user.username} / {password}")
 
     return redirect('listings:gestion_agences')
+
+
+@login_required
+@require_POST
+def toggle_inspiration(request):
+    """Toggle le statut inspiration d'une annonce (AJAX, pour agences)"""
+    try:
+        data = json.loads(request.body)
+        annonce_id = data.get('annonce_id')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    annonce = get_object_or_404(Annonce, id=annonce_id)
+
+    # Verifier que l'utilisateur est responsable de l'agence qui possede ce bien
+    try:
+        agence = Agence.objects.get(responsable=request.user)
+        if annonce.client_reference != agence.reference:
+            return JsonResponse({'error': 'Non autorise'}, status=403)
+    except Agence.DoesNotExist:
+        if not request.user.is_staff:
+            return JsonResponse({'error': 'Non autorise'}, status=403)
+
+    annonce.is_inspiration = not annonce.is_inspiration
+    annonce.save(update_fields=['is_inspiration'])
+
+    return JsonResponse({'is_inspiration': annonce.is_inspiration})

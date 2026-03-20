@@ -163,3 +163,106 @@ class Favori(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ❤ {self.annonce.reference}"
+
+
+class Agence(models.Model):
+    """Représente une agence cliente qui alimente des biens"""
+
+    FEED_TYPE_CHOICES = [
+        ('url', 'URL publique'),
+        ('ftp', 'FTP'),
+    ]
+
+    nom = models.CharField(max_length=200)
+    reference = models.CharField(max_length=50, unique=True)
+    logo_url = models.URLField(max_length=500, blank=True)
+    feed_url = models.URLField(max_length=500, blank=True)
+    feed_type = models.CharField(max_length=10, choices=FEED_TYPE_CHOICES, default='url')
+    contact_nom = models.CharField(max_length=100, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_telephone = models.CharField(max_length=20, blank=True)
+    adresse = models.TextField(blank=True)
+    responsable = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='agence'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_import = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['nom']
+        verbose_name = 'Agence'
+
+    def __str__(self):
+        return self.nom
+
+
+class Decoration(models.Model):
+    """Inspiration déco intérieure"""
+
+    titre = models.CharField(max_length=200)
+    description = models.TextField()
+    image_url = models.URLField(max_length=500)
+    auteur = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='decorations'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Inspiration deco'
+
+    def __str__(self):
+        return self.titre
+
+
+class DecoCommentaire(models.Model):
+    """Commentaires sur les posts déco"""
+
+    decoration = models.ForeignKey(
+        Decoration,
+        on_delete=models.CASCADE,
+        related_name='commentaires'
+    )
+    auteur = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='deco_commentaires'
+    )
+    texte = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.auteur.username} - {self.texte[:30]}"
+
+
+class Partenaire(models.Model):
+    """Annuaire de partenaires professionnels"""
+
+    nom = models.CharField(max_length=200)
+    metier = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    site_web = models.URLField(max_length=500, blank=True)
+    ville = models.CharField(max_length=100, blank=True)
+    logo_url = models.URLField(max_length=500, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['metier', 'nom']
+        verbose_name = 'Partenaire'
+
+    def __str__(self):
+        return f"{self.nom} - {self.metier}"

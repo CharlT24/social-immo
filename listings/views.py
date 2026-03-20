@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db import models
 from django.db.models import Prefetch, Avg, Sum
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_POST
 from datetime import timedelta
 import json
 
-from .models import Annonce, Photo, Commentaire, Favori
+from .models import Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire, Partenaire
 from .forms import CommentaireForm
 
 
@@ -208,3 +209,132 @@ def toggle_favorite(request):
         liked = True
 
     return JsonResponse({'liked': liked})
+
+
+def decoration_list(request):
+    """Vue liste des inspirations deco"""
+    decorations = Decoration.objects.filter(is_active=True).select_related('auteur').prefetch_related('commentaires')
+    return render(request, 'listings/decoration_list.html', {'decorations': decorations})
+
+
+def partenaire_list(request):
+    """Vue liste des partenaires pro"""
+    partenaires = Partenaire.objects.filter(is_active=True)
+    metiers = Partenaire.objects.filter(is_active=True).values_list('metier', flat=True).distinct().order_by('metier')
+
+    current_metier = request.GET.get('metier', '').strip()
+    if current_metier:
+        partenaires = partenaires.filter(metier=current_metier)
+
+    context = {
+        'partenaires': partenaires,
+        'metiers': metiers,
+        'current_metier': current_metier,
+    }
+    return render(request, 'listings/partenaire_list.html', context)
+
+
+@login_required
+def agence_dashboard(request):
+    """Dashboard pour une agence : gestion de ses biens (style leboncoin Pro)"""
+    try:
+        agence = Agence.objects.get(responsable=request.user)
+    except Agence.DoesNotExist:
+        if request.user.is_staff:
+            return redirect('listings:dashboard')
+        return HttpResponseForbidden("Vous n'etes pas rattache a une agence.")
+
+    annonces = Annonce.objects.filter(
+        client_reference=agence.reference
+    ).prefetch_related('photos', 'commentaires', 'favoris').order_by('-updated_at')
+
+    # Stats principales
+    annonces_actives = annonces.filter(is_active=True)
+    annonces_inactives = annonces.filter(is_active=False)
+    total_annonces = annonces_actives.count()
+    total_inactives = annonces_inactives.count()
+
+    # KPI 7 derniers jours
+    semaine = timezone.now() - timedelta(days=7)
+    hier = timezone.now() - timedelta(days=1)
+
+    messages_semaine = Commentaire.objects.filter(
+        annonce__client_reference=agence.reference,
+        created_at__gte=semaine
+    ).count()
+
+    messages_24h = Commentaire.objects.filter(
+        annonce__client_reference=agence.reference,
+        created_at__gte=hier
+    ).count()
+
+    favoris_semaine = Favori.objects.filter(
+        annonce__client_reference=agence.reference,
+        created_at__gte=semaine
+    ).count()
+
+    total_commentaires = Commentaire.objects.filter(
+        annonce__client_reference=agence.reference
+    ).count()
+
+    total_favoris = Favori.objects.filter(
+        annonce__client_reference=agence.reference
+    ).count()
+
+    # Annonces sans photo ou sans description (a modifier)
+    annonces_a_modifier = annonces_actives.filter(
+        models.Q(photos__isnull=True) | models.Q(texte='')
+    ).distinct().count()
+
+    # Annonces completes (optimisees)
+    annonces_optimisees = total_annonces - annonces_a_modifier
+
+    # Derniers commentaires
+    derniers_commentaires = Commentaire.objects.filter(
+        annonce__client_reference=agence.reference
+    ).select_related('auteur', 'annonce').order_by('-created_at')[:10]
+
+    # Dernieres annonces ajoutees/modifiees
+    dernieres_annonces = annonces_actives.order_by('-updated_at')[:5]
+
+    context = {
+        'agence': agence,
+        'annonces': annonces,
+        'total_annonces': total_annonces,
+        'total_inactives': total_inactives,
+        'messages_semaine': messages_semaine,
+        'messages_24h': messages_24h,
+        'favoris_semaine': favoris_semaine,
+        'total_commentaires': total_commentaires,
+        'total_favoris': total_favoris,
+        'annonces_a_modifier': annonces_a_modifier,
+        'annonces_optimisees': annonces_optimisees,
+        'derniers_commentaires': derniers_commentaires,
+        'dernieres_annonces': dernieres_annonces,
+    }
+    return render(request, 'listings/agence_dashboard.html', context)
+
+
+@login_required
+def agence_run_import(request):
+    """Lance l'import XML pour une agence specifique"""
+    try:
+        agence = Agence.objects.get(responsable=request.user)
+    except Agence.DoesNotExist:
+        return HttpResponseForbidden("Agence non trouvee.")
+
+    if not agence.feed_url:
+        messages.error(request, "Aucune URL de flux configuree pour votre agence.")
+        return redirect('listings:agence_dashboard')
+
+    try:
+        from io import StringIO
+        out = StringIO()
+        call_command('import_xml', url=agence.feed_url, stdout=out)
+        agence.last_import = timezone.now()
+        agence.save(update_fields=['last_import'])
+        messages.success(request, "Import termine avec succes !")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de l'import : {str(e)}")
+
+    return redirect('listings:agence_dashboard')

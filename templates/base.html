@@ -56,14 +56,14 @@
 
                 <!-- Navigation -->
                 <div class="flex items-center gap-6">
-                    <a href="{% url 'listings:list' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
-                        Acheter
+                    <a href="{% url 'listings:list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'list' or request.resolver_match.url_name == 'detail' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Biens
                     </a>
-                    <a href="#" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
-                        Louer
+                    <a href="{% url 'listings:decoration_list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'decoration_list' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Inspirations
                     </a>
-                    <a href="#" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
-                        Estimer
+                    <a href="{% url 'listings:partenaire_list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'partenaire_list' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Pros
                     </a>
 
                     <!-- Separator -->
@@ -78,7 +78,16 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
-                            Dashboard
+                            Admin
+                        </a>
+                        {% endif %}
+                        {% if user.agence.exists %}
+                        <a href="{% url 'listings:agence_dashboard' %}"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            Mon agence
                         </a>
                         {% endif %}
                         <span class="text-sm text-apple-gray">

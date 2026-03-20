@@ -478,3 +478,63 @@ def toggle_agence_active(request, agence_id):
     status = "activee" if agence.is_active else "desactivee"
     messages.success(request, f"Agence '{agence.nom}' {status}.")
     return redirect('listings:gestion_agences')
+
+
+@login_required
+def renvoyer_acces(request, agence_id):
+    """Regenere un mot de passe et renvoie les acces par mail"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    from django.utils.crypto import get_random_string
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    agence = get_object_or_404(Agence, id=agence_id)
+
+    if not agence.responsable:
+        messages.error(request, f"Aucun responsable associe a {agence.nom}.")
+        return redirect('listings:gestion_agences')
+
+    user = agence.responsable
+
+    if not user.email:
+        messages.error(request, f"Le responsable {user.username} n'a pas d'adresse email.")
+        return redirect('listings:gestion_agences')
+
+    # Nouveau mot de passe
+    password = get_random_string(12, 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#')
+    user.set_password(password)
+    user.save()
+
+    site_url = request.build_absolute_uri('/')[:-1]
+    subject = "Social Immo - Vos nouveaux acces Pro"
+    message = f"""Bonjour {agence.contact_nom or user.username},
+
+Vos identifiants de connexion Social Immo ont ete reinitialises.
+
+Voici vos nouveaux acces :
+
+  Identifiant : {user.username}
+  Mot de passe : {password}
+
+Connectez-vous sur : {site_url}/mon-agence/
+
+A bientot sur Social Immo !
+
+--
+L'equipe Social Immo
+"""
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        messages.success(request, f"Nouveaux acces envoyes a {user.email} pour '{agence.nom}'.")
+    except Exception as e:
+        messages.warning(request, f"Erreur d'envoi du mail : {e}. Identifiants: {user.username} / {password}")
+
+    return redirect('listings:gestion_agences')

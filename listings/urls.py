@@ -18,4 +18,5 @@ urlpatterns = [
     path('gestion/creer-agence/', views.creer_agence, name='creer_agence'),
     path('gestion/import/<int:agence_id>/', views.lancer_import_agence, name='lancer_import_agence'),
     path('gestion/toggle/<int:agence_id>/', views.toggle_agence_active, name='toggle_agence_active'),
+    path('gestion/renvoyer-acces/<int:agence_id>/', views.renvoyer_acces, name='renvoyer_acces'),
 ]

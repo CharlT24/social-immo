@@ -13,7 +13,7 @@ from datetime import timedelta
 import json
 
 from .models import Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire, Partenaire
-from .forms import CommentaireForm
+from .forms import CommentaireForm, AgenceCreateForm
 
 
 def listing_list(request):
@@ -338,3 +338,143 @@ def agence_run_import(request):
         messages.error(request, f"Erreur lors de l'import : {str(e)}")
 
     return redirect('listings:agence_dashboard')
+
+
+@login_required
+def gestion_agences(request):
+    """Page de gestion admin : liste des agences + creation"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agences = Agence.objects.all().select_related('responsable').order_by('-created_at')
+    form = AgenceCreateForm()
+
+    context = {
+        'agences': agences,
+        'form': form,
+    }
+    return render(request, 'listings/gestion_agences.html', context)
+
+
+@login_required
+def creer_agence(request):
+    """Cree une agence + compte utilisateur + envoi mail"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    if request.method != 'POST':
+        return redirect('listings:gestion_agences')
+
+    form = AgenceCreateForm(request.POST)
+    if form.is_valid():
+        from django.contrib.auth.models import User
+        from django.utils.crypto import get_random_string
+        from django.core.mail import send_mail
+        from django.conf import settings
+
+        # Generer un mot de passe
+        password = get_random_string(12, 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#')
+
+        # Creer le compte utilisateur
+        user = User.objects.create_user(
+            username=form.cleaned_data['username'],
+            email=form.cleaned_data['email'],
+            password=password,
+        )
+
+        # Creer l'agence
+        agence = Agence.objects.create(
+            nom=form.cleaned_data['nom_agence'],
+            reference=form.cleaned_data['reference_agence'],
+            feed_url=form.cleaned_data['feed_url'],
+            feed_type=form.cleaned_data['feed_type'],
+            logo_url=form.cleaned_data.get('logo_url', ''),
+            contact_nom=form.cleaned_data.get('contact_nom', ''),
+            contact_email=form.cleaned_data.get('contact_email', ''),
+            contact_telephone=form.cleaned_data.get('contact_telephone', ''),
+            adresse=form.cleaned_data.get('adresse', ''),
+            responsable=user,
+            is_active=True,
+        )
+
+        # Envoyer le mail
+        site_url = request.build_absolute_uri('/')[:-1]
+        subject = f"Bienvenue sur Social Immo - Vos acces Pro"
+        message = f"""Bonjour {form.cleaned_data['contact_nom'] or form.cleaned_data['username']},
+
+Votre espace professionnel Social Immo a ete cree avec succes.
+
+Voici vos identifiants de connexion :
+
+  Identifiant : {user.username}
+  Mot de passe : {password}
+
+Connectez-vous sur : {site_url}/mon-agence/
+
+Votre flux XML est configure et pret a etre importe.
+
+A bientot sur Social Immo !
+
+--
+L'equipe Social Immo
+"""
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@social-immo.com',
+                [form.cleaned_data['email']],
+                fail_silently=False,
+            )
+            messages.success(request, f"Agence '{agence.nom}' creee ! Mail envoye a {user.email}")
+        except Exception as e:
+            messages.warning(request, f"Agence '{agence.nom}' creee, mais erreur d'envoi du mail : {e}. Identifiants: {user.username} / {password}")
+
+        return redirect('listings:gestion_agences')
+    else:
+        agences = Agence.objects.all().select_related('responsable').order_by('-created_at')
+        return render(request, 'listings/gestion_agences.html', {'agences': agences, 'form': form})
+
+
+@login_required
+def lancer_import_agence(request, agence_id):
+    """Lance l'import XML pour une agence specifique (admin)"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agence = get_object_or_404(Agence, id=agence_id)
+
+    if not agence.feed_url:
+        messages.error(request, f"Aucun flux configure pour {agence.nom}.")
+        return redirect('listings:gestion_agences')
+
+    try:
+        from io import StringIO
+        out = StringIO()
+        call_command('import_xml', url=agence.feed_url, stdout=out)
+        output = out.getvalue()
+        agence.last_import = timezone.now()
+        agence.save(update_fields=['last_import'])
+
+        lines = output.strip().split('\n')
+        last_line = lines[-1] if lines else ''
+        messages.success(request, f"Import '{agence.nom}' termine ! {last_line}")
+    except Exception as e:
+        messages.error(request, f"Erreur import '{agence.nom}' : {str(e)}")
+
+    return redirect('listings:gestion_agences')
+
+
+@login_required
+def toggle_agence_active(request, agence_id):
+    """Active/desactive une agence"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agence = get_object_or_404(Agence, id=agence_id)
+    agence.is_active = not agence.is_active
+    agence.save(update_fields=['is_active'])
+
+    status = "activee" if agence.is_active else "desactivee"
+    messages.success(request, f"Agence '{agence.nom}' {status}.")
+    return redirect('listings:gestion_agences')

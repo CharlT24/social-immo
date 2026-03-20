@@ -14,4 +14,8 @@ urlpatterns = [
     path('mon-agence/', views.agence_dashboard, name='agence_dashboard'),
     path('mon-agence/import/', views.agence_run_import, name='agence_run_import'),
     path('api/toggle-favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('gestion/', views.gestion_agences, name='gestion_agences'),
+    path('gestion/creer-agence/', views.creer_agence, name='creer_agence'),
+    path('gestion/import/<int:agence_id>/', views.lancer_import_agence, name='lancer_import_agence'),
+    path('gestion/toggle/<int:agence_id>/', views.toggle_agence_active, name='toggle_agence_active'),
 ]

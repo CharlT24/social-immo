@@ -468,15 +468,50 @@ def agence_dashboard(request):
             return redirect('listings:dashboard')
         return HttpResponseForbidden("Vous n'etes pas rattache a une agence.")
 
-    annonces = Annonce.objects.filter(
+    from django.core.paginator import Paginator
+
+    all_annonces = Annonce.objects.filter(
         client_reference=agence.reference
     ).prefetch_related('photos', 'commentaires', 'favoris').order_by('-updated_at')
 
     # Stats principales
-    annonces_actives = annonces.filter(is_active=True)
-    annonces_inactives = annonces.filter(is_active=False)
+    annonces_actives = all_annonces.filter(is_active=True)
+    annonces_inactives = all_annonces.filter(is_active=False)
     total_annonces = annonces_actives.count()
     total_inactives = annonces_inactives.count()
+
+    # Recherche et filtrage pour le tableau
+    annonces_filtered = all_annonces
+    search_query = request.GET.get('q', '').strip()
+    statut_filter = request.GET.get('statut', '').strip()
+    if search_query:
+        annonces_filtered = annonces_filtered.filter(
+            models.Q(reference__icontains=search_query) |
+            models.Q(ville__icontains=search_query) |
+            models.Q(titre__icontains=search_query) |
+            models.Q(code_postal__icontains=search_query)
+        )
+        # Recherche par prix (si c'est un nombre)
+        try:
+            prix_val = int(search_query.replace(' ', '').replace('€', ''))
+            annonces_filtered = all_annonces.filter(
+                models.Q(reference__icontains=search_query) |
+                models.Q(ville__icontains=search_query) |
+                models.Q(titre__icontains=search_query) |
+                models.Q(prix__gte=prix_val - 50000, prix__lte=prix_val + 50000)
+            )
+        except (ValueError, TypeError):
+            pass
+    if statut_filter == 'actif':
+        annonces_filtered = annonces_filtered.filter(is_active=True)
+    elif statut_filter == 'inactif':
+        annonces_filtered = annonces_filtered.filter(is_active=False)
+
+    # Pagination
+    paginator = Paginator(annonces_filtered, 20)
+    page_number = request.GET.get('page', 1)
+    annonces_page = paginator.get_page(page_number)
+    annonces = annonces_page
 
     # KPI 7 derniers jours
     semaine = timezone.now() - timedelta(days=7)
@@ -543,8 +578,11 @@ def agence_dashboard(request):
     context = {
         'agence': agence,
         'annonces': annonces,
+        'annonces_page': annonces_page,
         'total_annonces': total_annonces,
         'total_inactives': total_inactives,
+        'search_query': search_query,
+        'statut_filter': statut_filter,
         'messages_semaine': messages_semaine,
         'messages_24h': messages_24h,
         'favoris_semaine': favoris_semaine,

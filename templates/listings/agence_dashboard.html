@@ -378,9 +378,42 @@
 
                     <!-- Liste des annonces -->
                     <div id="liste-annonces" class="bg-white rounded-2xl overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 class="text-lg font-bold text-lbc-text">Mes biens</h2>
-                            <span class="text-sm text-lbc-gray">{{ total_annonces }} actif{{ total_annonces|pluralize:"s" }} / {{ total_inactives }} inactif{{ total_inactives|pluralize:"s" }}</span>
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-bold text-lbc-text">Mes biens</h2>
+                                <span class="text-sm text-lbc-gray">{{ total_annonces }} actif{{ total_annonces|pluralize:"s" }} / {{ total_inactives }} inactif{{ total_inactives|pluralize:"s" }}</span>
+                            </div>
+                            <!-- Recherche + filtres -->
+                            <form method="get" action="#liste-annonces" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                <div class="relative flex-1">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                    </div>
+                                    <input type="text" name="q" value="{{ search_query }}" placeholder="Rechercher par reference, ville, prix..."
+                                           class="w-full pl-10 pr-4 py-2.5 bg-lbc-bg border border-transparent rounded-xl text-sm text-lbc-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lbc-blue focus:bg-white transition-all">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select name="statut" onchange="this.form.submit()"
+                                            class="text-sm bg-lbc-bg border border-transparent rounded-xl px-4 py-2.5 text-lbc-text focus:outline-none focus:ring-2 focus:ring-lbc-blue">
+                                        <option value="">Tous statuts</option>
+                                        <option value="actif" {% if statut_filter == 'actif' %}selected{% endif %}>Actifs</option>
+                                        <option value="inactif" {% if statut_filter == 'inactif' %}selected{% endif %}>Inactifs</option>
+                                    </select>
+                                    <button type="submit" class="bg-lbc-blue text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-lbc-blue-dark transition-colors">
+                                        Rechercher
+                                    </button>
+                                    {% if search_query or statut_filter %}
+                                    <a href="{% url 'listings:agence_dashboard' %}#liste-annonces" class="text-sm text-lbc-gray hover:text-lbc-text transition-colors px-3 py-2.5">
+                                        Effacer
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                            {% if search_query %}
+                            <p class="text-xs text-lbc-gray mt-2">{{ annonces_page.paginator.count }} resultat{{ annonces_page.paginator.count|pluralize }} pour "{{ search_query }}"</p>
+                            {% endif %}
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
@@ -451,6 +484,45 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Pagination -->
+                        {% if annonces_page.has_other_pages %}
+                        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                            <p class="text-xs text-lbc-gray">
+                                Page {{ annonces_page.number }} sur {{ annonces_page.paginator.num_pages }}
+                                ({{ annonces_page.paginator.count }} bien{{ annonces_page.paginator.count|pluralize }})
+                            </p>
+                            <div class="flex items-center gap-1">
+                                {% if annonces_page.has_previous %}
+                                <a href="?page={{ annonces_page.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}#liste-annonces"
+                                   class="w-9 h-9 flex items-center justify-center rounded-lg bg-lbc-bg hover:bg-gray-200 transition-colors">
+                                    <svg class="w-4 h-4 text-lbc-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </a>
+                                {% endif %}
+
+                                {% for num in annonces_page.paginator.page_range %}
+                                    {% if annonces_page.number == num %}
+                                    <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-lbc-blue text-white text-sm font-bold">{{ num }}</span>
+                                    {% elif num > annonces_page.number|add:'-3' and num < annonces_page.number|add:'3' %}
+                                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}#liste-annonces"
+                                       class="w-9 h-9 flex items-center justify-center rounded-lg bg-lbc-bg hover:bg-gray-200 text-sm text-lbc-text transition-colors">{{ num }}</a>
+                                    {% elif num == 1 or num == annonces_page.paginator.num_pages %}
+                                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}#liste-annonces"
+                                       class="w-9 h-9 flex items-center justify-center rounded-lg bg-lbc-bg hover:bg-gray-200 text-sm text-lbc-text transition-colors">{{ num }}</a>
+                                    {% elif num == 2 or num == annonces_page.paginator.num_pages|add:'-1' %}
+                                    <span class="text-lbc-gray text-xs px-1">...</span>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if annonces_page.has_next %}
+                                <a href="?page={{ annonces_page.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}#liste-annonces"
+                                   class="w-9 h-9 flex items-center justify-center rounded-lg bg-lbc-bg hover:bg-gray-200 transition-colors">
+                                    <svg class="w-4 h-4 text-lbc-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- ===== INSPIRATIONS SECTION ===== -->

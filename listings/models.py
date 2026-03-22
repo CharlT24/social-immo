@@ -124,6 +124,11 @@ class Photo(models.Model):
     )
     url = models.URLField(max_length=500)
     ordre = models.PositiveIntegerField(default=1)
+    is_inspiration = models.BooleanField(default=False)
+    inspiration_categorie = models.CharField(
+        max_length=20, blank=True, default='',
+        choices=Annonce.INSPIRATION_CHOICES
+    )
 
     class Meta:
         ordering = ['ordre']

@@ -393,7 +393,7 @@
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Prix</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Type</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Statut</th>
-                                        <th class="px-4 py-3 text-center text-[11px] font-bold text-lbc-gray uppercase tracking-wider" title="Afficher dans Inspirations">Inspi</th>
+                                        <th class="px-4 py-3 text-center text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Photos</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider"></th>
                                     </tr>
                                 </thead>
@@ -429,20 +429,9 @@
                                             </span>
                                             {% endif %}
                                         </td>
-                                        <!-- Inspiration toggle -->
-                                        <td class="px-4 py-3 text-center">
-                                            {% if annonce.is_active and annonce.photos.first %}
-                                            <button type="button"
-                                                    class="inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 {% if annonce.is_inspiration %}bg-purple-100 text-purple-600{% else %}bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50{% endif %}"
-                                                    data-annonce-id="{{ annonce.id }}"
-                                                    title="{% if annonce.is_inspiration %}Retirer des inspirations{% else %}Ajouter aux inspirations{% endif %}">
-                                                <svg class="w-5 h-5" fill="{% if annonce.is_inspiration %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                                </svg>
-                                            </button>
-                                            {% else %}
-                                            <span class="text-gray-200">-</span>
-                                            {% endif %}
+                                        <!-- Photos count -->
+                                        <td class="px-4 py-3 text-center text-sm text-lbc-gray">
+                                            {{ annonce.photos.count }}
                                         </td>
                                         <td class="px-4 py-3">
                                             <a href="{% url 'listings:detail' annonce.reference %}" class="text-lbc-blue hover:text-lbc-blue-dark transition-colors">
@@ -477,7 +466,7 @@
                                         <p class="text-xs text-lbc-gray">Selectionnez vos plus belles photos et assignez-leur une ambiance</p>
                                     </div>
                                 </div>
-                                <span class="text-sm font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full">
+                                <span class="inspi-counter text-sm font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full">
                                     {{ total_inspirations }} selectionnee{{ total_inspirations|pluralize }}
                                 </span>
                             </div>
@@ -506,26 +495,34 @@
                             </div>
                         </div>
 
-                        <!-- Photo Gallery Grid -->
+                        <!-- Search by reference -->
+                        <div class="px-6 pt-4">
+                            <div class="relative">
+                                <input type="text" id="inspi-search" placeholder="Rechercher par reference..."
+                                       class="w-full pl-10 pr-4 py-2.5 bg-lbc-bg border-0 rounded-xl text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none">
+                                <svg class="w-4 h-4 text-lbc-gray absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Photo Gallery Grid (all individual photos) -->
                         <div class="p-6">
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {% for annonce in annonces_inspirables %}
-                                {% with photo=annonce.photos.first %}
-                                {% if photo %}
-                                <div class="inspi-card relative group rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer transition-all duration-300 {% if annonce.is_inspiration %}ring-3 ring-purple-500 ring-offset-2{% else %}hover:ring-2 hover:ring-gray-300 hover:ring-offset-1{% endif %}"
-                                     data-annonce-id="{{ annonce.id }}"
-                                     data-is-inspi="{{ annonce.is_inspiration|yesno:'true,false' }}"
-                                     data-categorie="{{ annonce.inspiration_categorie }}">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="inspi-grid">
+                                {% for photo in all_photos %}
+                                <div class="inspi-card relative group rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer transition-all duration-300 {% if photo.is_inspiration %}ring-3 ring-purple-500 ring-offset-2{% else %}hover:ring-2 hover:ring-gray-300 hover:ring-offset-1{% endif %}"
+                                     data-photo-id="{{ photo.id }}"
+                                     data-ref="{{ photo.annonce.reference }}"
+                                     data-is-inspi="{{ photo.is_inspiration|yesno:'true,false' }}"
+                                     data-categorie="{{ photo.inspiration_categorie }}">
 
                                     <!-- Photo -->
-                                    <img src="{{ photo.url }}" alt="{{ annonce.titre }}"
+                                    <img src="{{ photo.url }}" alt="{{ photo.annonce.titre }}"
                                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
 
                                     <!-- Overlay gradient -->
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                                     <!-- Selected badge -->
-                                    {% if annonce.is_inspiration %}
+                                    {% if photo.is_inspiration %}
                                     <div class="inspi-badge absolute top-2 right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-lg">
                                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                     </div>
@@ -536,22 +533,20 @@
                                     {% endif %}
 
                                     <!-- Category tag -->
-                                    {% if annonce.inspiration_categorie %}
+                                    {% if photo.inspiration_categorie %}
                                     <div class="inspi-cat-label absolute top-2 left-2">
                                         <span class="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
-                                            {{ annonce.get_inspiration_categorie_display }}
+                                            {{ photo.get_inspiration_categorie_display }}
                                         </span>
                                     </div>
                                     {% endif %}
 
                                     <!-- Bottom info (on hover) -->
                                     <div class="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <p class="text-white text-xs font-bold truncate">{{ annonce.titre|truncatechars:35 }}</p>
-                                        <p class="text-white/70 text-[11px]">{{ annonce.ville }} - {{ annonce.prix_format }}</p>
+                                        <p class="text-white text-xs font-bold truncate">{{ photo.annonce.reference }}</p>
+                                        <p class="text-white/70 text-[11px]">{{ photo.annonce.ville }} - Photo {{ photo.ordre }}</p>
                                     </div>
                                 </div>
-                                {% endif %}
-                                {% endwith %}
                                 {% empty %}
                                 <div class="col-span-full text-center py-12">
                                     <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -766,22 +761,22 @@
     </div>
 
 <script>
-let currentInspiAnnonceId = null;
+let currentInspiPhotoId = null;
 
-function openCatModal(annonceId) {
-    currentInspiAnnonceId = annonceId;
+function openCatModal(photoId) {
+    currentInspiPhotoId = photoId;
     document.getElementById('cat-modal').classList.remove('hidden');
 }
 
 function closeCatModal() {
     document.getElementById('cat-modal').classList.add('hidden');
-    currentInspiAnnonceId = null;
+    currentInspiPhotoId = null;
 }
 
 function applyInspiCategorie(categorie) {
-    if (!currentInspiAnnonceId) return;
+    if (!currentInspiPhotoId) return;
 
-    const annonceId = currentInspiAnnonceId;
+    const photoId = currentInspiPhotoId;
     closeCatModal();
 
     fetch('/api/toggle-inspiration/', {
@@ -790,12 +785,11 @@ function applyInspiCategorie(categorie) {
             'Content-Type': 'application/json',
             'X-CSRFToken': '{{ csrf_token }}'
         },
-        body: JSON.stringify({ annonce_id: annonceId, categorie: categorie })
+        body: JSON.stringify({ photo_id: photoId, categorie: categorie })
     })
     .then(r => r.json())
     .then(data => {
-        // Update the inspi card
-        const card = document.querySelector(`.inspi-card[data-annonce-id="${annonceId}"]`);
+        const card = document.querySelector(`.inspi-card[data-photo-id="${photoId}"]`);
         if (card) {
             card.dataset.isInspi = data.is_inspiration ? 'true' : 'false';
             card.dataset.categorie = data.categorie || '';
@@ -803,13 +797,11 @@ function applyInspiCategorie(categorie) {
             if (data.is_inspiration) {
                 card.classList.add('ring-3', 'ring-purple-500', 'ring-offset-2');
                 card.classList.remove('hover:ring-2', 'hover:ring-gray-300', 'hover:ring-offset-1');
-                // Update badge
                 const badge = card.querySelector('.inspi-badge');
                 if (badge) {
                     badge.className = 'inspi-badge absolute top-2 right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-lg';
                     badge.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
                 }
-                // Update/add category label
                 let catLabel = card.querySelector('.inspi-cat-label');
                 if (data.categorie) {
                     if (!catLabel) {
@@ -841,43 +833,34 @@ function applyInspiCategorie(categorie) {
             }
         }
 
-        // Also update the table inspi button if it exists
-        const tableBtn = document.querySelector(`.inspi-btn[data-annonce-id="${annonceId}"]`);
-        if (tableBtn) {
-            const icon = tableBtn.querySelector('svg');
-            if (data.is_inspiration) {
-                tableBtn.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-purple-100 text-purple-600';
-                icon.setAttribute('fill', 'currentColor');
-            } else {
-                tableBtn.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50';
-                icon.setAttribute('fill', 'none');
-            }
+        // Update counter
+        const counter = document.querySelector('.inspi-counter');
+        if (counter) {
+            const allCards = document.querySelectorAll('.inspi-card[data-is-inspi="true"]');
+            counter.textContent = allCards.length + ' selectionnee' + (allCards.length > 1 ? 's' : '');
         }
     })
     .catch(err => console.error('Erreur:', err));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Table inspi buttons (simple toggle without category)
-    document.querySelectorAll('.inspi-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const annonceId = this.dataset.annonceId;
-            openCatModal(annonceId);
+    // Search filter for photos by reference
+    const searchInput = document.getElementById('inspi-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            document.querySelectorAll('.inspi-card').forEach(function(card) {
+                const ref = (card.dataset.ref || '').toLowerCase();
+                card.style.display = (!query || ref.includes(query)) ? '' : 'none';
+            });
         });
-    });
+    }
 
     // Inspi cards click -> open category modal
     document.querySelectorAll('.inspi-card').forEach(function(card) {
         card.addEventListener('click', function() {
-            const annonceId = this.dataset.annonceId;
-            const isInspi = this.dataset.isInspi === 'true';
-            if (isInspi) {
-                // Already selected: open modal to change category or remove
-                openCatModal(annonceId);
-            } else {
-                // Not selected: open modal to pick category
-                openCatModal(annonceId);
-            }
+            const photoId = this.dataset.photoId;
+            openCatModal(photoId);
         });
     });
 
@@ -887,8 +870,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const cat = this.dataset.cat;
             if (cat === '') {
                 // Remove from inspirations
-                if (currentInspiAnnonceId) {
-                    const aid = currentInspiAnnonceId;
+                if (currentInspiPhotoId) {
+                    const pid = currentInspiPhotoId;
                     closeCatModal();
                     fetch('/api/toggle-inspiration/', {
                         method: 'POST',
@@ -896,26 +879,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}'
                         },
-                        body: JSON.stringify({ annonce_id: aid })
+                        body: JSON.stringify({ photo_id: pid })
                     })
                     .then(r => r.json())
                     .then(data => {
-                        // Force is_inspiration to false
                         if (data.is_inspiration) {
-                            // Toggle again to disable
                             return fetch('/api/toggle-inspiration/', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'X-CSRFToken': '{{ csrf_token }}'
                                 },
-                                body: JSON.stringify({ annonce_id: aid })
+                                body: JSON.stringify({ photo_id: pid })
                             }).then(r => r.json());
                         }
                         return data;
                     })
                     .then(data => {
-                        // Reload to refresh state
                         location.reload();
                     });
                 }

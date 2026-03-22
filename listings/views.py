@@ -215,7 +215,7 @@ def signup(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('listings:homepage')
     else:
         form = UserCreationForm()
@@ -331,13 +331,11 @@ def toggle_favorite(request):
 
 
 def decoration_list(request):
-    """Vue inspirations : biens agences + realisations pro"""
-    # Photos d'inspiration agences
-    inspirations = Annonce.objects.filter(
-        is_active=True, is_inspiration=True
-    ).prefetch_related(
-        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).select_related().order_by('-updated_at')
+    """Vue inspirations : photos individuelles agences + realisations pro"""
+    # Photos d'inspiration agences (individuelles)
+    inspiration_photos = Photo.objects.filter(
+        is_inspiration=True, annonce__is_active=True
+    ).select_related('annonce').order_by('-annonce__updated_at')
 
     # Realisations pro
     realisations_pro = ProRealisation.objects.filter(
@@ -347,15 +345,20 @@ def decoration_list(request):
     # Filtrer par categorie
     current_categorie = request.GET.get('categorie', '').strip()
     if current_categorie:
-        inspirations = inspirations.filter(inspiration_categorie=current_categorie)
+        inspiration_photos = inspiration_photos.filter(inspiration_categorie=current_categorie)
         realisations_pro = realisations_pro.filter(categorie=current_categorie)
 
     # Source filter (agence / pro / all)
     source = request.GET.get('source', '').strip()
 
+    # Recherche par reference
+    search_ref = request.GET.get('ref', '').strip()
+    if search_ref:
+        inspiration_photos = inspiration_photos.filter(annonce__reference__icontains=search_ref)
+
     # Categories disponibles
-    cat_agent = set(Annonce.objects.filter(
-        is_active=True, is_inspiration=True
+    cat_agent = set(Photo.objects.filter(
+        is_inspiration=True, annonce__is_active=True
     ).exclude(inspiration_categorie='').values_list('inspiration_categorie', flat=True))
     cat_pro = set(ProRealisation.objects.filter(
         is_active=True
@@ -386,11 +389,12 @@ def decoration_list(request):
     total_pros = ProProfile.objects.filter(is_active=True).count()
 
     context = {
-        'inspirations': inspirations if source != 'pro' else [],
+        'inspiration_photos': inspiration_photos if source != 'pro' else [],
         'realisations_pro': realisations_pro if source != 'agence' else [],
         'categories': categories,
         'current_categorie': current_categorie,
         'current_source': source,
+        'search_ref': search_ref,
         'user_photo_favs': user_photo_favs,
         'user_photo_notes': user_photo_notes,
         'total_pros': total_pros,
@@ -488,11 +492,18 @@ def agence_dashboard(request):
     # Annonces completes (optimisees)
     annonces_optimisees = total_annonces - annonces_a_modifier
 
-    # Inspirations
-    inspirations = annonces_actives.filter(is_inspiration=True)
-    total_inspirations = inspirations.count()
-    # Annonces avec photo eligible pour inspiration
-    annonces_inspirables = annonces_actives.filter(photos__isnull=False).distinct()
+    # Inspirations (photos individuelles)
+    photos_inspiration = Photo.objects.filter(
+        annonce__client_reference=agence.reference,
+        annonce__is_active=True,
+        is_inspiration=True
+    ).select_related('annonce')
+    total_inspirations = photos_inspiration.count()
+    # Toutes les photos des annonces pour le selecteur
+    all_photos = Photo.objects.filter(
+        annonce__client_reference=agence.reference,
+        annonce__is_active=True
+    ).select_related('annonce').order_by('annonce__reference', 'ordre')
 
     # Derniers commentaires
     derniers_commentaires = Commentaire.objects.filter(
@@ -523,7 +534,8 @@ def agence_dashboard(request):
         'derniers_commentaires': derniers_commentaires,
         'dernieres_annonces': dernieres_annonces,
         'total_inspirations': total_inspirations,
-        'annonces_inspirables': annonces_inspirables,
+        'photos_inspiration': photos_inspiration,
+        'all_photos': all_photos,
         'inspiration_choices': Annonce.INSPIRATION_CHOICES,
         'demandes_contact': demandes_contact,
         'demandes_non_lues': demandes_non_lues,
@@ -759,20 +771,20 @@ L'equipe Social Immo
 @login_required
 @require_POST
 def toggle_inspiration(request):
-    """Toggle le statut inspiration d'une annonce (AJAX, pour agences)"""
+    """Toggle le statut inspiration d'une photo individuelle (AJAX, pour agences)"""
     try:
         data = json.loads(request.body)
-        annonce_id = data.get('annonce_id')
+        photo_id = data.get('photo_id')
         categorie = data.get('categorie', '')
     except (json.JSONDecodeError, KeyError):
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
-    annonce = get_object_or_404(Annonce, id=annonce_id)
+    photo = get_object_or_404(Photo, id=photo_id)
 
     # Verifier que l'utilisateur est responsable de l'agence qui possede ce bien
     try:
         agence = Agence.objects.get(responsable=request.user)
-        if annonce.client_reference != agence.reference:
+        if photo.annonce.client_reference != agence.reference:
             return JsonResponse({'error': 'Non autorise'}, status=403)
     except Agence.DoesNotExist:
         if not request.user.is_staff:
@@ -780,18 +792,19 @@ def toggle_inspiration(request):
 
     # Si on envoie une categorie, on active l'inspiration avec cette categorie
     if categorie:
-        annonce.is_inspiration = True
-        annonce.inspiration_categorie = categorie
-        annonce.save(update_fields=['is_inspiration', 'inspiration_categorie'])
+        photo.is_inspiration = True
+        photo.inspiration_categorie = categorie
+        photo.save(update_fields=['is_inspiration', 'inspiration_categorie'])
     else:
-        annonce.is_inspiration = not annonce.is_inspiration
-        if not annonce.is_inspiration:
-            annonce.inspiration_categorie = ''
-        annonce.save(update_fields=['is_inspiration', 'inspiration_categorie'])
+        photo.is_inspiration = not photo.is_inspiration
+        if not photo.is_inspiration:
+            photo.inspiration_categorie = ''
+        photo.save(update_fields=['is_inspiration', 'inspiration_categorie'])
 
     return JsonResponse({
-        'is_inspiration': annonce.is_inspiration,
-        'categorie': annonce.inspiration_categorie,
+        'is_inspiration': photo.is_inspiration,
+        'categorie': photo.inspiration_categorie,
+        'photo_id': photo.id,
     })
 
 
@@ -1194,6 +1207,26 @@ def gestion_utilisateurs(request):
         'total_agences': total_agences,
     }
     return render(request, 'listings/gestion_utilisateurs.html', context)
+
+
+@login_required
+@require_POST
+def admin_reset_password(request, user_id):
+    """Admin resets a user's password and shows it once"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    from django.utils.crypto import get_random_string
+    target_user = get_object_or_404(User, id=user_id)
+    new_password = get_random_string(10, 'abcdefghjkmnpqrstuvwxyz23456789')
+    target_user.set_password(new_password)
+    target_user.save()
+
+    messages.success(
+        request,
+        f'Mot de passe de {target_user.username} ({target_user.email}) reinitialise : {new_password}'
+    )
+    return redirect('listings:gestion_utilisateurs')
 
 
 @login_required

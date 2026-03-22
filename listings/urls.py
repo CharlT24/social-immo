@@ -37,6 +37,7 @@ urlpatterns = [
     # Gestion utilisateurs (admin)
     path('gestion/utilisateurs/', views.gestion_utilisateurs, name='gestion_utilisateurs'),
     path('gestion/utilisateurs/export/', views.export_utilisateurs_csv, name='export_utilisateurs_csv'),
+    path('gestion/utilisateurs/reset-password/<int:user_id>/', views.admin_reset_password, name='admin_reset_password'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

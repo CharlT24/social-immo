@@ -394,12 +394,15 @@ def decoration_list(request):
                 'id': fav.id, 'photo_id': fav.photo.id, 'url': fav.photo.url,
                 'categorie': cat, 'categorie_label': cat_label, 'type': 'annonce',
                 'reference': fav.photo.annonce.reference,
+                'link': f'/annonce/{fav.photo.annonce.reference}/',
             })
         for fav in PhotoFavori.objects.filter(user=request.user, photo_pro__isnull=False).select_related('photo_pro__realisation__pro').order_by('-created_at'):
+            pro_id = fav.photo_pro.realisation.pro.id if fav.photo_pro.realisation else 0
             sidebar_favs.append({
                 'id': fav.id, 'photo_id': fav.photo_pro.id, 'url': fav.photo_pro.url,
                 'categorie': 'pro', 'categorie_label': 'Realisations Pro', 'type': 'pro',
                 'reference': fav.photo_pro.realisation.pro.nom_entreprise if fav.photo_pro.realisation else '',
+                'link': f'/pro/{pro_id}/',
             })
 
     # Pros actifs pour le compteur
@@ -1015,11 +1018,12 @@ def toggle_photo_favori(request):
 
     # Return photo data for sidebar
     if photo_type == 'pro':
+        pro_id = photo.realisation.pro.id if photo.realisation else 0
         photo_data = {
             'photo_id': photo.id, 'url': photo.url, 'type': 'pro',
             'categorie': 'pro', 'categorie_label': 'Realisations Pro',
             'reference': photo.realisation.pro.nom_entreprise if photo.realisation else '',
-            'fav_id': fav.id,
+            'fav_id': fav.id, 'link': f'/pro/{pro_id}/',
         }
     else:
         cat = photo.inspiration_categorie or 'sans_categorie'
@@ -1028,7 +1032,7 @@ def toggle_photo_favori(request):
             'photo_id': photo.id, 'url': photo.url, 'type': 'annonce',
             'categorie': cat, 'categorie_label': cat_label,
             'reference': photo.annonce.reference,
-            'fav_id': fav.id,
+            'fav_id': fav.id, 'link': f'/annonce/{photo.annonce.reference}/',
         }
 
     return JsonResponse({'liked': True, 'photo': photo_data})

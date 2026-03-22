@@ -202,7 +202,7 @@
     <div onclick="closePhotoModal()" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
 
     <!-- Modal Content -->
-    <div class="relative w-[95vw] max-w-5xl h-[90vh] max-h-[700px] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row z-10 transform scale-95 transition-transform duration-300" id="photoModalContent">
+    <div class="relative w-full h-full sm:w-[95vw] sm:max-w-5xl sm:h-[90vh] sm:max-h-[700px] bg-white sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row z-10 transform scale-95 transition-transform duration-300" id="photoModalContent">
 
         <!-- Close button -->
         <button onclick="closePhotoModal()" class="absolute top-4 right-4 z-20 w-9 h-9 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/50 transition-colors">
@@ -212,7 +212,7 @@
         </button>
 
         <!-- Left: Photo -->
-        <div class="lg:w-3/5 h-64 lg:h-full bg-black flex items-center justify-center flex-shrink-0">
+        <div class="lg:w-3/5 h-52 sm:h-64 lg:h-full bg-black flex items-center justify-center flex-shrink-0">
             <img id="modalPhoto" src="" alt="" class="max-w-full max-h-full object-contain">
         </div>
 
@@ -304,8 +304,9 @@
 
 <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
-<div id="favSidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white/95 backdrop-blur-xl z-50 transform translate-x-full transition-transform duration-500 ease-out shadow-2xl flex flex-col">
-    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+<div id="favSidebar" class="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white/95 backdrop-blur-xl z-50 transform translate-x-full transition-transform duration-500 ease-out shadow-2xl flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-red-500 rounded-xl flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -323,8 +324,15 @@
             </svg>
         </button>
     </div>
-    <div id="favContent" class="flex-1 overflow-y-auto px-5 py-4">
-        <div id="favEmpty" class="hidden flex-col items-center justify-center h-full text-center py-16">
+
+    <!-- Category filters -->
+    <div id="favFilters" class="px-5 py-3 border-b border-gray-100 flex-shrink-0 overflow-x-auto">
+        <div id="favFilterBtns" class="flex items-center gap-2"></div>
+    </div>
+
+    <!-- Feed content (scrollable) -->
+    <div id="favContent" class="flex-1 overflow-y-auto min-h-0">
+        <div id="favEmpty" class="hidden flex-col items-center justify-center h-full text-center py-16 px-5">
             <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                 <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -333,7 +341,7 @@
             <p class="text-sm font-medium text-gray-400">Aucune inspiration sauvegardee</p>
             <p class="text-xs text-gray-300 mt-1">Cliquez sur le coeur d'une photo pour commencer</p>
         </div>
-        <div id="favCategories"></div>
+        <div id="favFeed"></div>
     </div>
 </div>
 {% endif %}
@@ -557,65 +565,100 @@ function toggleSidebar() {
     }
 }
 
+let sidebarFilter = 'all';
+
 function renderSidebar() {
-    const container = document.getElementById('favCategories');
+    const feed = document.getElementById('favFeed');
+    const filterBar = document.getElementById('favFilterBtns');
     const emptyState = document.getElementById('favEmpty');
     const countEl = document.getElementById('favCount');
     const badgeEl = document.getElementById('favBadge');
-    if (!container) return;
+    if (!feed) return;
 
     if (badgeEl) badgeEl.textContent = userFavs.length;
     if (countEl) countEl.textContent = userFavs.length + ' photo' + (userFavs.length !== 1 ? 's' : '') + ' sauvegardee' + (userFavs.length !== 1 ? 's' : '');
 
     if (userFavs.length === 0) {
-        container.innerHTML = '';
+        feed.innerHTML = '';
+        if (filterBar) filterBar.innerHTML = '';
         if (emptyState) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); }
         return;
     }
     if (emptyState) { emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); }
 
-    const groups = {};
-    userFavs.forEach(fav => {
-        if (!groups[fav.categorie]) groups[fav.categorie] = { label: fav.categorie_label, photos: [] };
-        groups[fav.categorie].photos.push(fav);
+    // Build category list for filters
+    const cats = {};
+    userFavs.forEach(f => {
+        if (!cats[f.categorie]) cats[f.categorie] = { label: f.categorie_label, count: 0 };
+        cats[f.categorie].count++;
     });
 
     const catColors = {
-        'interieur': 'from-amber-500 to-orange-500', 'jardin': 'from-green-500 to-emerald-500',
-        'cuisine': 'from-red-500 to-pink-500', 'salle_de_bain': 'from-blue-500 to-cyan-500',
-        'chambre': 'from-indigo-500 to-purple-500', 'salon': 'from-yellow-500 to-amber-500',
-        'exterieur': 'from-teal-500 to-green-500', 'pro': 'from-purple-500 to-violet-500',
-        'sans_categorie': 'from-gray-400 to-gray-500',
+        'interieur': 'bg-amber-500', 'jardin': 'bg-green-500', 'cuisine': 'bg-red-500',
+        'salle_de_bain': 'bg-blue-500', 'chambre': 'bg-indigo-500', 'salon': 'bg-yellow-500',
+        'exterieur': 'bg-teal-500', 'pro': 'bg-purple-500', 'sans_categorie': 'bg-gray-400',
     };
 
-    let html = '';
-    Object.keys(groups).forEach(cat => {
-        const g = groups[cat];
-        const color = catColors[cat] || 'from-gray-400 to-gray-500';
-        html += `<div class="mb-6">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-7 h-7 bg-gradient-to-br ${color} rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </div>
-                <span class="text-sm font-semibold text-apple-text">${g.label}</span>
-                <span class="text-xs text-apple-gray bg-gray-100 px-2 py-0.5 rounded-full">${g.photos.length}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2">`;
-        g.photos.forEach(photo => {
-            html += `<div class="relative group/fav aspect-square rounded-xl overflow-hidden">
-                    <img src="${photo.url}" alt="" class="w-full h-full object-cover group-hover/fav:scale-110 transition-transform duration-500" loading="lazy">
-                    <button onclick="removeFav(${photo.photo_id}, '${photo.type}')"
-                            class="absolute top-1 right-1 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity hover:bg-red-500">
-                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-1.5 opacity-0 group-hover/fav:opacity-100 transition-opacity">
-                        <p class="text-[10px] text-white font-medium truncate">${photo.reference}</p>
-                    </div>
-                </div>`;
+    // Render filter pills
+    if (filterBar) {
+        let fhtml = `<button onclick="setSidebarFilter('all')" class="text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all whitespace-nowrap ${sidebarFilter === 'all' ? 'bg-apple-text text-white' : 'bg-gray-100 text-apple-gray hover:bg-gray-200'}">Tout (${userFavs.length})</button>`;
+        Object.keys(cats).forEach(cat => {
+            const active = sidebarFilter === cat;
+            const dotColor = catColors[cat] || 'bg-gray-400';
+            fhtml += `<button onclick="setSidebarFilter('${cat}')" class="text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all whitespace-nowrap flex items-center gap-1.5 ${active ? 'bg-apple-text text-white' : 'bg-gray-100 text-apple-gray hover:bg-gray-200'}">
+                <span class="w-2 h-2 rounded-full ${active ? 'bg-white' : dotColor}"></span>
+                ${cats[cat].label} (${cats[cat].count})
+            </button>`;
         });
-        html += `</div></div>`;
+        filterBar.innerHTML = fhtml;
+    }
+
+    // Filter photos
+    const filtered = sidebarFilter === 'all' ? userFavs : userFavs.filter(f => f.categorie === sidebarFilter);
+
+    // Render feed - big photos like Instagram/Pinterest
+    let html = '';
+    filtered.forEach(photo => {
+        html += `<div class="relative group/fav cursor-pointer" onclick="openPhotoFromSidebar('${photo.url}', ${photo.photo_id}, '${photo.type}', '${photo.categorie_label}', '${photo.reference.replace(/'/g, "\\'")}', '${photo.link || '#'}')">
+            <img src="${photo.url}" alt="" class="w-full object-cover group-hover/fav:scale-[1.02] transition-transform duration-500" loading="lazy">
+            <!-- Overlay on hover -->
+            <div class="absolute inset-0 bg-black/0 group-hover/fav:bg-black/20 transition-colors duration-300"></div>
+            <!-- Category pill -->
+            <div class="absolute top-3 left-3">
+                <span class="text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">${photo.categorie_label}</span>
+            </div>
+            <!-- Remove button -->
+            <button onclick="event.stopPropagation(); removeFav(${photo.photo_id}, '${photo.type}')"
+                    class="absolute top-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity hover:bg-red-500">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <!-- Bottom info -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-white font-medium">${photo.reference}</span>
+                    <span class="text-xs text-white/70">${photo.type === 'pro' ? 'Pro' : 'Agence'}</span>
+                </div>
+            </div>
+        </div>`;
     });
-    container.innerHTML = html;
+
+    if (filtered.length === 0) {
+        html = '<div class="text-center py-12 px-5"><p class="text-sm text-gray-400">Aucune photo dans cette categorie</p></div>';
+    }
+
+    feed.innerHTML = html;
+}
+
+function setSidebarFilter(cat) {
+    sidebarFilter = cat;
+    renderSidebar();
+}
+
+function openPhotoFromSidebar(url, photoId, type, categorie, reference, link) {
+    if (sidebarOpen) toggleSidebar();
+    setTimeout(() => {
+        openPhotoModal(url, photoId, type, categorie, reference, link || '#');
+    }, 300);
 }
 
 function removeFav(photoId, type) {

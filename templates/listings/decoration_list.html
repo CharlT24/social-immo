@@ -652,10 +652,10 @@ function renderSidebar() {
     // Render feed - masonry grid in fullscreen, single column in sidebar
     let html = '';
     if (sidebarFullscreen) {
-        html += '<div class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 p-4">';
+        html += '<div class="columns-1 sm:columns-2 lg:columns-3 gap-5 p-6">';
     }
     filtered.forEach(photo => {
-        const itemClass = sidebarFullscreen ? 'break-inside-avoid mb-3 rounded-2xl overflow-hidden' : '';
+        const itemClass = sidebarFullscreen ? 'break-inside-avoid mb-5 rounded-2xl overflow-hidden shadow-lg' : '';
         html += `<div class="relative group/fav cursor-pointer ${itemClass}" onclick="openPhotoFromSidebar('${photo.url}', ${photo.photo_id}, '${photo.type}', '${photo.categorie_label}', '${photo.reference.replace(/'/g, "\\'")}', '${photo.link || '#'}')">
             <img src="${photo.url}" alt="" class="w-full object-cover group-hover/fav:scale-[1.02] transition-transform duration-500" loading="lazy">
             <div class="absolute inset-0 bg-black/0 group-hover/fav:bg-black/20 transition-colors duration-300"></div>

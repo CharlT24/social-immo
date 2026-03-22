@@ -22,6 +22,8 @@ urlpatterns = [
     path('gestion/import/<int:agence_id>/', views.lancer_import_agence, name='lancer_import_agence'),
     path('gestion/toggle/<int:agence_id>/', views.toggle_agence_active, name='toggle_agence_active'),
     path('gestion/renvoyer-acces/<int:agence_id>/', views.renvoyer_acces, name='renvoyer_acces'),
+    path('gestion/conseillers/<int:agence_id>/', views.gestion_conseillers, name='gestion_conseillers'),
+    path('gestion/conseillers/renvoyer/<int:conseiller_id>/', views.renvoyer_acces_conseiller, name='renvoyer_acces_conseiller'),
     # Espace Pro
     path('pro/inscription/', views.pro_inscription, name='pro_inscription'),
     path('pro/dashboard/', views.pro_dashboard, name='pro_dashboard'),
@@ -41,6 +43,9 @@ urlpatterns = [
     path('gestion/utilisateurs/export/', views.export_utilisateurs_csv, name='export_utilisateurs_csv'),
     path('gestion/utilisateurs/reset-password/<int:user_id>/', views.admin_reset_password, name='admin_reset_password'),
     path('gestion/utilisateurs/supprimer/<int:user_id>/', views.admin_delete_user, name='admin_delete_user'),
+    # Espace Conseiller
+    path('mon-espace/', views.conseiller_dashboard, name='conseiller_dashboard'),
+    path('mon-espace/mot-de-passe/', views.conseiller_set_password, name='conseiller_set_password'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Conseillers - {{ agence.nom }} | Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-8">
+
+    <nav class="mb-6">
+        <a href="{% url 'listings:gestion_agences' %}" class="text-apple-blue text-sm font-medium hover:underline">&larr; Retour a la gestion</a>
+    </nav>
+
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl flex items-center gap-3 text-sm font-medium {% if message.tags == 'success' %}bg-green-50 text-green-700{% elif message.tags == 'error' %}bg-red-50 text-red-600{% else %}bg-blue-50 text-blue-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Conseillers de {{ agence.nom }}</h1>
+            <p class="text-apple-gray mt-1">{{ conseillers_data|length }} conseiller{{ conseillers_data|length|pluralize }} enregistre{{ conseillers_data|length|pluralize }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            {% if agence.logo_url %}
+            <img src="{{ agence.logo_url }}" alt="{{ agence.nom }}" class="w-12 h-12 rounded-xl object-cover">
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <div class="text-2xl font-bold text-apple-text">{{ conseillers_data|length }}</div>
+            <div class="text-sm text-apple-gray">Conseillers</div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <div class="text-2xl font-bold text-apple-text">
+                {% with total=0 %}{% for cd in conseillers_data %}{% endfor %}{{ conseillers_data|length }}{% endwith %}
+            </div>
+            <div class="text-sm text-apple-gray">Emails recuperes</div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <div class="text-2xl font-bold text-apple-text">{{ agence.reference }}</div>
+            <div class="text-sm text-apple-gray">Reference agence</div>
+        </div>
+    </div>
+
+    <!-- Liste conseillers -->
+    <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold">Tous les conseillers</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-apple-gray uppercase tracking-wider">Nom</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-apple-gray uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-apple-gray uppercase tracking-wider">Telephone</th>
+                        <th class="px-6 py-3 text-center text-xs font-bold text-apple-gray uppercase tracking-wider">Biens actifs</th>
+                        <th class="px-6 py-3 text-center text-xs font-bold text-apple-gray uppercase tracking-wider">Contacts recus</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-apple-gray uppercase tracking-wider">Identifiant</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-apple-gray uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for cd in conseillers_data %}
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="text-xs font-bold text-white">{{ cd.conseiller.nom|slice:":2"|upper }}</span>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-apple-text">{{ cd.conseiller.nom }}</div>
+                                    <div class="text-xs text-apple-gray">Depuis {{ cd.conseiller.created_at|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="mailto:{{ cd.conseiller.email }}" class="text-sm text-apple-blue hover:underline">{{ cd.conseiller.email }}</a>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-apple-gray">{{ cd.conseiller.telephone|default:"-" }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-sm font-bold {% if cd.nb_biens > 0 %}text-emerald-600{% else %}text-apple-gray{% endif %}">{{ cd.nb_biens }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-sm font-bold {% if cd.nb_contacts > 0 %}text-apple-blue{% else %}text-apple-gray{% endif %}">{{ cd.nb_contacts }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-apple-gray font-mono">{{ cd.conseiller.user.username }}</td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'listings:renvoyer_acces_conseiller' cd.conseiller.id %}"
+                               class="inline-flex items-center gap-1.5 text-xs font-bold text-apple-blue hover:underline"
+                               onclick="return confirm('Envoyer les acces a {{ cd.conseiller.nom }} ?')">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                Envoyer acces
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-16 text-center">
+                            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <p class="font-semibold text-apple-text">Aucun conseiller</p>
+                            <p class="text-sm text-apple-gray mt-1">Les conseillers seront crees automatiquement lors de l'import XML, a partir du champ contact_email.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Export info -->
+    <div class="mt-6 bg-blue-50 rounded-2xl p-5">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-apple-blue flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="text-sm text-apple-text">
+                <p class="font-semibold mb-1">Comment ca marche ?</p>
+                <p class="text-apple-gray">Les conseillers sont crees automatiquement lors de chaque import XML. Chaque email unique dans le champ <code class="bg-white px-1.5 py-0.5 rounded text-xs">contact_email</code> du flux genere un compte conseiller. Le conseiller peut ensuite se connecter sur <code class="bg-white px-1.5 py-0.5 rounded text-xs">/mon-espace/</code> pour voir ses biens, ses contacts et gerer ses inspirations.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

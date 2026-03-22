@@ -18,7 +18,7 @@ import csv
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact
+    PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller
 )
 from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
@@ -470,6 +470,8 @@ def agence_dashboard(request):
 
     from django.core.paginator import Paginator
 
+    current_tab = request.GET.get('tab', 'biens')
+
     all_annonces = Annonce.objects.filter(
         client_reference=agence.reference
     ).prefetch_related('photos', 'commentaires', 'favoris').order_by('-updated_at')
@@ -480,38 +482,43 @@ def agence_dashboard(request):
     total_annonces = annonces_actives.count()
     total_inactives = annonces_inactives.count()
 
-    # Recherche et filtrage pour le tableau
-    annonces_filtered = all_annonces
-    search_query = request.GET.get('q', '').strip()
-    statut_filter = request.GET.get('statut', '').strip()
-    if search_query:
-        annonces_filtered = annonces_filtered.filter(
-            models.Q(reference__icontains=search_query) |
-            models.Q(ville__icontains=search_query) |
-            models.Q(titre__icontains=search_query) |
-            models.Q(code_postal__icontains=search_query)
-        )
-        # Recherche par prix (si c'est un nombre)
-        try:
-            prix_val = int(search_query.replace(' ', '').replace('€', ''))
-            annonces_filtered = all_annonces.filter(
+    # Variables par defaut
+    annonces_page = None
+    annonces = []
+    search_query = ''
+    statut_filter = ''
+
+    if current_tab == 'biens':
+        # Recherche et filtrage pour le tableau
+        annonces_filtered = all_annonces
+        search_query = request.GET.get('q', '').strip()
+        statut_filter = request.GET.get('statut', '').strip()
+        if search_query:
+            annonces_filtered = annonces_filtered.filter(
                 models.Q(reference__icontains=search_query) |
                 models.Q(ville__icontains=search_query) |
                 models.Q(titre__icontains=search_query) |
-                models.Q(prix__gte=prix_val - 50000, prix__lte=prix_val + 50000)
+                models.Q(code_postal__icontains=search_query)
             )
-        except (ValueError, TypeError):
-            pass
-    if statut_filter == 'actif':
-        annonces_filtered = annonces_filtered.filter(is_active=True)
-    elif statut_filter == 'inactif':
-        annonces_filtered = annonces_filtered.filter(is_active=False)
+            try:
+                prix_val = int(search_query.replace(' ', '').replace('€', ''))
+                annonces_filtered = all_annonces.filter(
+                    models.Q(reference__icontains=search_query) |
+                    models.Q(ville__icontains=search_query) |
+                    models.Q(titre__icontains=search_query) |
+                    models.Q(prix__gte=prix_val - 50000, prix__lte=prix_val + 50000)
+                )
+            except (ValueError, TypeError):
+                pass
+        if statut_filter == 'actif':
+            annonces_filtered = annonces_filtered.filter(is_active=True)
+        elif statut_filter == 'inactif':
+            annonces_filtered = annonces_filtered.filter(is_active=False)
 
-    # Pagination
-    paginator = Paginator(annonces_filtered, 20)
-    page_number = request.GET.get('page', 1)
-    annonces_page = paginator.get_page(page_number)
-    annonces = annonces_page
+        paginator = Paginator(annonces_filtered, 20)
+        page_number = request.GET.get('page', 1)
+        annonces_page = paginator.get_page(page_number)
+        annonces = annonces_page
 
     # KPI 7 derniers jours
     semaine = timezone.now() - timedelta(days=7)
@@ -548,18 +555,40 @@ def agence_dashboard(request):
     # Annonces completes (optimisees)
     annonces_optimisees = total_annonces - annonces_a_modifier
 
-    # Inspirations (photos individuelles)
-    photos_inspiration = Photo.objects.filter(
+    # Inspirations (photos individuelles) - seulement sur l'onglet inspirations
+    total_inspirations = Photo.objects.filter(
         annonce__client_reference=agence.reference,
         annonce__is_active=True,
         is_inspiration=True
-    ).select_related('annonce')
-    total_inspirations = photos_inspiration.count()
-    # Toutes les photos des annonces pour le selecteur
-    all_photos = Photo.objects.filter(
-        annonce__client_reference=agence.reference,
-        annonce__is_active=True
-    ).select_related('annonce').order_by('annonce__reference', 'ordre')
+    ).count()
+
+    photos_inspiration = []
+    all_photos = []
+    inspi_page = None
+    inspi_search = ''
+
+    if current_tab == 'inspirations':
+        photos_inspiration = Photo.objects.filter(
+            annonce__client_reference=agence.reference,
+            annonce__is_active=True,
+            is_inspiration=True
+        ).select_related('annonce')
+
+        # Toutes les photos pour le selecteur, avec recherche
+        all_photos_qs = Photo.objects.filter(
+            annonce__client_reference=agence.reference,
+            annonce__is_active=True
+        ).select_related('annonce').order_by('annonce__reference', 'ordre')
+
+        inspi_search = request.GET.get('ref', '').strip()
+        if inspi_search:
+            all_photos_qs = all_photos_qs.filter(annonce__reference__icontains=inspi_search)
+
+        # Pagination des photos du selecteur
+        inspi_paginator = Paginator(all_photos_qs, 40)
+        inspi_page_num = request.GET.get('ipage', 1)
+        inspi_page = inspi_paginator.get_page(inspi_page_num)
+        all_photos = inspi_page
 
     # Derniers commentaires
     derniers_commentaires = Commentaire.objects.filter(
@@ -577,12 +606,15 @@ def agence_dashboard(request):
 
     context = {
         'agence': agence,
+        'current_tab': current_tab,
         'annonces': annonces,
         'annonces_page': annonces_page,
         'total_annonces': total_annonces,
         'total_inactives': total_inactives,
         'search_query': search_query,
         'statut_filter': statut_filter,
+        'inspi_page': inspi_page,
+        'inspi_search': inspi_search,
         'messages_semaine': messages_semaine,
         'messages_24h': messages_24h,
         'favoris_semaine': favoris_semaine,
@@ -633,12 +665,16 @@ def gestion_agences(request):
     if not request.user.is_staff:
         return HttpResponseForbidden("Acces reserve aux administrateurs.")
 
-    agences = Agence.objects.all().select_related('responsable').order_by('-created_at')
+    agences = Agence.objects.all().select_related('responsable').prefetch_related('conseillers').order_by('-created_at')
     form = AgenceCreateForm()
+
+    # Stats conseillers
+    total_conseillers = Conseiller.objects.count()
 
     context = {
         'agences': agences,
         'form': form,
+        'total_conseillers': total_conseillers,
     }
     return render(request, 'listings/gestion_agences.html', context)
 
@@ -765,6 +801,75 @@ def toggle_agence_active(request, agence_id):
     status = "activee" if agence.is_active else "desactivee"
     messages.success(request, f"Agence '{agence.nom}' {status}.")
     return redirect('listings:gestion_agences')
+
+
+@login_required
+def gestion_conseillers(request, agence_id):
+    """Liste les conseillers d'une agence avec leurs coordonnees et stats"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agence = get_object_or_404(Agence, id=agence_id)
+    conseillers = agence.conseillers.all().order_by('nom')
+
+    conseillers_data = []
+    for c in conseillers:
+        nb_biens = c.annonces.filter(is_active=True).count()
+        nb_contacts = DemandeContact.objects.filter(annonce__conseiller=c).count()
+        conseillers_data.append({
+            'conseiller': c,
+            'nb_biens': nb_biens,
+            'nb_contacts': nb_contacts,
+        })
+
+    context = {
+        'agence': agence,
+        'conseillers_data': conseillers_data,
+    }
+    return render(request, 'listings/gestion_conseillers.html', context)
+
+
+@login_required
+def renvoyer_acces_conseiller(request, conseiller_id):
+    """Envoie les acces par mail au conseiller"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    conseiller = get_object_or_404(Conseiller, id=conseiller_id)
+    from django.utils.crypto import get_random_string
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    password = get_random_string(10)
+    conseiller.user.set_password(password)
+    conseiller.user.save()
+
+    try:
+        send_mail(
+            f'Vos acces SocialImmo - {conseiller.agence.nom}',
+            f"""Bonjour {conseiller.nom},
+
+Voici vos identifiants pour acceder a votre espace conseiller SocialImmo :
+
+URL : https://social-immo.com/mon-espace/
+Identifiant : {conseiller.user.username}
+Mot de passe : {password}
+
+Vous pourrez modifier votre mot de passe une fois connecte.
+
+Cordialement,
+L'equipe SocialImmo
+""",
+            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@social-immo.com',
+            [conseiller.email],
+            fail_silently=False,
+        )
+        messages.success(request, f'Acces envoyes a {conseiller.nom} ({conseiller.email})')
+    except Exception as e:
+        messages.error(request, f'Erreur envoi mail : {e}')
+        messages.info(request, f'Identifiant: {conseiller.user.username} / Mot de passe: {password}')
+
+    return redirect('listings:gestion_conseillers', agence_id=conseiller.agence.id)
 
 
 @login_required
@@ -1176,7 +1281,8 @@ def get_photo_comments(request):
 @login_required
 @require_POST
 def envoyer_contact(request):
-    """Envoie une demande de contact a un agent ou pro"""
+    """Envoie une demande de contact a un agent ou pro, avec email direct"""
+    from django.core.mail import send_mail
     try:
         data = json.loads(request.body)
         message_text = data.get('message', '').strip()
@@ -1195,14 +1301,59 @@ def envoyer_contact(request):
         telephone=telephone,
     )
 
+    recipient_email = None
+    recipient_name = None
+
     if annonce_id:
-        demande.annonce = get_object_or_404(Annonce, id=annonce_id)
+        annonce = get_object_or_404(Annonce, id=annonce_id)
+        demande.annonce = annonce
+        # Email direct au conseiller (pas au siege)
+        if annonce.conseiller and annonce.conseiller.email:
+            recipient_email = annonce.conseiller.email
+            recipient_name = annonce.conseiller.nom
+        elif annonce.contact_email:
+            recipient_email = annonce.contact_email
+            recipient_name = annonce.contact_nom
     elif pro_id:
-        demande.pro = get_object_or_404(ProProfile, id=pro_id)
+        pro = get_object_or_404(ProProfile, id=pro_id)
+        demande.pro = pro
+        if pro.email:
+            recipient_email = pro.email
+            recipient_name = pro.nom_entreprise
     else:
         return JsonResponse({'error': 'Cible requise'}, status=400)
 
     demande.save()
+
+    # Envoyer l'email directement au conseiller/agent
+    if recipient_email:
+        try:
+            subject = f"Nouvelle demande - {demande.annonce.reference if demande.annonce else 'Contact'} | SocialImmo"
+            body = f"""Bonjour {recipient_name},
+
+Vous avez recu une nouvelle demande sur SocialImmo.
+
+{'Bien : ' + demande.annonce.titre + ' (' + demande.annonce.reference + ')' if demande.annonce else ''}
+De : {request.user.get_full_name() or request.user.username}
+Email : {request.user.email}
+{('Telephone : ' + telephone) if telephone else ''}
+
+Message :
+{message_text}
+
+---
+Connectez-vous sur SocialImmo pour repondre.
+"""
+            send_mail(
+                subject,
+                body,
+                'noreply@social-immo.com',
+                [recipient_email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass  # Ne pas bloquer si l'email echoue
+
     return JsonResponse({'success': True})
 
 
@@ -1491,3 +1642,157 @@ def mentions_legales(request):
 
 def confidentialite(request):
     return render(request, 'listings/confidentialite.html')
+
+
+@login_required
+def conseiller_dashboard(request):
+    """Dashboard individuel pour un conseiller (IAD, Capifrance, etc.)"""
+    try:
+        conseiller = request.user.conseiller_profile
+    except Conseiller.DoesNotExist:
+        return HttpResponseForbidden("Vous n'etes pas enregistre comme conseiller.")
+
+    from django.core.paginator import Paginator
+
+    current_tab = request.GET.get('tab', 'biens')
+
+    # Biens du conseiller uniquement
+    mes_annonces = Annonce.objects.filter(
+        conseiller=conseiller
+    ).prefetch_related('photos', 'commentaires', 'favoris').order_by('-updated_at')
+
+    annonces_actives = mes_annonces.filter(is_active=True)
+    annonces_inactives = mes_annonces.filter(is_active=False)
+    total_annonces = annonces_actives.count()
+    total_inactives = annonces_inactives.count()
+
+    annonces_page = None
+    annonces = []
+    search_query = ''
+    statut_filter = ''
+
+    if current_tab == 'biens':
+        annonces_filtered = mes_annonces
+        search_query = request.GET.get('q', '').strip()
+        statut_filter = request.GET.get('statut', '').strip()
+        if search_query:
+            annonces_filtered = annonces_filtered.filter(
+                models.Q(reference__icontains=search_query) |
+                models.Q(ville__icontains=search_query) |
+                models.Q(titre__icontains=search_query) |
+                models.Q(code_postal__icontains=search_query)
+            )
+        if statut_filter == 'actif':
+            annonces_filtered = annonces_filtered.filter(is_active=True)
+        elif statut_filter == 'inactif':
+            annonces_filtered = annonces_filtered.filter(is_active=False)
+
+        paginator = Paginator(annonces_filtered, 20)
+        page_number = request.GET.get('page', 1)
+        annonces_page = paginator.get_page(page_number)
+        annonces = annonces_page
+
+    # KPIs
+    semaine = timezone.now() - timedelta(days=7)
+    hier = timezone.now() - timedelta(days=1)
+
+    messages_semaine = Commentaire.objects.filter(
+        annonce__conseiller=conseiller,
+        created_at__gte=semaine
+    ).count()
+
+    messages_24h = Commentaire.objects.filter(
+        annonce__conseiller=conseiller,
+        created_at__gte=hier
+    ).count()
+
+    favoris_semaine = Favori.objects.filter(
+        annonce__conseiller=conseiller,
+        created_at__gte=semaine
+    ).count()
+
+    total_favoris = Favori.objects.filter(
+        annonce__conseiller=conseiller
+    ).count()
+
+    # Inspirations
+    total_inspirations = Photo.objects.filter(
+        annonce__conseiller=conseiller,
+        annonce__is_active=True,
+        is_inspiration=True
+    ).count()
+
+    all_photos = []
+    inspi_page = None
+    inspi_search = ''
+
+    if current_tab == 'inspirations':
+        all_photos_qs = Photo.objects.filter(
+            annonce__conseiller=conseiller,
+            annonce__is_active=True
+        ).select_related('annonce').order_by('annonce__reference', 'ordre')
+
+        inspi_search = request.GET.get('ref', '').strip()
+        if inspi_search:
+            all_photos_qs = all_photos_qs.filter(annonce__reference__icontains=inspi_search)
+
+        inspi_paginator = Paginator(all_photos_qs, 40)
+        inspi_page_num = request.GET.get('ipage', 1)
+        inspi_page = inspi_paginator.get_page(inspi_page_num)
+        all_photos = inspi_page
+
+    # Commentaires sur mes biens
+    derniers_commentaires = Commentaire.objects.filter(
+        annonce__conseiller=conseiller
+    ).select_related('auteur', 'annonce').order_by('-created_at')[:10]
+
+    # Demandes de contact sur mes biens
+    demandes_contact = DemandeContact.objects.filter(
+        annonce__conseiller=conseiller
+    ).select_related('expediteur', 'annonce').order_by('-created_at')
+    demandes_non_lues = demandes_contact.filter(is_read=False).count()
+
+    context = {
+        'conseiller': conseiller,
+        'agence': conseiller.agence,
+        'current_tab': current_tab,
+        'annonces': annonces,
+        'annonces_page': annonces_page,
+        'total_annonces': total_annonces,
+        'total_inactives': total_inactives,
+        'search_query': search_query,
+        'statut_filter': statut_filter,
+        'inspi_page': inspi_page,
+        'inspi_search': inspi_search,
+        'all_photos': all_photos,
+        'messages_semaine': messages_semaine,
+        'messages_24h': messages_24h,
+        'favoris_semaine': favoris_semaine,
+        'total_favoris': total_favoris,
+        'total_inspirations': total_inspirations,
+        'derniers_commentaires': derniers_commentaires,
+        'demandes_contact': demandes_contact,
+        'demandes_non_lues': demandes_non_lues,
+        'inspiration_choices': Annonce.INSPIRATION_CHOICES,
+    }
+    return render(request, 'listings/conseiller_dashboard.html', context)
+
+
+@login_required
+def conseiller_set_password(request):
+    """Permet au conseiller de definir son mot de passe a la premiere connexion"""
+    if request.method == 'POST':
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+        if len(password) < 8:
+            messages.error(request, 'Le mot de passe doit contenir au moins 8 caracteres.')
+        elif password != password2:
+            messages.error(request, 'Les mots de passe ne correspondent pas.')
+        else:
+            request.user.set_password(password)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Mot de passe defini avec succes !')
+            return redirect('listings:conseiller_dashboard')
+    return render(request, 'listings/conseiller_set_password.html')

@@ -4,7 +4,8 @@ from django.conf import settings
 from lxml import etree
 from decimal import Decimal
 
-from listings.models import Annonce, Photo
+from django.contrib.auth.models import User
+from listings.models import Annonce, Photo, Agence, Conseiller
 
 
 # URL par defaut du flux XML
@@ -273,6 +274,50 @@ class Command(BaseCommand):
             annonce = Annonce.objects.create(reference=reference, **data)
             is_new = True
             annonce_changed = True
+
+        # Rattacher au conseiller (auto-creation si agence configuree)
+        contact_email = data.get('contact_email', '').strip()
+        contact_nom = data.get('contact_nom', '').strip()
+        if contact_email:
+            try:
+                agence = Agence.objects.get(reference=client_ref)
+                conseiller = Conseiller.objects.filter(
+                    email__iexact=contact_email, agence=agence
+                ).first()
+                if not conseiller:
+                    # Auto-creer le user et le conseiller
+                    username = contact_email.split('@')[0].lower().replace('.', '_')
+                    # Eviter les doublons de username
+                    base_username = username
+                    counter = 1
+                    while User.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+                    user = User.objects.create_user(
+                        username=username,
+                        email=contact_email,
+                        first_name=contact_nom.split()[0] if contact_nom else '',
+                        last_name=' '.join(contact_nom.split()[1:]) if contact_nom and len(contact_nom.split()) > 1 else '',
+                    )
+                    # Mot de passe aleatoire - sera reinitialise par l'agence
+                    user.set_unusable_password()
+                    user.save()
+                    conseiller = Conseiller.objects.create(
+                        user=user,
+                        agence=agence,
+                        nom=contact_nom or username,
+                        email=contact_email,
+                        telephone=data.get('contact_telephone', ''),
+                    )
+                    self.stdout.write(self.style.SUCCESS(
+                        f'    [CONSEILLER CREE] {conseiller.nom} ({contact_email})'
+                    ))
+                if annonce.conseiller != conseiller:
+                    annonce.conseiller = conseiller
+                    annonce.save(update_fields=['conseiller'])
+                    annonce_changed = True
+            except Agence.DoesNotExist:
+                pass
 
         # Gerer les photos (incremental : ne toucher que si changement)
         photos_changed = False

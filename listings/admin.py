@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, DemandeContact
+    PhotoFavori, PhotoNote, DemandeContact, Conseiller
 )
 
 
@@ -13,8 +13,8 @@ class PhotoInline(admin.TabularInline):
 
 @admin.register(Annonce)
 class AnnonceAdmin(admin.ModelAdmin):
-    list_display = ['reference', 'titre', 'ville', 'prix', 'type_transaction', 'is_active', 'created_at']
-    list_filter = ['type_transaction', 'ville', 'is_active', 'dpe_etiquette_conso']
+    list_display = ['reference', 'titre', 'ville', 'prix', 'type_transaction', 'conseiller', 'is_active', 'created_at']
+    list_filter = ['type_transaction', 'ville', 'is_active', 'dpe_etiquette_conso', 'conseiller']
     search_fields = ['reference', 'titre', 'ville']
     inlines = [PhotoInline]
 
@@ -38,11 +38,33 @@ class FavoriAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
 
 
+class ConseillerInline(admin.TabularInline):
+    model = Conseiller
+    extra = 0
+    readonly_fields = ['user', 'created_at']
+
+
 @admin.register(Agence)
 class AgenceAdmin(admin.ModelAdmin):
-    list_display = ['nom', 'reference', 'responsable', 'feed_type', 'is_active', 'last_import']
+    list_display = ['nom', 'reference', 'responsable', 'nb_conseillers', 'feed_type', 'is_active', 'last_import']
     list_filter = ['is_active', 'feed_type']
     search_fields = ['nom', 'reference', 'contact_nom']
+    inlines = [ConseillerInline]
+
+    def nb_conseillers(self, obj):
+        return obj.conseillers.count()
+    nb_conseillers.short_description = 'Conseillers'
+
+
+@admin.register(Conseiller)
+class ConseillerAdmin(admin.ModelAdmin):
+    list_display = ['nom', 'email', 'agence', 'nb_biens', 'is_active', 'created_at']
+    list_filter = ['is_active', 'agence']
+    search_fields = ['nom', 'email', 'agence__nom']
+
+    def nb_biens(self, obj):
+        return obj.annonces.filter(is_active=True).count()
+    nb_biens.short_description = 'Biens actifs'
 
 
 @admin.register(Decoration)

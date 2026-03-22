@@ -91,52 +91,243 @@
                 </p>
             </div>
 
-            <!-- DPE Section -->
+            <!-- Caractéristiques détaillées -->
+            {% if annonce.surface or annonce.surface_sejour or annonce.surface_terrain or annonce.nb_pieces or annonce.nb_chambres or annonce.annee_construction or annonce.libelle_type %}
+            <div>
+                <h2 class="text-xl font-semibold mb-6">Caractéristiques</h2>
+                <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+                    <div class="divide-y divide-gray-100">
+                        {% if annonce.libelle_type %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span class="text-sm text-apple-gray">Type de bien</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.libelle_type }}</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.surface %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                <span class="text-sm text-apple-gray">Surface habitable</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.surface }} m²</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.surface_sejour %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <span class="text-sm text-apple-gray">Surface séjour</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.surface_sejour }} m²</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.surface_terrain %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                <span class="text-sm text-apple-gray">Surface terrain</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.surface_terrain }} m²</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.nb_pieces %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                                <span class="text-sm text-apple-gray">Nombre de pièces</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.nb_pieces }}</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.nb_chambres %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12V8a2 2 0 00-2-2H6a2 2 0 00-2 2v4m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4"/></svg>
+                                <span class="text-sm text-apple-gray">Chambres</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.nb_chambres }}</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.annee_construction %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span class="text-sm text-apple-gray">Année de construction</span>
+                            </div>
+                            <span class="text-sm font-semibold">{{ annonce.annee_construction }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Performance énergétique (DPE) -->
             {% if annonce.dpe_etiquette_conso %}
             <div>
-                <h2 class="text-xl font-semibold mb-6">Diagnostics énergétiques</h2>
-                <div class="grid grid-cols-2 gap-6">
+                <h2 class="text-xl font-semibold mb-6">Performance énergétique</h2>
+                <div class="bg-white rounded-2xl shadow-apple p-6 space-y-6">
+
                     <!-- DPE Consommation -->
-                    <div class="bg-white rounded-2xl p-6 shadow-apple">
-                        <div class="text-sm text-apple-gray mb-3">Consommation énergétique</div>
-                        <div class="flex items-center gap-4">
-                            <span class="inline-flex items-center justify-center w-14 h-14 rounded-xl text-2xl font-bold
-                                {% if annonce.dpe_etiquette_conso == 'A' %}bg-green-100 text-green-700
-                                {% elif annonce.dpe_etiquette_conso == 'B' %}bg-lime-100 text-lime-700
-                                {% elif annonce.dpe_etiquette_conso == 'C' %}bg-yellow-100 text-yellow-700
-                                {% elif annonce.dpe_etiquette_conso == 'D' %}bg-orange-100 text-orange-700
-                                {% elif annonce.dpe_etiquette_conso == 'E' %}bg-red-100 text-red-600
-                                {% elif annonce.dpe_etiquette_conso == 'F' %}bg-red-200 text-red-700
-                                {% else %}bg-red-300 text-red-800{% endif %}">
-                                {{ annonce.dpe_etiquette_conso }}
-                            </span>
-                            {% if annonce.dpe_valeur_conso %}
-                            <div>
-                                <div class="text-lg font-semibold">{{ annonce.dpe_valeur_conso }}</div>
-                                <div class="text-xs text-apple-gray">kWh/m²/an</div>
+                    <div>
+                        <div class="text-sm font-medium text-apple-gray mb-4">Diagnostic de performance énergétique (DPE)</div>
+                        <div class="space-y-1.5">
+                            {% with letters="ABCDEFG" %}
+                            {% for letter in "ABCDEFG" %}
+                            <div class="flex items-center gap-2">
+                                <div class="h-8 rounded-r-full flex items-center px-3 text-white text-xs font-bold
+                                    {% if letter == 'A' %}bg-green-500 w-[20%]
+                                    {% elif letter == 'B' %}bg-lime-500 w-[30%]
+                                    {% elif letter == 'C' %}bg-yellow-500 w-[40%]
+                                    {% elif letter == 'D' %}bg-orange-400 w-[50%]
+                                    {% elif letter == 'E' %}bg-orange-500 w-[65%]
+                                    {% elif letter == 'F' %}bg-red-500 w-[80%]
+                                    {% elif letter == 'G' %}bg-red-700 w-full{% endif %}
+                                    {% if annonce.dpe_etiquette_conso == letter %}ring-2 ring-offset-1 ring-gray-800{% endif %}">
+                                    {{ letter }}
+                                </div>
+                                {% if annonce.dpe_etiquette_conso == letter and annonce.dpe_valeur_conso %}
+                                <div class="flex items-center gap-1.5 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg relative">
+                                    <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-b-[6px] border-r-[6px] border-transparent border-r-gray-900"></div>
+                                    {{ annonce.dpe_valeur_conso }} kWh/m²/an
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
+                            {% endfor %}
+                            {% endwith %}
                         </div>
                     </div>
 
                     <!-- GES -->
                     {% if annonce.dpe_etiquette_ges %}
-                    <div class="bg-white rounded-2xl p-6 shadow-apple">
-                        <div class="text-sm text-apple-gray mb-3">Émissions de GES</div>
-                        <div class="flex items-center gap-4">
-                            <span class="inline-flex items-center justify-center w-14 h-14 rounded-xl text-2xl font-bold
-                                {% if annonce.dpe_etiquette_ges == 'A' %}bg-purple-100 text-purple-700
-                                {% elif annonce.dpe_etiquette_ges == 'B' %}bg-violet-100 text-violet-700
-                                {% elif annonce.dpe_etiquette_ges == 'C' %}bg-indigo-100 text-indigo-700
-                                {% elif annonce.dpe_etiquette_ges == 'D' %}bg-blue-100 text-blue-700
-                                {% elif annonce.dpe_etiquette_ges == 'E' %}bg-sky-100 text-sky-700
-                                {% elif annonce.dpe_etiquette_ges == 'F' %}bg-cyan-100 text-cyan-700
-                                {% else %}bg-teal-100 text-teal-700{% endif %}">
-                                {{ annonce.dpe_etiquette_ges }}
-                            </span>
+                    <div class="pt-4 border-t border-gray-100">
+                        <div class="text-sm font-medium text-apple-gray mb-4">Indice d'émission de gaz à effet de serre (GES)</div>
+                        <div class="space-y-1.5">
+                            {% for letter in "ABCDEFG" %}
+                            <div class="flex items-center gap-2">
+                                <div class="h-8 rounded-r-full flex items-center px-3 text-white text-xs font-bold
+                                    {% if letter == 'A' %}bg-violet-300 w-[20%]
+                                    {% elif letter == 'B' %}bg-violet-400 w-[30%]
+                                    {% elif letter == 'C' %}bg-purple-400 w-[40%]
+                                    {% elif letter == 'D' %}bg-purple-500 w-[50%]
+                                    {% elif letter == 'E' %}bg-purple-600 w-[65%]
+                                    {% elif letter == 'F' %}bg-purple-700 w-[80%]
+                                    {% elif letter == 'G' %}bg-purple-900 w-full{% endif %}
+                                    {% if annonce.dpe_etiquette_ges == letter %}ring-2 ring-offset-1 ring-gray-800{% endif %}">
+                                    {{ letter }}
+                                </div>
+                                {% if annonce.dpe_etiquette_ges == letter and annonce.dpe_valeur_ges %}
+                                <div class="flex items-center gap-1.5 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg relative">
+                                    <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-b-[6px] border-r-[6px] border-transparent border-r-gray-900"></div>
+                                    {{ annonce.dpe_valeur_ges }} kgCO₂/m²/an
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                     {% endif %}
+
+                    <!-- Estimation facture énergétique -->
+                    {% if annonce.montant_depenses_energies_min and annonce.montant_depenses_energies_max %}
+                    <div class="pt-4 border-t border-gray-100">
+                        <div class="flex items-center gap-3 bg-amber-50 rounded-xl p-4">
+                            <svg class="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <div>
+                                <div class="text-sm font-semibold text-amber-800">Estimation de la facture énergétique</div>
+                                <div class="text-lg font-bold text-amber-900">entre {{ annonce.montant_depenses_energies_min|floatformat:0 }} et {{ annonce.montant_depenses_energies_max|floatformat:0 }} €/an</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if annonce.dpe_date_realisation %}
+                    <p class="text-xs text-apple-gray">DPE réalisé le {{ annonce.dpe_date_realisation }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Détails du prix -->
+            {% if annonce.type_transaction == 'V' and annonce.prix %}
+            <div>
+                <h2 class="text-xl font-semibold mb-6">Détails du prix</h2>
+                <div class="bg-white rounded-2xl shadow-apple p-6 space-y-4">
+                    {% if annonce.honoraires_payeurs %}
+                    <p class="text-sm text-apple-gray">Les honoraires sont à la charge de {{ annonce.honoraires_payeurs|lower }}</p>
+                    {% endif %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span class="text-sm text-apple-gray">Prix du bien honoraires inclus</span>
+                        <span class="text-lg font-bold">{{ annonce.prix_format }}</span>
+                    </div>
+                    {% if annonce.surface and annonce.prix %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span class="text-sm text-apple-gray">Prix au m²</span>
+                        <span class="text-sm font-semibold">{{ annonce.prix_m2 }} €/m²</span>
+                    </div>
+                    {% endif %}
+                    {% if annonce.frais_agence %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span class="text-sm text-apple-gray">Dont honoraires d'agence</span>
+                        <span class="text-sm font-semibold">{{ annonce.frais_agence|floatformat:0 }} €</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span class="text-sm text-apple-gray">Frais de notaire estimés (8%)</span>
+                        <span class="text-sm font-semibold">{{ annonce.frais_notaire }} €</span>
+                    </div>
+                    <div class="flex items-center justify-between py-3 bg-apple-bg -mx-6 px-6 rounded-xl">
+                        <span class="text-sm font-semibold">Montant estimé du projet</span>
+                        <span class="text-lg font-bold text-apple-blue">{{ annonce.montant_projet }} €</span>
+                    </div>
+                    <div class="flex items-center justify-between py-3">
+                        <span class="text-sm text-apple-gray">Estimation mensuelle (20 ans, 3.5%)</span>
+                        <span class="text-sm font-semibold">~{{ annonce.mensualite_estimee }} €/mois</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Détails location -->
+            {% if annonce.type_transaction == 'L' %}
+            <div>
+                <h2 class="text-xl font-semibold mb-6">Détails de la location</h2>
+                <div class="bg-white rounded-2xl shadow-apple p-6">
+                    <div class="divide-y divide-gray-100">
+                        {% if annonce.loyer_mensuel %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Loyer mensuel</span>
+                            <span class="text-lg font-bold">{{ annonce.loyer_mensuel|floatformat:0 }} €/mois</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.charges_locatives %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Charges locatives</span>
+                            <span class="text-sm font-semibold">{{ annonce.charges_locatives|floatformat:0 }} €/mois</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.depot_garantie %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Dépôt de garantie</span>
+                            <span class="text-sm font-semibold">{{ annonce.depot_garantie|floatformat:0 }} €</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.honoraires_location %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Honoraires de location</span>
+                            <span class="text-sm font-semibold">{{ annonce.honoraires_location|floatformat:0 }} €</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.loyer_mensuel and annonce.charges_locatives %}
+                        <div class="flex items-center justify-between py-3 bg-apple-bg -mx-6 px-6 rounded-xl">
+                            <span class="text-sm font-semibold">Coût mensuel total</span>
+                            <span class="text-lg font-bold text-apple-blue">{{ annonce.cout_mensuel_total }} €/mois</span>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% endif %}

@@ -94,6 +94,13 @@ class Annonce(models.Model):
         max_length=20, blank=True, default='',
         choices=INSPIRATION_CHOICES
     )
+    conseiller = models.ForeignKey(
+        'Conseiller',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='annonces'
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -112,6 +119,47 @@ class Annonce(models.Model):
     def photo_principale(self):
         """Retourne la première photo de l'annonce"""
         return self.photos.first()
+
+    @property
+    def prix_m2(self):
+        if self.prix and self.surface and self.surface > 0:
+            return f"{self.prix / self.surface:,.0f}".replace(',', ' ')
+        return None
+
+    @property
+    def frais_notaire(self):
+        if self.prix:
+            return f"{self.prix * 8 / 100:,.0f}".replace(',', ' ')
+        return None
+
+    @property
+    def montant_projet(self):
+        if self.prix:
+            return f"{self.prix * 108 / 100:,.0f}".replace(',', ' ')
+        return None
+
+    @property
+    def mensualite_estimee(self):
+        if self.prix:
+            import math
+            capital = float(self.prix) * 0.8
+            taux_mensuel = 0.035 / 12
+            nb_mois = 20 * 12
+            if taux_mensuel > 0:
+                mensualite = capital * taux_mensuel / (1 - math.pow(1 + taux_mensuel, -nb_mois))
+                return f"{mensualite:,.0f}".replace(',', ' ')
+        return None
+
+    @property
+    def cout_mensuel_total(self):
+        total = 0
+        if self.loyer_mensuel:
+            total += float(self.loyer_mensuel)
+        if self.charges_locatives:
+            total += float(self.charges_locatives)
+        if total > 0:
+            return f"{total:,.0f}".replace(',', ' ')
+        return None
 
 
 class Photo(models.Model):
@@ -223,6 +271,34 @@ class Agence(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class Conseiller(models.Model):
+    """Conseiller/agent individuel rattaché à une agence (IAD, Capifrance, etc.)"""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='conseiller_profile'
+    )
+    agence = models.ForeignKey(
+        'Agence',
+        on_delete=models.CASCADE,
+        related_name='conseillers'
+    )
+    nom = models.CharField(max_length=100)
+    email = models.EmailField()
+    telephone = models.CharField(max_length=20, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['nom']
+        verbose_name = 'Conseiller'
+        verbose_name_plural = 'Conseillers'
+
+    def __str__(self):
+        return f"{self.nom} ({self.agence.nom})"
 
 
 class Decoration(models.Model):

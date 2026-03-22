@@ -69,6 +69,8 @@
 
             <!-- Google Signup (primary) -->
             {% load socialaccount %}
+            {% get_providers as socialaccount_providers %}
+            {% if socialaccount_providers %}
             <a href="{% provider_login_url 'google' %}"
                class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-apple-text font-medium py-3.5 px-6 rounded-2xl hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm transition-all">
                 <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -86,6 +88,7 @@
                 <span class="text-xs text-apple-gray uppercase tracking-wider">ou par email</span>
                 <div class="flex-1 h-px bg-gray-200"></div>
             </div>
+            {% endif %}
 
             <!-- Non-field errors -->
             {% if form.non_field_errors %}

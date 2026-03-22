@@ -77,6 +77,23 @@ class Annonce(models.Model):
     is_active = models.BooleanField(default=True)
     is_inspiration = models.BooleanField(default=False)
 
+    INSPIRATION_CHOICES = [
+        ('chaleureux', 'Foyer chaleureux'),
+        ('architecte', 'Deco architecte'),
+        ('moderne', 'Design moderne'),
+        ('nature', 'Esprit nature'),
+        ('luxe', 'Standing & luxe'),
+        ('cosy', 'Ambiance cosy'),
+        ('scandinave', 'Style scandinave'),
+        ('industriel', 'Loft industriel'),
+        ('famille', 'Maison de famille'),
+        ('jardin', 'Terrasse & jardin'),
+    ]
+    inspiration_categorie = models.CharField(
+        max_length=20, blank=True, default='',
+        choices=INSPIRATION_CHOICES
+    )
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Annonce'

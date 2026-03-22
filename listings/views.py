@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db import models
-from django.db.models import Prefetch, Avg, Sum
+from django.db.models import Prefetch, Avg, Sum, Count, F, Value, FloatField
+from django.db.models.functions import Cast
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -16,43 +17,25 @@ from .models import Annonce, Photo, Commentaire, Favori, Agence, Decoration, Dec
 from .forms import CommentaireForm, AgenceCreateForm
 
 
-def listing_list(request):
-    """Vue liste : affiche toutes les annonces actives avec filtres"""
-    annonces = Annonce.objects.filter(is_active=True).prefetch_related(
+def homepage(request):
+    """Page d'accueil avec hero, recherche, dernieres arrivees"""
+    total_annonces = Annonce.objects.filter(is_active=True).count()
+    count_vente = Annonce.objects.filter(is_active=True, type_transaction='V').count()
+    count_location = Annonce.objects.filter(is_active=True, type_transaction='L').count()
+
+    # 6 dernieres annonces
+    dernieres_annonces = Annonce.objects.filter(is_active=True).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    )
+    ).order_by('-created_at')[:6]
 
-    # Récupérer les paramètres de filtre
-    ville = request.GET.get('ville', '').strip()
-    prix_max = request.GET.get('prix_max', '').strip()
-    surface_min = request.GET.get('surface_min', '').strip()
-    type_transaction = request.GET.get('type', '').strip()
-
-    # Appliquer les filtres
-    if ville:
-        annonces = annonces.filter(ville__icontains=ville)
-
-    if prix_max:
-        try:
-            annonces = annonces.filter(prix__lte=int(prix_max))
-        except ValueError:
-            pass
-
-    if surface_min:
-        try:
-            annonces = annonces.filter(surface__gte=int(surface_min))
-        except ValueError:
-            pass
-
-    if type_transaction in ['V', 'L']:
-        annonces = annonces.filter(type_transaction=type_transaction)
-
-    # Liste des villes disponibles pour le select
-    villes_disponibles = Annonce.objects.filter(
+    # Villes populaires (top 12 par nombre d'annonces)
+    villes_populaires = Annonce.objects.filter(
         is_active=True
-    ).values_list('ville', flat=True).distinct().order_by('ville')
+    ).exclude(ville='').values('ville').annotate(
+        count=Count('id')
+    ).order_by('-count')[:12]
 
-    # Récupérer les IDs des annonces likées par l'utilisateur
+    # Favoris user
     user_favorites = []
     if request.user.is_authenticated:
         user_favorites = list(Favori.objects.filter(
@@ -60,16 +43,133 @@ def listing_list(request):
         ).values_list('annonce_id', flat=True))
 
     context = {
+        'total_annonces': total_annonces,
+        'count_vente': count_vente,
+        'count_location': count_location,
+        'dernieres_annonces': dernieres_annonces,
+        'villes_populaires': villes_populaires,
+        'user_favorites': user_favorites,
+    }
+    return render(request, 'listings/homepage.html', context)
+
+
+def search_results(request):
+    """Page de resultats de recherche (SERP) avec filtres avances"""
+    annonces = Annonce.objects.filter(is_active=True).prefetch_related(
+        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+    )
+
+    # Recuperer tous les parametres de filtre
+    ville = request.GET.get('ville', '').strip()
+    type_transaction = request.GET.get('type', '').strip()
+    prix_min = request.GET.get('prix_min', '').strip()
+    prix_max = request.GET.get('prix_max', '').strip()
+    surface_min = request.GET.get('surface_min', '').strip()
+    surface_max = request.GET.get('surface_max', '').strip()
+    pieces_min = request.GET.get('pieces_min', '').strip()
+    pieces_max = request.GET.get('pieces_max', '').strip()
+    chambres_min = request.GET.get('chambres_min', '').strip()
+    chambres_max = request.GET.get('chambres_max', '').strip()
+    dpe_list = request.GET.getlist('dpe')
+    tri = request.GET.get('tri', 'date').strip()
+
+    # Appliquer les filtres
+    if ville:
+        annonces = annonces.filter(ville__icontains=ville)
+
+    valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
+    if type_transaction in valid_types:
+        annonces = annonces.filter(type_transaction=type_transaction)
+
+    for param, lookup in [
+        (prix_min, 'prix__gte'), (prix_max, 'prix__lte'),
+        (surface_min, 'surface__gte'), (surface_max, 'surface__lte'),
+        (pieces_min, 'nb_pieces__gte'), (pieces_max, 'nb_pieces__lte'),
+        (chambres_min, 'nb_chambres__gte'), (chambres_max, 'nb_chambres__lte'),
+    ]:
+        if param:
+            try:
+                annonces = annonces.filter(**{lookup: int(param)})
+            except ValueError:
+                pass
+
+    if dpe_list:
+        valid_dpe = [d for d in dpe_list if d in 'ABCDEFG']
+        if valid_dpe:
+            annonces = annonces.filter(dpe_etiquette_conso__in=valid_dpe)
+
+    # Tri
+    sort_map = {
+        'prix_asc': 'prix',
+        'prix_desc': '-prix',
+        'surface': '-surface',
+        'date': '-created_at',
+    }
+    annonces = annonces.order_by(sort_map.get(tri, '-created_at'))
+
+    result_count = annonces.count()
+
+    # Villes pour autocomplete fallback
+    villes_disponibles = Annonce.objects.filter(
+        is_active=True
+    ).exclude(ville='').values_list('ville', flat=True).distinct().order_by('ville')
+
+    # Favoris
+    user_favorites = []
+    if request.user.is_authenticated:
+        user_favorites = list(Favori.objects.filter(
+            user=request.user
+        ).values_list('annonce_id', flat=True))
+
+    # Seuil "nouveau" = 7 jours
+    seuil_nouveau = timezone.now() - timedelta(days=7)
+
+    context = {
         'annonces': annonces,
+        'result_count': result_count,
         'villes_disponibles': villes_disponibles,
         'user_favorites': user_favorites,
-        # Valeurs actuelles pour les garder dans le formulaire
+        'seuil_nouveau': seuil_nouveau,
+        # Valeurs actuelles des filtres
         'current_ville': ville,
+        'current_type': type_transaction,
+        'current_prix_min': prix_min,
         'current_prix_max': prix_max,
         'current_surface_min': surface_min,
-        'current_type': type_transaction,
+        'current_surface_max': surface_max,
+        'current_pieces_min': pieces_min,
+        'current_pieces_max': pieces_max,
+        'current_chambres_min': chambres_min,
+        'current_chambres_max': chambres_max,
+        'current_dpe': dpe_list,
+        'current_tri': tri,
     }
-    return render(request, 'listings/listing_list.html', context)
+    return render(request, 'listings/search_results.html', context)
+
+
+def autocomplete(request):
+    """API autocomplete pour la recherche de villes"""
+    q = request.GET.get('q', '').strip()
+    if len(q) < 2:
+        return JsonResponse({'results': []})
+
+    cities = Annonce.objects.filter(
+        is_active=True,
+        ville__icontains=q
+    ).exclude(ville='').values('ville').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+
+    results = []
+    for c in cities:
+        results.append({
+            'label': c['ville'],
+            'value': c['ville'],
+            'count': c['count'],
+            'type': 'Ville',
+        })
+
+    return JsonResponse({'results': results})
 
 
 def listing_detail(request, reference):
@@ -103,14 +203,14 @@ def listing_detail(request, reference):
 def signup(request):
     """Vue inscription : crée un nouveau compte utilisateur"""
     if request.user.is_authenticated:
-        return redirect('listings:list')
+        return redirect('listings:homepage')
 
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('listings:list')
+            return redirect('listings:homepage')
     else:
         form = UserCreationForm()
 
@@ -218,7 +318,27 @@ def decoration_list(request):
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
     ).select_related().order_by('-updated_at')
-    return render(request, 'listings/decoration_list.html', {'inspirations': inspirations})
+
+    # Filtrer par categorie
+    current_categorie = request.GET.get('categorie', '').strip()
+    if current_categorie:
+        inspirations = inspirations.filter(inspiration_categorie=current_categorie)
+
+    # Categories disponibles (avec au moins 1 bien)
+    categories_dispo = Annonce.objects.filter(
+        is_active=True, is_inspiration=True
+    ).exclude(inspiration_categorie='').values_list(
+        'inspiration_categorie', flat=True
+    ).distinct()
+    # Convertir en liste de tuples (code, label)
+    cat_choices = dict(Annonce.INSPIRATION_CHOICES)
+    categories = [(c, cat_choices.get(c, c)) for c in categories_dispo]
+
+    return render(request, 'listings/decoration_list.html', {
+        'inspirations': inspirations,
+        'categories': categories,
+        'current_categorie': current_categorie,
+    })
 
 
 def partenaire_list(request):
@@ -293,6 +413,12 @@ def agence_dashboard(request):
     # Annonces completes (optimisees)
     annonces_optimisees = total_annonces - annonces_a_modifier
 
+    # Inspirations
+    inspirations = annonces_actives.filter(is_inspiration=True)
+    total_inspirations = inspirations.count()
+    # Annonces avec photo eligible pour inspiration
+    annonces_inspirables = annonces_actives.filter(photos__isnull=False).distinct()
+
     # Derniers commentaires
     derniers_commentaires = Commentaire.objects.filter(
         annonce__client_reference=agence.reference
@@ -315,6 +441,9 @@ def agence_dashboard(request):
         'annonces_optimisees': annonces_optimisees,
         'derniers_commentaires': derniers_commentaires,
         'dernieres_annonces': dernieres_annonces,
+        'total_inspirations': total_inspirations,
+        'annonces_inspirables': annonces_inspirables,
+        'inspiration_choices': Annonce.INSPIRATION_CHOICES,
     }
     return render(request, 'listings/agence_dashboard.html', context)
 
@@ -551,6 +680,7 @@ def toggle_inspiration(request):
     try:
         data = json.loads(request.body)
         annonce_id = data.get('annonce_id')
+        categorie = data.get('categorie', '')
     except (json.JSONDecodeError, KeyError):
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
@@ -565,7 +695,18 @@ def toggle_inspiration(request):
         if not request.user.is_staff:
             return JsonResponse({'error': 'Non autorise'}, status=403)
 
-    annonce.is_inspiration = not annonce.is_inspiration
-    annonce.save(update_fields=['is_inspiration'])
+    # Si on envoie une categorie, on active l'inspiration avec cette categorie
+    if categorie:
+        annonce.is_inspiration = True
+        annonce.inspiration_categorie = categorie
+        annonce.save(update_fields=['is_inspiration', 'inspiration_categorie'])
+    else:
+        annonce.is_inspiration = not annonce.is_inspiration
+        if not annonce.is_inspiration:
+            annonce.inspiration_categorie = ''
+        annonce.save(update_fields=['is_inspiration', 'inspiration_categorie'])
 
-    return JsonResponse({'is_inspiration': annonce.is_inspiration})
+    return JsonResponse({
+        'is_inspiration': annonce.is_inspiration,
+        'categorie': annonce.inspiration_categorie,
+    })

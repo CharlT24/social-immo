@@ -55,18 +55,18 @@
     <header class="bg-white sticky top-0 z-50 border-b border-gray-200/60">
         <div class="flex items-center justify-between px-6 py-3">
             <!-- Logo -->
-            <a href="{% url 'listings:list' %}" class="flex items-center gap-2">
+            <a href="{% url 'listings:search_results' %}" class="flex items-center gap-2">
                 <span class="text-xl font-bold tracking-tight">Social<span class="text-lbc-blue">Immo</span></span>
                 <span class="bg-lbc-blue text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pro</span>
             </a>
 
             <!-- Right actions -->
             <div class="flex items-center gap-5">
-                <a href="{% url 'listings:list' %}" class="flex items-center gap-2 text-sm text-lbc-gray hover:text-lbc-text transition-colors">
+                <a href="{% url 'listings:search_results' %}" class="flex items-center gap-2 text-sm text-lbc-gray hover:text-lbc-text transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     Voir le site
                 </a>
-                <a href="{% url 'listings:list' %}" class="flex items-center gap-2 text-sm text-lbc-gray hover:text-lbc-text transition-colors">
+                <a href="{% url 'listings:search_results' %}" class="flex items-center gap-2 text-sm text-lbc-gray hover:text-lbc-text transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                     Biens
                 </a>
@@ -135,6 +135,17 @@
                         <a href="#commentaires-section" class="block px-4 py-2 text-white/60 hover:text-white text-sm rounded-lg hover:bg-white/5 transition-colors">Messages</a>
                     </div>
                 </div>
+
+                <!-- Inspirations -->
+                <a href="#inspirations-section" class="flex items-center justify-between px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-xl text-sm font-semibold transition-colors">
+                    <span class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Inspirations
+                    </span>
+                    {% if total_inspirations %}
+                    <span class="bg-purple-500 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full min-w-[24px] text-center">{{ total_inspirations }}</span>
+                    {% endif %}
+                </a>
 
                 <!-- Import / Outils -->
                 <a href="#flux-section" class="flex items-center gap-3 px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-xl text-sm font-semibold transition-colors">
@@ -453,6 +464,173 @@
                         </div>
                     </div>
 
+                    <!-- ===== INSPIRATIONS SECTION ===== -->
+                    <div id="inspirations-section" class="bg-white rounded-2xl overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-lg font-bold text-lbc-text">Mes inspirations</h2>
+                                        <p class="text-xs text-lbc-gray">Selectionnez vos plus belles photos et assignez-leur une ambiance</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full">
+                                    {{ total_inspirations }} selectionnee{{ total_inspirations|pluralize }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Categories legend -->
+                        <div class="px-6 py-4 bg-gradient-to-r from-purple-50/50 to-pink-50/50 border-b border-gray-100">
+                            <p class="text-xs font-bold text-lbc-gray uppercase tracking-wider mb-3">Cahier des charges</p>
+                            <div class="flex flex-wrap gap-2">
+                                {% for code, label in inspiration_choices %}
+                                <span class="inspi-cat-tag inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full cursor-pointer transition-all
+                                    {% if code == 'chaleureux' %}bg-orange-100 text-orange-700 hover:bg-orange-200
+                                    {% elif code == 'architecte' %}bg-slate-100 text-slate-700 hover:bg-slate-200
+                                    {% elif code == 'moderne' %}bg-blue-100 text-blue-700 hover:bg-blue-200
+                                    {% elif code == 'nature' %}bg-green-100 text-green-700 hover:bg-green-200
+                                    {% elif code == 'luxe' %}bg-amber-100 text-amber-700 hover:bg-amber-200
+                                    {% elif code == 'cosy' %}bg-rose-100 text-rose-700 hover:bg-rose-200
+                                    {% elif code == 'scandinave' %}bg-sky-100 text-sky-700 hover:bg-sky-200
+                                    {% elif code == 'industriel' %}bg-stone-100 text-stone-700 hover:bg-stone-200
+                                    {% elif code == 'famille' %}bg-indigo-100 text-indigo-700 hover:bg-indigo-200
+                                    {% elif code == 'jardin' %}bg-emerald-100 text-emerald-700 hover:bg-emerald-200
+                                    {% endif %}" data-cat="{{ code }}">
+                                    {{ label }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Photo Gallery Grid -->
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {% for annonce in annonces_inspirables %}
+                                {% with photo=annonce.photos.first %}
+                                {% if photo %}
+                                <div class="inspi-card relative group rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer transition-all duration-300 {% if annonce.is_inspiration %}ring-3 ring-purple-500 ring-offset-2{% else %}hover:ring-2 hover:ring-gray-300 hover:ring-offset-1{% endif %}"
+                                     data-annonce-id="{{ annonce.id }}"
+                                     data-is-inspi="{{ annonce.is_inspiration|yesno:'true,false' }}"
+                                     data-categorie="{{ annonce.inspiration_categorie }}">
+
+                                    <!-- Photo -->
+                                    <img src="{{ photo.url }}" alt="{{ annonce.titre }}"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+
+                                    <!-- Overlay gradient -->
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                    <!-- Selected badge -->
+                                    {% if annonce.is_inspiration %}
+                                    <div class="inspi-badge absolute top-2 right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    {% else %}
+                                    <div class="inspi-badge absolute top-2 right-2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Category tag -->
+                                    {% if annonce.inspiration_categorie %}
+                                    <div class="inspi-cat-label absolute top-2 left-2">
+                                        <span class="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+                                            {{ annonce.get_inspiration_categorie_display }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Bottom info (on hover) -->
+                                    <div class="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <p class="text-white text-xs font-bold truncate">{{ annonce.titre|truncatechars:35 }}</p>
+                                        <p class="text-white/70 text-[11px]">{{ annonce.ville }} - {{ annonce.prix_format }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                                {% empty %}
+                                <div class="col-span-full text-center py-12">
+                                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <p class="font-bold text-lbc-text">Aucun bien avec photo</p>
+                                    <p class="text-sm text-lbc-gray mt-1">Importez vos biens pour commencer a creer vos inspirations.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Picker Modal -->
+                    <div id="cat-modal" class="fixed inset-0 z-[100] hidden">
+                        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeCatModal()"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-2xl w-[420px] max-w-[90vw] overflow-hidden">
+                            <div class="px-6 py-5 border-b border-gray-100">
+                                <h3 class="text-lg font-bold text-lbc-text">Choisir une ambiance</h3>
+                                <p class="text-sm text-lbc-gray mt-1">Quelle ambiance pour cette photo ?</p>
+                            </div>
+                            <div class="p-5 space-y-2 max-h-[400px] overflow-y-auto">
+                                {% for code, label in inspiration_choices %}
+                                <button type="button"
+                                        class="cat-choice w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+                                        data-cat="{{ code }}">
+                                    <span class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                                        {% if code == 'chaleureux' %}bg-orange-100 text-orange-600
+                                        {% elif code == 'architecte' %}bg-slate-100 text-slate-600
+                                        {% elif code == 'moderne' %}bg-blue-100 text-blue-600
+                                        {% elif code == 'nature' %}bg-green-100 text-green-600
+                                        {% elif code == 'luxe' %}bg-amber-100 text-amber-600
+                                        {% elif code == 'cosy' %}bg-rose-100 text-rose-600
+                                        {% elif code == 'scandinave' %}bg-sky-100 text-sky-600
+                                        {% elif code == 'industriel' %}bg-stone-100 text-stone-600
+                                        {% elif code == 'famille' %}bg-indigo-100 text-indigo-600
+                                        {% elif code == 'jardin' %}bg-emerald-100 text-emerald-600
+                                        {% endif %}">
+                                        {% if code == 'chaleureux' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/></svg>
+                                        {% elif code == 'architecte' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        {% elif code == 'moderne' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        {% elif code == 'nature' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                        {% elif code == 'luxe' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                        {% elif code == 'cosy' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                        {% elif code == 'scandinave' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                        {% elif code == 'industriel' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        {% elif code == 'famille' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        {% elif code == 'jardin' %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                        {% endif %}
+                                    </span>
+                                    <div>
+                                        <p class="text-sm font-bold text-lbc-text">{{ label }}</p>
+                                    </div>
+                                </button>
+                                {% endfor %}
+
+                                <!-- Remove button -->
+                                <div class="pt-2 border-t border-gray-100 mt-2">
+                                    <button type="button"
+                                            class="cat-choice w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-red-50 transition-colors"
+                                            data-cat="">
+                                        <span class="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </span>
+                                        <p class="text-sm font-bold text-red-600">Retirer des inspirations</p>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- ===== RIGHT COLUMN (40%) ===== -->
@@ -588,37 +766,168 @@
     </div>
 
 <script>
+let currentInspiAnnonceId = null;
+
+function openCatModal(annonceId) {
+    currentInspiAnnonceId = annonceId;
+    document.getElementById('cat-modal').classList.remove('hidden');
+}
+
+function closeCatModal() {
+    document.getElementById('cat-modal').classList.add('hidden');
+    currentInspiAnnonceId = null;
+}
+
+function applyInspiCategorie(categorie) {
+    if (!currentInspiAnnonceId) return;
+
+    const annonceId = currentInspiAnnonceId;
+    closeCatModal();
+
+    fetch('/api/toggle-inspiration/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ annonce_id: annonceId, categorie: categorie })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Update the inspi card
+        const card = document.querySelector(`.inspi-card[data-annonce-id="${annonceId}"]`);
+        if (card) {
+            card.dataset.isInspi = data.is_inspiration ? 'true' : 'false';
+            card.dataset.categorie = data.categorie || '';
+
+            if (data.is_inspiration) {
+                card.classList.add('ring-3', 'ring-purple-500', 'ring-offset-2');
+                card.classList.remove('hover:ring-2', 'hover:ring-gray-300', 'hover:ring-offset-1');
+                // Update badge
+                const badge = card.querySelector('.inspi-badge');
+                if (badge) {
+                    badge.className = 'inspi-badge absolute top-2 right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-lg';
+                    badge.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+                }
+                // Update/add category label
+                let catLabel = card.querySelector('.inspi-cat-label');
+                if (data.categorie) {
+                    if (!catLabel) {
+                        catLabel = document.createElement('div');
+                        catLabel.className = 'inspi-cat-label absolute top-2 left-2';
+                        card.appendChild(catLabel);
+                    }
+                    const choices = {
+                        'chaleureux': 'Foyer chaleureux', 'architecte': 'Deco architecte',
+                        'moderne': 'Design moderne', 'nature': 'Esprit nature',
+                        'luxe': 'Standing & luxe', 'cosy': 'Ambiance cosy',
+                        'scandinave': 'Style scandinave', 'industriel': 'Loft industriel',
+                        'famille': 'Maison de famille', 'jardin': 'Terrasse & jardin'
+                    };
+                    catLabel.innerHTML = `<span class="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">${choices[data.categorie] || data.categorie}</span>`;
+                } else if (catLabel) {
+                    catLabel.remove();
+                }
+            } else {
+                card.classList.remove('ring-3', 'ring-purple-500', 'ring-offset-2');
+                card.classList.add('hover:ring-2', 'hover:ring-gray-300', 'hover:ring-offset-1');
+                const badge = card.querySelector('.inspi-badge');
+                if (badge) {
+                    badge.className = 'inspi-badge absolute top-2 right-2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg';
+                    badge.innerHTML = '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
+                }
+                const catLabel = card.querySelector('.inspi-cat-label');
+                if (catLabel) catLabel.remove();
+            }
+        }
+
+        // Also update the table inspi button if it exists
+        const tableBtn = document.querySelector(`.inspi-btn[data-annonce-id="${annonceId}"]`);
+        if (tableBtn) {
+            const icon = tableBtn.querySelector('svg');
+            if (data.is_inspiration) {
+                tableBtn.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-purple-100 text-purple-600';
+                icon.setAttribute('fill', 'currentColor');
+            } else {
+                tableBtn.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50';
+                icon.setAttribute('fill', 'none');
+            }
+        }
+    })
+    .catch(err => console.error('Erreur:', err));
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Table inspi buttons (simple toggle without category)
     document.querySelectorAll('.inspi-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const annonceId = this.dataset.annonceId;
-            const button = this;
-            const icon = button.querySelector('svg');
-
-            fetch('/api/toggle-inspiration/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ annonce_id: annonceId })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.is_inspiration) {
-                    button.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-purple-100 text-purple-600';
-                    icon.setAttribute('fill', 'currentColor');
-                    button.title = 'Retirer des inspirations';
-                } else {
-                    button.className = 'inspi-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 bg-lbc-bg text-gray-300 hover:text-purple-400 hover:bg-purple-50';
-                    icon.setAttribute('fill', 'none');
-                    button.title = 'Ajouter aux inspirations';
-                }
-                button.classList.add('scale-110');
-                setTimeout(() => button.classList.remove('scale-110'), 200);
-            })
-            .catch(err => console.error('Erreur:', err));
+            openCatModal(annonceId);
         });
+    });
+
+    // Inspi cards click -> open category modal
+    document.querySelectorAll('.inspi-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            const annonceId = this.dataset.annonceId;
+            const isInspi = this.dataset.isInspi === 'true';
+            if (isInspi) {
+                // Already selected: open modal to change category or remove
+                openCatModal(annonceId);
+            } else {
+                // Not selected: open modal to pick category
+                openCatModal(annonceId);
+            }
+        });
+    });
+
+    // Category choice buttons in modal
+    document.querySelectorAll('.cat-choice').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const cat = this.dataset.cat;
+            if (cat === '') {
+                // Remove from inspirations
+                if (currentInspiAnnonceId) {
+                    const aid = currentInspiAnnonceId;
+                    closeCatModal();
+                    fetch('/api/toggle-inspiration/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ annonce_id: aid })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        // Force is_inspiration to false
+                        if (data.is_inspiration) {
+                            // Toggle again to disable
+                            return fetch('/api/toggle-inspiration/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: JSON.stringify({ annonce_id: aid })
+                            }).then(r => r.json());
+                        }
+                        return data;
+                    })
+                    .then(data => {
+                        // Reload to refresh state
+                        location.reload();
+                    });
+                }
+            } else {
+                applyInspiCategorie(cat);
+            }
+        });
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeCatModal();
     });
 });
 </script>

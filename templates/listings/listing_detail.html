@@ -7,7 +7,7 @@
 
     <!-- Breadcrumb -->
     <nav class="mb-6">
-        <a href="{% url 'listings:list' %}" class="text-apple-blue text-sm font-medium hover:underline">
+        <a href="{% url 'listings:search_results' %}" class="text-apple-blue text-sm font-medium hover:underline">
             &larr; Retour aux annonces
         </a>
     </nav>
@@ -366,4 +366,28 @@
     </div>
 
 </div>
+
+<!-- Save to recently viewed -->
+<script>
+(function(){
+    try {
+        const item = {
+            id: {{ annonce.id }},
+            titre: "{{ annonce.titre|escapejs }}",
+            ville: "{{ annonce.ville|escapejs }}",
+            prix: {{ annonce.prix|default:"null" }},
+            surface: {{ annonce.surface|default:"null" }},
+            photo: {% if annonce.photos.first %}"{{ annonce.photos.first.url }}"{% else %}null{% endif %},
+            url: "{% url 'listings:detail' annonce.reference %}",
+            type_transaction: "{{ annonce.type_transaction }}",
+            ts: Date.now()
+        };
+        let recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        recent = recent.filter(r => r.id !== item.id);
+        recent.unshift(item);
+        if (recent.length > 10) recent = recent.slice(0, 10);
+        localStorage.setItem('recentlyViewed', JSON.stringify(recent));
+    } catch(e) {}
+})();
+</script>
 {% endblock %}

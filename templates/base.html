@@ -50,13 +50,13 @@
         <nav class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
-                <a href="{% url 'listings:list' %}" class="text-xl font-semibold tracking-tight">
+                <a href="{% url 'listings:homepage' %}" class="text-xl font-semibold tracking-tight">
                     Social<span class="text-apple-blue">Immo</span>
                 </a>
 
                 <!-- Navigation -->
                 <div class="flex items-center gap-6">
-                    <a href="{% url 'listings:list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'list' or request.resolver_match.url_name == 'detail' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                    <a href="{% url 'listings:search_results' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'search_results' or request.resolver_match.url_name == 'detail' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
                         Biens
                     </a>
                     <a href="{% url 'listings:decoration_list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'decoration_list' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">

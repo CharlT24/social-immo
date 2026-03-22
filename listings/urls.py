@@ -4,7 +4,9 @@ from . import views
 app_name = 'listings'
 
 urlpatterns = [
-    path('', views.listing_list, name='list'),
+    path('', views.homepage, name='homepage'),
+    path('recherche/', views.search_results, name='search_results'),
+    path('api/search/autocomplete/', views.autocomplete, name='autocomplete'),
     path('annonce/<str:reference>/', views.listing_detail, name='detail'),
     path('signup/', views.signup, name='signup'),
     path('inspirations/', views.decoration_list, name='decoration_list'),

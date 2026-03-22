@@ -55,7 +55,7 @@
     {% endif %}
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <a href="{% url 'listings:gestion_utilisateurs' %}"
            class="bg-white rounded-2xl p-5 shadow-apple {% if not current_role %}ring-2 ring-apple-blue{% endif %} hover:shadow-apple-hover transition-all">
             <p class="text-sm text-apple-gray font-medium">Tous</p>
@@ -70,6 +70,11 @@
            class="bg-white rounded-2xl p-5 shadow-apple {% if current_role == 'agence' %}ring-2 ring-green-500{% endif %} hover:shadow-apple-hover transition-all">
             <p class="text-sm text-green-600 font-medium">Agences</p>
             <p class="text-3xl font-semibold mt-1">{{ total_agences }}</p>
+        </a>
+        <a href="?role=agent"
+           class="bg-white rounded-2xl p-5 shadow-apple {% if current_role == 'agent' %}ring-2 ring-emerald-500{% endif %} hover:shadow-apple-hover transition-all">
+            <p class="text-sm text-emerald-600 font-medium">Agents Immo</p>
+            <p class="text-3xl font-semibold mt-1">{{ total_agents }}</p>
         </a>
         <a href="?role=pro"
            class="bg-white rounded-2xl p-5 shadow-apple {% if current_role == 'pro' %}ring-2 ring-purple-500{% endif %} hover:shadow-apple-hover transition-all">
@@ -100,6 +105,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
                                     {% if item.role == 'admin' %}bg-apple-blue
+                                    {% elif item.role == 'agent' %}bg-emerald-600
                                     {% elif item.role == 'pro' %}bg-purple-500
                                     {% elif item.role == 'agence' %}bg-green-500
                                     {% else %}bg-gray-400{% endif %}">
@@ -114,17 +120,27 @@
                         <td class="px-6 py-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full
                                 {% if item.role == 'admin' %}bg-blue-100 text-blue-700
+                                {% elif item.role == 'agent' %}bg-emerald-100 text-emerald-700
                                 {% elif item.role == 'pro' %}bg-purple-100 text-purple-700
                                 {% elif item.role == 'agence' %}bg-green-100 text-green-700
                                 {% else %}bg-gray-100 text-gray-700{% endif %}">
                                 {% if item.role == 'admin' %}Admin
+                                {% elif item.role == 'agent' %}Agent Immo
                                 {% elif item.role == 'pro' %}Pro
                                 {% elif item.role == 'agence' %}Agence
                                 {% else %}Client{% endif %}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-apple-text">
-                            {% if item.role == 'pro' and item.pro_profile %}
+                            {% if item.role == 'agent' and item.conseiller %}
+                                <div>
+                                    <span class="text-emerald-600 font-medium">{{ item.conseiller.agence.nom }}</span>
+                                    <div class="text-xs text-apple-gray mt-0.5">
+                                        {{ item.conseiller.email }}
+                                        {% if item.conseiller.telephone %} &middot; {{ item.conseiller.telephone }}{% endif %}
+                                    </div>
+                                </div>
+                            {% elif item.role == 'pro' and item.pro_profile %}
                                 <a href="{% url 'listings:pro_profil' item.pro_profile.id %}" class="text-purple-600 hover:underline">
                                     {{ item.pro_profile.nom_entreprise }}
                                 </a>

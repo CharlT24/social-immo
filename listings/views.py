@@ -1479,24 +1479,32 @@ def gestion_utilisateurs(request):
 
     users = User.objects.all().prefetch_related('agence').order_by('-date_joined')
 
-    # Pre-fetch pro profiles
+    # Pre-fetch pro profiles et conseiller profiles
     try:
         pro_profiles = {p.user_id: p for p in ProProfile.objects.all()}
     except Exception:
         pro_profiles = {}
 
+    try:
+        conseiller_profiles = {c.user_id: c for c in Conseiller.objects.select_related('agence').all()}
+    except Exception:
+        conseiller_profiles = {}
+
     # Build user list with roles
     users_data = []
     for u in users:
-        # Determine role
         role = 'client'
         role_label = 'Client'
         pro = pro_profiles.get(u.id)
+        conseiller = conseiller_profiles.get(u.id)
         agence = u.agence.first() if u.agence.exists() else None
 
         if u.is_staff:
             role = 'admin'
             role_label = 'Admin'
+        elif conseiller:
+            role = 'agent'
+            role_label = 'Agent - ' + conseiller.agence.nom
         elif pro:
             role = 'pro'
             role_label = 'Pro - ' + pro.get_metier_display()
@@ -1513,6 +1521,7 @@ def gestion_utilisateurs(request):
             'role_label': role_label,
             'pro_profile': pro,
             'agence': agence,
+            'conseiller': conseiller,
         })
 
     # Stats
@@ -1523,12 +1532,16 @@ def gestion_utilisateurs(request):
     except Exception:
         pro_ids = set()
         total_pros = 0
+    conseiller_ids = set(Conseiller.objects.values_list('user_id', flat=True))
+    total_agents = len(conseiller_ids)
     agence_ids = set(Agence.objects.values_list('responsable_id', flat=True))
     total_agences = Agence.objects.count()
     total_clients = User.objects.filter(is_staff=False).exclude(
         id__in=pro_ids
     ).exclude(
         id__in=agence_ids
+    ).exclude(
+        id__in=conseiller_ids
     ).count()
 
     context = {
@@ -1538,6 +1551,7 @@ def gestion_utilisateurs(request):
         'total_clients': total_clients,
         'total_pros': total_pros,
         'total_agences': total_agences,
+        'total_agents': total_agents,
     }
     return render(request, 'listings/gestion_utilisateurs.html', context)
 

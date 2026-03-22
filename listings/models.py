@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.contrib.auth.models import User
 
 
@@ -284,3 +285,173 @@ class Partenaire(models.Model):
 
     def __str__(self):
         return f"{self.nom} - {self.metier}"
+
+
+class ProProfile(models.Model):
+    """Profil professionnel auto-enregistre (decorateur, artisan, etc.)"""
+
+    METIER_CHOICES = [
+        ('decorateur', 'Decorateur d\'interieur'),
+        ('architecte', 'Architecte d\'interieur'),
+        ('peintre', 'Peintre'),
+        ('plombier', 'Plombier'),
+        ('electricien', 'Electricien'),
+        ('jardinier', 'Paysagiste'),
+        ('cuisiniste', 'Cuisiniste'),
+        ('menuisier', 'Menuisier'),
+        ('carreleur', 'Carreleur'),
+        ('macon', 'Macon'),
+        ('couvreur', 'Couvreur'),
+        ('serrurier', 'Serrurier'),
+        ('domotique', 'Domotique'),
+        ('renovation', 'Renovation generale'),
+        ('autre', 'Autre'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pro_profile')
+    nom_entreprise = models.CharField(max_length=200)
+    metier = models.CharField(max_length=50, choices=METIER_CHOICES)
+    description = models.TextField(blank=True)
+    photo_url = models.URLField(max_length=500, blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    ville = models.CharField(max_length=100, blank=True)
+    site_web = models.URLField(max_length=500, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Profil Pro'
+        verbose_name_plural = 'Profils Pro'
+
+    def __str__(self):
+        return f"{self.nom_entreprise} ({self.get_metier_display()})"
+
+    @property
+    def note_moyenne(self):
+        avg = self.avis.aggregate(avg=Avg('note'))['avg']
+        return round(avg, 1) if avg else 0
+
+    @property
+    def nb_avis(self):
+        return self.avis.count()
+
+
+class ProRealisation(models.Model):
+    """Realisation/projet d'un professionnel"""
+
+    pro = models.ForeignKey(ProProfile, on_delete=models.CASCADE, related_name='realisations')
+    titre = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    categorie = models.CharField(
+        max_length=20, blank=True, default='',
+        choices=Annonce.INSPIRATION_CHOICES
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Realisation'
+
+    def __str__(self):
+        return f"{self.titre} - {self.pro.nom_entreprise}"
+
+
+class ProRealisationPhoto(models.Model):
+    """Photos d'une realisation pro"""
+
+    realisation = models.ForeignKey(ProRealisation, on_delete=models.CASCADE, related_name='photos')
+    url = models.URLField(max_length=500)
+    ordre = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['ordre']
+
+    def __str__(self):
+        return f"Photo {self.ordre} - {self.realisation.titre}"
+
+
+class ProAvis(models.Model):
+    """Avis et notation sur un professionnel"""
+
+    pro = models.ForeignKey(ProProfile, on_delete=models.CASCADE, related_name='avis')
+    auteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='avis_donnes')
+    note = models.PositiveIntegerField()  # 1 a 5
+    commentaire = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['pro', 'auteur']
+        verbose_name = 'Avis Pro'
+        verbose_name_plural = 'Avis Pro'
+
+    def __str__(self):
+        return f"{self.auteur.username} -> {self.pro.nom_entreprise}: {self.note}/5"
+
+
+class PhotoFavori(models.Model):
+    """Favori sur une photo d'inspiration (Pinterest-like)"""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photo_favoris')
+    photo = models.ForeignKey(
+        Photo, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='photo_favoris'
+    )
+    photo_pro = models.ForeignKey(
+        ProRealisationPhoto, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='photo_favoris'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Favori Photo'
+        verbose_name_plural = 'Favoris Photos'
+
+
+class PhotoNote(models.Model):
+    """Notation 1-5 etoiles sur une photo d'inspiration"""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photo_notes')
+    photo = models.ForeignKey(
+        Photo, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='notes'
+    )
+    photo_pro = models.ForeignKey(
+        ProRealisationPhoto, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='notes'
+    )
+    note = models.PositiveIntegerField()  # 1 a 5
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Note Photo'
+        verbose_name_plural = 'Notes Photos'
+
+
+class DemandeContact(models.Model):
+    """Demande de contact envoyee a un agent immo ou un pro"""
+
+    expediteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demandes_envoyees')
+    annonce = models.ForeignKey(
+        Annonce, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='demandes_contact'
+    )
+    pro = models.ForeignKey(
+        ProProfile, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='demandes_contact'
+    )
+    message = models.TextField()
+    telephone = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Demande de contact'
+        verbose_name_plural = 'Demandes de contact'
+
+    def __str__(self):
+        target = self.annonce.reference if self.annonce else self.pro.nom_entreprise
+        return f"{self.expediteur.username} -> {target}"

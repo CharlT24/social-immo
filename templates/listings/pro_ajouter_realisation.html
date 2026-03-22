@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter une realisation - Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-8 text-sm text-apple-gray">
+        <a href="{% url 'listings:pro_dashboard' %}" class="hover:text-purple-600 transition-colors">Mon espace Pro</a>
+        <span class="mx-2">/</span>
+        <span class="text-apple-text font-medium">Ajouter une realisation</span>
+    </nav>
+
+    <!-- Card -->
+    <div class="bg-white rounded-3xl shadow-apple p-8 sm:p-10">
+
+        <h1 class="text-2xl font-bold text-apple-text mb-8">Ajouter une realisation</h1>
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Titre -->
+            <div>
+                <label for="{{ form.titre.id_for_label }}" class="block text-sm font-semibold text-apple-text mb-2">
+                    Titre du projet
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text"
+                           name="{{ form.titre.html_name }}"
+                           id="{{ form.titre.id_for_label }}"
+                           value="{{ form.titre.value|default:'' }}"
+                           placeholder="Ex: Renovation salon contemporain"
+                           class="w-full pl-12 pr-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-apple-gray focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+                {% if form.titre.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.titre.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-apple-text mb-2">
+                    Description
+                </label>
+                <textarea name="{{ form.description.html_name }}"
+                          id="{{ form.description.id_for_label }}"
+                          rows="5"
+                          placeholder="Decrivez ce projet..."
+                          class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-apple-gray focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-y">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Categorie -->
+            <div>
+                <label for="{{ form.categorie.id_for_label }}" class="block text-sm font-semibold text-apple-text mb-2">
+                    Categorie
+                </label>
+                <select name="{{ form.categorie.html_name }}"
+                        id="{{ form.categorie.id_for_label }}"
+                        class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none"
+                        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%2286868B%22%3E%3Cpath fill-rule=%22evenodd%22 d=%22M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z%22 clip-rule=%22evenodd%22/%3E%3C/svg%3E'); background-position: right 1rem center; background-repeat: no-repeat; background-size: 1.25rem;">
+                    {% for value, label in form.categorie.field.choices %}
+                    <option value="{{ value }}" {% if form.categorie.value|default:'' == value|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.categorie.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.categorie.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Photo URLs -->
+            <div>
+                <label for="{{ form.photo_urls.id_for_label }}" class="block text-sm font-semibold text-apple-text mb-2">
+                    Photos (URLs)
+                </label>
+                <textarea name="{{ form.photo_urls.html_name }}"
+                          id="{{ form.photo_urls.id_for_label }}"
+                          rows="4"
+                          placeholder="https://exemple.com/photo1.jpg
+https://exemple.com/photo2.jpg
+https://exemple.com/photo3.jpg"
+                          class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-apple-gray focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-y font-mono text-sm">{{ form.photo_urls.value|default:'' }}</textarea>
+                <p class="mt-2 text-xs text-apple-gray">Ajoutez une URL par ligne. Les formats acceptes sont JPG, PNG et WebP.</p>
+                {% if form.photo_urls.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.photo_urls.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Buttons -->
+            <div class="pt-4 space-y-3">
+                <button type="submit"
+                        class="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                    Publier ma realisation
+                </button>
+                <div class="text-center">
+                    <a href="{% url 'listings:pro_dashboard' %}" class="text-sm text-apple-gray hover:text-purple-600 transition-colors">
+                        Annuler
+                    </a>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

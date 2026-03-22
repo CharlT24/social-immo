@@ -18,7 +18,6 @@
     <!-- 3 Tabs: Biens / Inspirations / Pros -->
     <div class="max-w-md mx-auto mb-8">
         <div class="flex items-center justify-center gap-3">
-            <!-- Biens -->
             <a href="{% url 'listings:search_results' %}"
                class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-white text-apple-gray rounded-2xl shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,7 +25,6 @@
                 </svg>
                 <span class="text-sm font-semibold">Biens</span>
             </a>
-            <!-- Inspirations (active) -->
             <a href="{% url 'listings:decoration_list' %}"
                class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-apple-blue text-white rounded-2xl shadow-apple transition-all">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +32,6 @@
                 </svg>
                 <span class="text-sm font-semibold">Inspirations</span>
             </a>
-            <!-- Pros -->
             <a href="{% url 'listings:partenaire_list' %}"
                class="flex-1 flex flex-col items-center gap-2 py-4 px-3 bg-white text-apple-gray rounded-2xl shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,37 +42,32 @@
         </div>
     </div>
 
+    <!-- Source Filter Tabs (Agences / Pros / Tous) -->
+    <div class="flex items-center justify-center gap-2 mb-6">
+        <a href="{% url 'listings:decoration_list' %}{% if current_categorie %}?categorie={{ current_categorie }}{% endif %}"
+           class="text-sm font-medium px-4 py-2 rounded-full transition-all {% if not current_source %}bg-apple-text text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
+            Tous
+        </a>
+        <a href="?source=agence{% if current_categorie %}&categorie={{ current_categorie }}{% endif %}"
+           class="text-sm font-medium px-4 py-2 rounded-full transition-all {% if current_source == 'agence' %}bg-apple-text text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
+            Agences
+        </a>
+        <a href="?source=pro{% if current_categorie %}&categorie={{ current_categorie }}{% endif %}"
+           class="text-sm font-medium px-4 py-2 rounded-full transition-all {% if current_source == 'pro' %}bg-purple-600 text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
+            Pros ({{ total_pros }})
+        </a>
+    </div>
+
     <!-- Category Filters -->
     {% if categories %}
     <div class="flex flex-wrap items-center justify-center gap-2 mb-10">
-        <a href="{% url 'listings:decoration_list' %}"
+        <a href="{% url 'listings:decoration_list' %}{% if current_source %}?source={{ current_source }}{% endif %}"
            class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-all {% if not current_categorie %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
             Toutes
         </a>
         {% for code, label in categories %}
-        <a href="?categorie={{ code }}"
-           class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-all {% if current_categorie == code %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
-            {% if code == 'chaleureux' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
-            {% elif code == 'architecte' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            {% elif code == 'moderne' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            {% elif code == 'nature' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-            {% elif code == 'luxe' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-            {% elif code == 'cosy' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            {% elif code == 'scandinave' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            {% elif code == 'industriel' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
-            {% elif code == 'famille' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            {% elif code == 'jardin' %}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-            {% endif %}
+        <a href="?categorie={{ code }}{% if current_source %}&source={{ current_source }}{% endif %}"
+           class="inline-flex items-center text-sm font-medium px-4 py-2 rounded-full transition-all {% if current_categorie == code %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
             {{ label }}
         </a>
         {% endfor %}
@@ -83,16 +75,19 @@
     {% endif %}
 
     <!-- Moodboard Grid -->
-    {% if inspirations %}
+    {% if inspirations or realisations_pro %}
     <div class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+
+        <!-- Agence Inspirations -->
         {% for annonce in inspirations %}
         {% if annonce.photo_principale %}
-        <a href="{% url 'listings:detail' annonce.reference %}"
-           class="block break-inside-avoid group relative overflow-hidden rounded-2xl">
-            <img src="{{ annonce.photo_principale.url }}"
-                 alt=""
-                 class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                 loading="lazy">
+        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl">
+            <a href="{% url 'listings:detail' annonce.reference %}">
+                <img src="{{ annonce.photo_principale.url }}"
+                     alt=""
+                     class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                     loading="lazy">
+            </a>
             <!-- Category badge -->
             {% if annonce.inspiration_categorie %}
             <div class="absolute top-3 left-3">
@@ -101,15 +96,99 @@
                 </span>
             </div>
             {% endif %}
-            <!-- Overlay au hover seulement -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div class="absolute bottom-4 left-4 right-4">
-                    <p class="text-white text-sm font-semibold">Decouvrir ce bien</p>
-                </div>
+
+            <!-- Social buttons (top right) -->
+            <div class="absolute top-3 right-3 flex flex-col gap-2">
+                <!-- Heart / Favori -->
+                <button onclick="togglePhotoFav({{ annonce.photo_principale.id }}, 'annonce', this)"
+                        class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm photo-fav-btn"
+                        data-photo-id="{{ annonce.photo_principale.id }}"
+                        data-type="annonce"
+                        title="Ajouter aux favoris">
+                    <svg class="w-5 h-5 {% if annonce.photo_principale.id in user_photo_favs %}text-red-500 fill-red-500{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
             </div>
-        </a>
+
+            <!-- Star rating (bottom) -->
+            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="flex items-center gap-0.5 star-rating" data-photo-id="{{ annonce.photo_principale.id }}" data-type="annonce">
+                    {% for i in "12345" %}
+                    <button onclick="ratePhoto({{ annonce.photo_principale.id }}, 'annonce', {{ i }}, this.parentElement)"
+                            class="w-7 h-7 flex items-center justify-center hover:scale-125 transition-transform star-btn"
+                            data-star="{{ i }}">
+                        <svg class="w-5 h-5 drop-shadow-md {% if i|add:0 <= user_photo_notes|default_if_none:"{}"|dictsort:"0"|first %}text-yellow-400 fill-yellow-400{% else %}text-white{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </button>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'listings:detail' annonce.reference %}" class="text-xs text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full font-medium hover:bg-black/50 transition-all">
+                    Voir le bien
+                </a>
+            </div>
+        </div>
         {% endif %}
         {% endfor %}
+
+        <!-- Pro Realisations -->
+        {% for realisation in realisations_pro %}
+        {% for photo in realisation.photos.all %}
+        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl">
+            <a href="{% url 'listings:pro_profil' realisation.pro.id %}">
+                <img src="{{ photo.url }}"
+                     alt="{{ realisation.titre }}"
+                     class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                     loading="lazy">
+            </a>
+
+            <!-- Pro badge + category -->
+            <div class="absolute top-3 left-3 flex items-center gap-2">
+                <span class="text-xs font-semibold text-white bg-purple-600/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                    {{ realisation.pro.nom_entreprise }}
+                </span>
+                {% if realisation.categorie %}
+                <span class="text-xs font-semibold text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
+                    {{ realisation.get_categorie_display }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Social buttons (top right) -->
+            <div class="absolute top-3 right-3 flex flex-col gap-2">
+                <button onclick="togglePhotoFav({{ photo.id }}, 'pro', this)"
+                        class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm photo-fav-btn"
+                        data-photo-id="{{ photo.id }}"
+                        data-type="pro"
+                        title="Ajouter aux favoris">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Star rating + link (bottom) -->
+            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="flex items-center gap-0.5 star-rating" data-photo-id="{{ photo.id }}" data-type="pro">
+                    {% for i in "12345" %}
+                    <button onclick="ratePhoto({{ photo.id }}, 'pro', {{ i }}, this.parentElement)"
+                            class="w-7 h-7 flex items-center justify-center hover:scale-125 transition-transform star-btn"
+                            data-star="{{ i }}">
+                        <svg class="w-5 h-5 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </button>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'listings:pro_profil' realisation.pro.id %}" class="text-xs text-white bg-purple-600/80 backdrop-blur-sm px-3 py-1 rounded-full font-medium hover:bg-purple-700/80 transition-all">
+                    Voir le pro
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+
     </div>
     {% else %}
     <!-- Empty state -->
@@ -124,14 +203,11 @@
             {% if current_categorie %}
             Aucune inspiration dans cette categorie.
             {% else %}
-            Les agences selectionnent leurs plus beaux biens pour vous inspirer.
+            Les agences et professionnels selectionnent leurs plus beaux projets pour vous inspirer.
             {% endif %}
         </p>
         {% if current_categorie %}
         <a href="{% url 'listings:decoration_list' %}" class="inline-flex items-center gap-2 text-apple-blue font-medium hover:underline mt-4">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
             Voir toutes les inspirations
         </a>
         {% endif %}
@@ -139,4 +215,79 @@
     {% endif %}
 
 </div>
+
+<!-- JavaScript for social interactions -->
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function togglePhotoFav(photoId, type, btn) {
+    {% if not user.is_authenticated %}
+    window.location.href = "{% url 'account_login' %}";
+    return;
+    {% endif %}
+
+    fetch("{% url 'listings:toggle_photo_favori' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({photo_id: photoId, type: type})
+    })
+    .then(r => r.json())
+    .then(data => {
+        const svg = btn.querySelector('svg');
+        if (data.liked) {
+            svg.classList.add('text-red-500', 'fill-red-500');
+            svg.classList.remove('text-gray-600');
+        } else {
+            svg.classList.remove('text-red-500', 'fill-red-500');
+            svg.classList.add('text-gray-600');
+        }
+    });
+}
+
+function ratePhoto(photoId, type, note, container) {
+    {% if not user.is_authenticated %}
+    window.location.href = "{% url 'account_login' %}";
+    return;
+    {% endif %}
+
+    fetch("{% url 'listings:rate_photo' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({photo_id: photoId, type: type, note: note})
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Update stars display
+        const stars = container.querySelectorAll('.star-btn svg');
+        stars.forEach((svg, i) => {
+            if (i < data.note) {
+                svg.classList.add('text-yellow-400', 'fill-yellow-400');
+                svg.classList.remove('text-white');
+            } else {
+                svg.classList.remove('text-yellow-400', 'fill-yellow-400');
+                svg.classList.add('text-white');
+            }
+        });
+    });
+}
+</script>
 {% endblock %}

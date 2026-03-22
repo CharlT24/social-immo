@@ -1,5 +1,5 @@
 from django import forms
-from .models import Commentaire, Agence
+from .models import Commentaire, Agence, ProProfile, Annonce
 
 
 class CommentaireForm(forms.ModelForm):
@@ -110,3 +110,101 @@ class AgenceCreateForm(forms.Form):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('Un compte avec cet email existe deja.')
         return email
+
+
+PRO_INPUT = 'w-full px-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all'
+PRO_SELECT = PRO_INPUT
+
+
+class ProInscriptionForm(forms.Form):
+    """Inscription pro : cree un compte + profil pro en une etape"""
+
+    # Compte
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'class': PRO_INPUT, 'placeholder': 'votre@email.com'}),
+        label='Email'
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': PRO_INPUT, 'placeholder': 'Minimum 8 caracteres'}),
+        label='Mot de passe', min_length=8
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': PRO_INPUT, 'placeholder': 'Confirmez le mot de passe'}),
+        label='Confirmer le mot de passe', min_length=8
+    )
+
+    # Profil pro
+    nom_entreprise = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': 'Ex: Studio Deco Paris'}),
+        label='Nom de votre entreprise'
+    )
+    metier = forms.ChoiceField(
+        choices=[('', 'Choisissez votre metier...')] + list(ProProfile.METIER_CHOICES),
+        widget=forms.Select(attrs={'class': PRO_SELECT}),
+        label='Votre metier'
+    )
+    telephone = forms.CharField(
+        max_length=20, required=False,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': '06 12 34 56 78'}),
+        label='Telephone'
+    )
+    ville = forms.CharField(
+        max_length=100, required=False,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': 'Votre ville'}),
+        label='Ville'
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': PRO_INPUT, 'rows': 3, 'placeholder': 'Decrivez votre activite en quelques mots...'}),
+        label='Description'
+    )
+    site_web = forms.URLField(
+        required=False,
+        widget=forms.URLInput(attrs={'class': PRO_INPUT, 'placeholder': 'https://www.monsite.fr'}),
+        label='Site web'
+    )
+
+    def clean_email(self):
+        from django.contrib.auth.models import User
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Un compte avec cet email existe deja.')
+        return email
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get('password1')
+        p2 = cleaned.get('password2')
+        if p1 and p2 and p1 != p2:
+            self.add_error('password2', 'Les mots de passe ne correspondent pas.')
+        return cleaned
+
+
+class ProRealisationForm(forms.Form):
+    """Formulaire d'ajout de realisation pro"""
+
+    titre = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': 'Ex: Renovation salon contemporain'}),
+        label='Titre du projet'
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': PRO_INPUT, 'rows': 3, 'placeholder': 'Decrivez ce projet...'}),
+        label='Description'
+    )
+    categorie = forms.ChoiceField(
+        choices=[('', 'Style / ambiance...')] + list(Annonce.INSPIRATION_CHOICES),
+        required=False,
+        widget=forms.Select(attrs={'class': PRO_SELECT}),
+        label='Categorie'
+    )
+    photo_urls = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': PRO_INPUT, 'rows': 4,
+            'placeholder': 'Collez une URL d\'image par ligne\nhttps://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'
+        }),
+        label='Photos (URLs)',
+        help_text='Une URL par ligne. Formats acceptes : JPG, PNG, WebP.'
+    )

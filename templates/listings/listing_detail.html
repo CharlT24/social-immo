@@ -197,11 +197,41 @@
                         Envoyer un email
                     </a>
                     {% endif %}
+
+                    <!-- Contact Form (tracked) -->
+                    {% if user.is_authenticated %}
+                    <div class="border-t border-gray-100 pt-4 mt-4">
+                        <p class="text-xs text-apple-gray mb-3 text-center">ou envoyez un message directement</p>
+                        <div id="contact-form-container">
+                            <textarea id="contact-message" rows="3"
+                                placeholder="Bonjour, je suis interesse par ce bien..."
+                                class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2"></textarea>
+                            <input type="tel" id="contact-tel" placeholder="Votre telephone (optionnel)"
+                                class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-3">
+                            <button onclick="envoyerContact({{ annonce.id }}, 'annonce')"
+                                class="w-full bg-green-600 text-white font-medium py-3 px-6 rounded-xl hover:bg-green-700 transition-colors text-sm">
+                                Envoyer ma demande
+                            </button>
+                        </div>
+                        <div id="contact-success" class="hidden text-center py-4">
+                            <svg class="w-10 h-10 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-apple-text">Message envoye !</p>
+                            <p class="text-xs text-apple-gray mt-1">L'agent vous recontactera bientot.</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'account_login' %}?next={{ request.path }}"
+                       class="flex items-center justify-center gap-2 w-full border-2 border-gray-200 text-apple-text font-medium py-3 px-6 rounded-2xl hover:bg-gray-50 transition-colors text-sm mt-2">
+                        Connectez-vous pour contacter l'agent
+                    </a>
+                    {% endif %}
                 </div>
 
                 <!-- Reference -->
                 <div class="text-center text-xs text-apple-gray mt-6">
-                    Réf. {{ annonce.reference }}
+                    Ref. {{ annonce.reference }}
                 </div>
             </div>
         </div>
@@ -389,5 +419,33 @@
         localStorage.setItem('recentlyViewed', JSON.stringify(recent));
     } catch(e) {}
 })();
+
+function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+
+function envoyerContact(targetId, targetType) {
+    const msg = document.getElementById('contact-message').value.trim();
+    const tel = document.getElementById('contact-tel').value.trim();
+    if (!msg) { alert('Veuillez ecrire un message.'); return; }
+
+    const body = { message: msg, telephone: tel };
+    if (targetType === 'annonce') body.annonce_id = targetId;
+    else body.pro_id = targetId;
+
+    fetch('{% url "listings:envoyer_contact" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('contact-form-container').classList.add('hidden');
+            document.getElementById('contact-success').classList.remove('hidden');
+        }
+    });
+}
 </script>
 {% endblock %}

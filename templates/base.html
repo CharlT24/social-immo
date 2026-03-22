@@ -97,18 +97,30 @@
                             Mon agence
                         </a>
                         {% endif %}
+                        {% if is_pro %}
+                        <a href="{% url 'listings:pro_dashboard' %}"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                            Mon espace Pro
+                        </a>
+                        {% endif %}
                         <span class="text-sm text-apple-gray">
                             Bonjour, <span class="font-medium text-apple-text">{{ user.username }}</span>
                         </span>
                         <a href="{% url 'account_logout' %}"
                            class="text-sm font-medium text-apple-gray hover:text-red-500 transition-colors">
-                            Déconnexion
+                            Deconnexion
                         </a>
                     </div>
                     {% else %}
                     <!-- Logged Out -->
                     <a href="{% url 'account_login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
                         Se connecter
+                    </a>
+                    <a href="{% url 'listings:pro_inscription' %}" class="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                        Espace Pro
                     </a>
                     <a href="{% url 'listings:signup' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors">
                         S'inscrire

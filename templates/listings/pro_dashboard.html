@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pro - {{ pro.nom_entreprise }} | Social Immo</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-[#F3F0FF] text-gray-900 font-inter min-h-screen">
+
+    <!-- Top Bar -->
+    <header class="bg-white sticky top-0 z-50 border-b border-gray-200/60 shadow-sm">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2">
+                    <span class="text-xl font-bold tracking-tight">Social<span class="text-purple-600">Immo</span></span>
+                </a>
+                <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pro</span>
+            </div>
+
+            <!-- Right actions -->
+            <div class="flex items-center gap-5">
+                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                    Voir le site
+                </a>
+                <a href="{% url 'listings:decoration_list' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
+                    Inspirations
+                </a>
+
+                <!-- Separator -->
+                <div class="w-px h-6 bg-gray-200"></div>
+
+                <!-- User -->
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span class="text-xs font-bold text-white">{{ user.username|slice:":2"|upper }}</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">{{ user.username }}</span>
+                </div>
+                <a href="{% url 'account_logout' %}" class="text-sm text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Bonjour, {{ pro.nom_entreprise }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Gerez votre activite et vos realisations</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Realisations -->
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Realisations</span>
+                    <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21"/></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ total_realisations }}</p>
+            </div>
+
+            <!-- Photos -->
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Photos</span>
+                    <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ total_photos }}</p>
+            </div>
+
+            <!-- Note moyenne -->
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Note moyenne</span>
+                    <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"/></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-gray-900">{{ note_moyenne }}</p>
+                    <span class="text-sm text-gray-400">/5</span>
+                </div>
+                <div class="flex gap-0.5 mt-1">
+                    {% with note_moyenne_int=note_moyenne|floatformat:"0" %}
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= note_moyenne %}
+                        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {% else %}
+                        <svg class="w-4 h-4 text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- Favoris recus -->
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Favoris recus</span>
+                    <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ total_favoris }}</p>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left Column: Realisations (2/3) -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-900">Mes realisations</h2>
+                        <a href="{% url 'listings:pro_ajouter_realisation' %}" class="inline-flex items-center gap-2 bg-purple-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            Ajouter
+                        </a>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-6">
+                        {% if realisations %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% for realisation in realisations %}
+                            <div class="group border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                                <!-- Thumbnail -->
+                                <div class="relative aspect-[4/3] bg-gray-100">
+                                    {% if realisation.photos.all %}
+                                    <img src="{{ realisation.photos.all.0.url }}" alt="{{ realisation.titre }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Photo count badge -->
+                                    {% if realisation.photos.all %}
+                                    <div class="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/></svg>
+                                        {{ realisation.photos.all|length }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Info -->
+                                <div class="p-4">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <h3 class="font-semibold text-gray-900 truncate">{{ realisation.titre }}</h3>
+                                            <span class="inline-block mt-1 text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">{{ realisation.get_categorie_display }}</span>
+                                        </div>
+                                        <!-- Delete button -->
+                                        <form method="post" action="{% url 'listings:pro_supprimer_realisation' realisation.id %}" onsubmit="return confirm('Supprimer cette realisation ?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <!-- Empty state -->
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                            <p class="text-gray-400 font-medium">Aucune realisation pour le moment</p>
+                            <p class="text-gray-300 text-sm mt-1">Ajoutez votre premiere realisation pour la mettre en avant</p>
+                            <a href="{% url 'listings:pro_ajouter_realisation' %}" class="inline-flex items-center gap-2 mt-4 bg-purple-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                Ajouter une realisation
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (1/3) -->
+            <div class="space-y-6">
+
+                <!-- Demandes de contact -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                        <h2 class="text-base font-bold text-gray-900">Demandes de contact</h2>
+                        {% if demandes_non_lues > 0 %}
+                        <span class="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ demandes_non_lues }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="divide-y divide-gray-50">
+                        {% if demandes %}
+                        {% for demande in demandes %}
+                        <div class="px-5 py-3 hover:bg-gray-50/50 transition-colors" id="demande-{{ demande.id }}">
+                            <div class="flex items-start gap-3">
+                                <!-- Unread dot -->
+                                <div class="pt-1.5 flex-shrink-0">
+                                    {% if not demande.is_read %}
+                                    <div class="w-2 h-2 bg-purple-500 rounded-full" id="dot-{{ demande.id }}"></div>
+                                    {% else %}
+                                    <div class="w-2 h-2 bg-transparent rounded-full"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-sm font-semibold text-gray-900 {% if not demande.is_read %}text-purple-700{% endif %}">{{ demande.expediteur.username }}</span>
+                                        <span class="text-xs text-gray-400 flex-shrink-0">{{ demande.created_at|timesince }}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-0.5 line-clamp-2">{{ demande.message|truncatewords:15 }}</p>
+                                    {% if not demande.is_read %}
+                                    <button onclick="markAsRead({{ demande.id }})" class="mt-1.5 text-xs font-medium text-purple-600 hover:text-purple-800 transition-colors">
+                                        Marquer comme lu
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="px-5 py-8 text-center">
+                            <svg class="w-10 h-10 text-gray-200 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                            <p class="text-sm text-gray-400">Aucune demande de contact</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Separator -->
+                <div class="border-t border-purple-100"></div>
+
+                <!-- Derniers avis -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="px-5 py-4 border-b border-gray-100">
+                        <h2 class="text-base font-bold text-gray-900">Derniers avis</h2>
+                    </div>
+
+                    <div class="divide-y divide-gray-50">
+                        {% if avis %}
+                        {% for avi in avis %}
+                        <div class="px-5 py-3">
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <span class="text-sm font-semibold text-gray-900">{{ avi.auteur.username }}</span>
+                                <span class="text-xs text-gray-400">{{ avi.created_at|timesince }}</span>
+                            </div>
+                            <!-- Stars -->
+                            <div class="flex gap-0.5 mb-1.5">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= avi.note %}
+                                    <svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    {% else %}
+                                    <svg class="w-3.5 h-3.5 text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p class="text-sm text-gray-500 line-clamp-3">{{ avi.commentaire }}</p>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="px-5 py-8 text-center">
+                            <svg class="w-10 h-10 text-gray-200 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"/></svg>
+                            <p class="text-sm text-gray-400">Aucun avis pour le moment</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    {% if pro.photo_url %}
+                    <img src="{{ pro.photo_url }}" alt="{{ pro.nom_entreprise }}" class="w-14 h-14 rounded-full object-cover border-2 border-purple-100">
+                    {% else %}
+                    <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-lg font-bold text-purple-600">{{ pro.nom_entreprise|slice:":1"|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">{{ pro.nom_entreprise }}</h3>
+                        <div class="flex items-center gap-3 mt-0.5">
+                            <span class="text-sm text-purple-600 font-medium">{{ pro.get_metier_display }}</span>
+                            {% if pro.ville %}
+                            <span class="text-gray-300">|</span>
+                            <span class="text-sm text-gray-500">{{ pro.ville }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'listings:pro_profil' pro.id %}" class="inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-200 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Voir mon profil public
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AJAX: Mark contact as read -->
+    <script>
+        function markAsRead(demandeId) {
+            fetch("{% url 'listings:mark_contact_read' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ demande_id: demandeId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || data.status === 'ok') {
+                    // Remove unread dot
+                    const dot = document.getElementById('dot-' + demandeId);
+                    if (dot) {
+                        dot.classList.remove('bg-purple-500');
+                        dot.classList.add('bg-transparent');
+                    }
+                    // Remove "mark as read" button
+                    const container = document.getElementById('demande-' + demandeId);
+                    const btn = container.querySelector('button[onclick]');
+                    if (btn) btn.remove();
+                    // Update badge count
+                    const badges = document.querySelectorAll('.bg-purple-600.text-white.text-xs.font-bold.px-2');
+                    badges.forEach(badge => {
+                        const count = parseInt(badge.textContent) - 1;
+                        if (count > 0) {
+                            badge.textContent = count;
+                        } else {
+                            badge.remove();
+                        }
+                    });
+                }
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+</body>
+</html>

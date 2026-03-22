@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription Pro - Social Immo{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-5xl flex bg-white rounded-3xl shadow-apple overflow-hidden">
+
+        <!-- Left Panel - Pro Branding -->
+        <div class="hidden lg:flex w-1/2 relative bg-gradient-to-br from-purple-600 via-violet-500 to-indigo-600 p-12 flex-col justify-between">
+            <!-- Decorative circles -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
+            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/4 -translate-x-1/4"></div>
+            <div class="absolute top-1/2 left-1/2 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+
+            <div class="relative z-10">
+                <h2 class="text-white text-3xl font-semibold tracking-tight leading-tight">
+                    Devenez Pro<br>
+                    <span class="text-white/90">sur Social Immo</span>
+                </h2>
+                <p class="text-white/70 mt-4 text-lg leading-relaxed">
+                    Montrez vos realisations et trouvez de nouveaux clients.
+                </p>
+            </div>
+
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <span class="text-white/90 text-sm font-medium">Vitrine gratuite pour votre activite</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                    </div>
+                    <span class="text-white/90 text-sm font-medium">Avis clients pour votre reputation</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-white/90 text-sm font-medium">Demandes de contact directes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Form -->
+        <div class="w-full lg:w-1/2 p-8 sm:p-12 lg:p-14 max-h-[90vh] overflow-y-auto">
+
+            <!-- Logo mobile -->
+            <div class="lg:hidden text-center mb-8">
+                <span class="text-2xl font-semibold tracking-tight">
+                    Social<span class="text-purple-600">Immo</span> <span class="text-sm text-purple-500 font-medium">Pro</span>
+                </span>
+            </div>
+
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-semibold tracking-tight mb-2">Creer votre espace Pro</h1>
+                <p class="text-apple-gray">Rejoignez le reseau des professionnels de l'immobilier</p>
+            </div>
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+            <div class="flex items-start gap-3 bg-red-50 text-red-600 text-sm rounded-2xl p-4 mb-6">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+                <div>
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+
+                <!-- Email -->
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-apple-text mb-2">
+                        Adresse email <span class="text-red-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                            </svg>
+                        </div>
+                        <input type="email"
+                               name="email"
+                               id="id_email"
+                               required
+                               value="{{ form.email.value|default:'' }}"
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="votre@email.com">
+                    </div>
+                    {% if form.email.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="id_password1" class="block text-sm font-medium text-apple-text mb-2">
+                        Mot de passe <span class="text-red-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <input type="password"
+                               name="password1"
+                               id="id_password1"
+                               required
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="Choisissez un mot de passe">
+                    </div>
+                    {% if form.password1.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="id_password2" class="block text-sm font-medium text-apple-text mb-2">
+                        Confirmer le mot de passe <span class="text-red-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <input type="password"
+                               name="password2"
+                               id="id_password2"
+                               required
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="Confirmez votre mot de passe">
+                    </div>
+                    {% if form.password2.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-4 my-2">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="text-xs text-apple-gray uppercase tracking-wider">Votre activite</span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
+
+                <!-- Nom entreprise -->
+                <div>
+                    <label for="id_nom_entreprise" class="block text-sm font-medium text-apple-text mb-2">
+                        Nom de l'entreprise <span class="text-red-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <input type="text"
+                               name="nom_entreprise"
+                               id="id_nom_entreprise"
+                               required
+                               value="{{ form.nom_entreprise.value|default:'' }}"
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="Nom de votre entreprise">
+                    </div>
+                    {% if form.nom_entreprise.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.nom_entreprise.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Metier -->
+                <div>
+                    <label for="id_metier" class="block text-sm font-medium text-apple-text mb-2">
+                        Metier <span class="text-red-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <select name="metier"
+                                id="id_metier"
+                                required
+                                class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all appearance-none">
+                            {% for value, label in form.metier.field.choices %}
+                            <option value="{{ value }}" {% if form.metier.value == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    {% if form.metier.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.metier.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Telephone -->
+                <div>
+                    <label for="id_telephone" class="block text-sm font-medium text-apple-text mb-2">
+                        Telephone
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                        </div>
+                        <input type="tel"
+                               name="telephone"
+                               id="id_telephone"
+                               value="{{ form.telephone.value|default:'' }}"
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="06 12 34 56 78">
+                    </div>
+                    {% if form.telephone.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.telephone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Ville -->
+                <div>
+                    <label for="id_ville" class="block text-sm font-medium text-apple-text mb-2">
+                        Ville
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <input type="text"
+                               name="ville"
+                               id="id_ville"
+                               value="{{ form.ville.value|default:'' }}"
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="Votre ville">
+                    </div>
+                    {% if form.ville.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.ville.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-apple-text mb-2">
+                        Description de votre activite
+                    </label>
+                    <div class="relative">
+                        <div class="absolute top-4 left-0 pl-4 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h7"/>
+                            </svg>
+                        </div>
+                        <textarea name="description"
+                                  id="id_description"
+                                  rows="3"
+                                  class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all resize-none"
+                                  placeholder="Decrivez votre activite en quelques mots...">{{ form.description.value|default:'' }}</textarea>
+                    </div>
+                    {% if form.description.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Site web -->
+                <div>
+                    <label for="id_site_web" class="block text-sm font-medium text-apple-text mb-2">
+                        Site web
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                            </svg>
+                        </div>
+                        <input type="url"
+                               name="site_web"
+                               id="id_site_web"
+                               value="{{ form.site_web.value|default:'' }}"
+                               class="w-full pl-12 pr-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                               placeholder="https://www.votresite.com">
+                    </div>
+                    {% if form.site_web.errors %}
+                    <p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.site_web.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="w-full bg-purple-600 text-white font-semibold py-4 px-6 rounded-xl hover:bg-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-purple-500/25">
+                    Creer mon espace Pro
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="text-center mt-8 pt-6 border-t border-gray-100">
+                <p class="text-apple-gray text-sm">
+                    Deja un compte ?
+                    <a href="{% url 'account_login' %}" class="text-purple-600 font-semibold hover:underline">
+                        Se connecter
+                    </a>
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

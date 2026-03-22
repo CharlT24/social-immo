@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire, Partenaire
+from .models import (
+    Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
+    Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
+    PhotoFavori, PhotoNote, DemandeContact
+)
 
 
 class PhotoInline(admin.TabularInline):
@@ -59,3 +63,36 @@ class PartenaireAdmin(admin.ModelAdmin):
     list_display = ['nom', 'metier', 'ville', 'is_active']
     list_filter = ['metier', 'is_active', 'ville']
     search_fields = ['nom', 'metier', 'ville']
+
+
+class ProRealisationPhotoInline(admin.TabularInline):
+    model = ProRealisationPhoto
+    extra = 1
+
+
+@admin.register(ProProfile)
+class ProProfileAdmin(admin.ModelAdmin):
+    list_display = ['nom_entreprise', 'metier', 'user', 'ville', 'is_active', 'created_at']
+    list_filter = ['metier', 'is_active', 'ville']
+    search_fields = ['nom_entreprise', 'user__username', 'ville']
+
+
+@admin.register(ProRealisation)
+class ProRealisationAdmin(admin.ModelAdmin):
+    list_display = ['titre', 'pro', 'categorie', 'is_active', 'created_at']
+    list_filter = ['categorie', 'is_active']
+    search_fields = ['titre', 'pro__nom_entreprise']
+    inlines = [ProRealisationPhotoInline]
+
+
+@admin.register(ProAvis)
+class ProAvisAdmin(admin.ModelAdmin):
+    list_display = ['pro', 'auteur', 'note', 'created_at']
+    list_filter = ['note', 'created_at']
+
+
+@admin.register(DemandeContact)
+class DemandeContactAdmin(admin.ModelAdmin):
+    list_display = ['expediteur', 'annonce', 'pro', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
+    search_fields = ['expediteur__username', 'message']

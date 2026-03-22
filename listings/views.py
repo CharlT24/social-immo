@@ -13,8 +13,12 @@ from django.views.decorators.http import require_POST
 from datetime import timedelta
 import json
 
-from .models import Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire, Partenaire
-from .forms import CommentaireForm, AgenceCreateForm
+from .models import (
+    Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
+    Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
+    PhotoFavori, PhotoNote, DemandeContact
+)
+from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
 
 def homepage(request):
@@ -312,47 +316,103 @@ def toggle_favorite(request):
 
 
 def decoration_list(request):
-    """Vue inspirations : biens selectionnes par les agences"""
+    """Vue inspirations : biens agences + realisations pro"""
+    # Photos d'inspiration agences
     inspirations = Annonce.objects.filter(
         is_active=True, is_inspiration=True
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
     ).select_related().order_by('-updated_at')
 
+    # Realisations pro
+    realisations_pro = ProRealisation.objects.filter(
+        is_active=True, pro__is_active=True
+    ).prefetch_related('photos').select_related('pro').order_by('-created_at')
+
     # Filtrer par categorie
     current_categorie = request.GET.get('categorie', '').strip()
     if current_categorie:
         inspirations = inspirations.filter(inspiration_categorie=current_categorie)
+        realisations_pro = realisations_pro.filter(categorie=current_categorie)
 
-    # Categories disponibles (avec au moins 1 bien)
-    categories_dispo = Annonce.objects.filter(
+    # Source filter (agence / pro / all)
+    source = request.GET.get('source', '').strip()
+
+    # Categories disponibles
+    cat_agent = set(Annonce.objects.filter(
         is_active=True, is_inspiration=True
-    ).exclude(inspiration_categorie='').values_list(
-        'inspiration_categorie', flat=True
-    ).distinct()
-    # Convertir en liste de tuples (code, label)
+    ).exclude(inspiration_categorie='').values_list('inspiration_categorie', flat=True))
+    cat_pro = set(ProRealisation.objects.filter(
+        is_active=True
+    ).exclude(categorie='').values_list('categorie', flat=True))
+    all_cats = cat_agent | cat_pro
     cat_choices = dict(Annonce.INSPIRATION_CHOICES)
-    categories = [(c, cat_choices.get(c, c)) for c in categories_dispo]
+    categories = [(c, cat_choices.get(c, c)) for c in sorted(all_cats)]
 
-    return render(request, 'listings/decoration_list.html', {
-        'inspirations': inspirations,
+    # Favoris et notes de l'utilisateur
+    user_photo_favs = set()
+    user_photo_notes = {}
+    if request.user.is_authenticated:
+        user_photo_favs = set(PhotoFavori.objects.filter(
+            user=request.user, photo__isnull=False
+        ).values_list('photo_id', flat=True))
+        user_photo_favs |= set(
+            ('pro', pid) for pid in PhotoFavori.objects.filter(
+                user=request.user, photo_pro__isnull=False
+            ).values_list('photo_pro_id', flat=True)
+        )
+        for pn in PhotoNote.objects.filter(user=request.user):
+            if pn.photo_id:
+                user_photo_notes[('annonce', pn.photo_id)] = pn.note
+            elif pn.photo_pro_id:
+                user_photo_notes[('pro', pn.photo_pro_id)] = pn.note
+
+    # Pros actifs pour le compteur
+    total_pros = ProProfile.objects.filter(is_active=True).count()
+
+    context = {
+        'inspirations': inspirations if source != 'pro' else [],
+        'realisations_pro': realisations_pro if source != 'agence' else [],
         'categories': categories,
         'current_categorie': current_categorie,
-    })
+        'current_source': source,
+        'user_photo_favs': user_photo_favs,
+        'user_photo_notes': user_photo_notes,
+        'total_pros': total_pros,
+    }
+    return render(request, 'listings/decoration_list.html', context)
 
 
 def partenaire_list(request):
-    """Vue liste des partenaires pro"""
+    """Vue liste des partenaires pro (admin-created + auto-registered)"""
     partenaires = Partenaire.objects.filter(is_active=True)
-    metiers = Partenaire.objects.filter(is_active=True).values_list('metier', flat=True).distinct().order_by('metier')
+    pros = ProProfile.objects.filter(is_active=True).prefetch_related('realisations', 'avis')
 
     current_metier = request.GET.get('metier', '').strip()
+
+    # Metiers from both sources
+    metiers_partenaire = set(Partenaire.objects.filter(is_active=True).values_list('metier', flat=True))
+    metiers_pro = set(ProProfile.objects.filter(is_active=True).values_list('metier', flat=True))
+    metier_labels = dict(ProProfile.METIER_CHOICES)
+    all_metiers = sorted(metiers_partenaire | {metier_labels.get(m, m) for m in metiers_pro})
+
     if current_metier:
         partenaires = partenaires.filter(metier=current_metier)
+        # Match pro by choice value or display label
+        pro_key = None
+        for k, v in ProProfile.METIER_CHOICES:
+            if v == current_metier or k == current_metier:
+                pro_key = k
+                break
+        if pro_key:
+            pros = pros.filter(metier=pro_key)
+        else:
+            pros = pros.none()
 
     context = {
         'partenaires': partenaires,
-        'metiers': metiers,
+        'pros': pros,
+        'metiers': all_metiers,
         'current_metier': current_metier,
     }
     return render(request, 'listings/partenaire_list.html', context)
@@ -427,6 +487,12 @@ def agence_dashboard(request):
     # Dernieres annonces ajoutees/modifiees
     dernieres_annonces = annonces_actives.order_by('-updated_at')[:5]
 
+    # Demandes de contact recues
+    demandes_contact = DemandeContact.objects.filter(
+        annonce__client_reference=agence.reference
+    ).select_related('expediteur', 'annonce').order_by('-created_at')
+    demandes_non_lues = demandes_contact.filter(is_read=False).count()
+
     context = {
         'agence': agence,
         'annonces': annonces,
@@ -444,6 +510,8 @@ def agence_dashboard(request):
         'total_inspirations': total_inspirations,
         'annonces_inspirables': annonces_inspirables,
         'inspiration_choices': Annonce.INSPIRATION_CHOICES,
+        'demandes_contact': demandes_contact,
+        'demandes_non_lues': demandes_non_lues,
     }
     return render(request, 'listings/agence_dashboard.html', context)
 
@@ -710,6 +778,334 @@ def toggle_inspiration(request):
         'is_inspiration': annonce.is_inspiration,
         'categorie': annonce.inspiration_categorie,
     })
+
+
+# ============================================================
+# ESPACE PRO (decorateurs, artisans, etc.)
+# ============================================================
+
+def pro_inscription(request):
+    """Inscription pro : cree un compte + profil en une etape"""
+    if request.user.is_authenticated:
+        try:
+            request.user.pro_profile
+            return redirect('listings:pro_dashboard')
+        except ProProfile.DoesNotExist:
+            pass
+
+    if request.method == 'POST':
+        form = ProInscriptionForm(request.POST)
+        if form.is_valid():
+            from django.contrib.auth.models import User
+
+            user = User.objects.create_user(
+                username=form.cleaned_data['email'].split('@')[0],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+            )
+
+            ProProfile.objects.create(
+                user=user,
+                nom_entreprise=form.cleaned_data['nom_entreprise'],
+                metier=form.cleaned_data['metier'],
+                description=form.cleaned_data.get('description', ''),
+                telephone=form.cleaned_data.get('telephone', ''),
+                ville=form.cleaned_data.get('ville', ''),
+                site_web=form.cleaned_data.get('site_web', ''),
+                email=form.cleaned_data['email'],
+            )
+
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('listings:pro_dashboard')
+    else:
+        form = ProInscriptionForm()
+
+    return render(request, 'listings/pro_inscription.html', {'form': form})
+
+
+@login_required
+def pro_dashboard(request):
+    """Dashboard pro : realisations, avis, demandes de contact"""
+    try:
+        pro = request.user.pro_profile
+    except ProProfile.DoesNotExist:
+        return redirect('listings:pro_inscription')
+
+    realisations = pro.realisations.filter(is_active=True).prefetch_related('photos')
+    avis = pro.avis.select_related('auteur').all()
+    demandes = pro.demandes_contact.select_related('expediteur').all()
+
+    demandes_non_lues = demandes.filter(is_read=False).count()
+
+    # Stats
+    from django.db.models import Avg, Count
+    total_realisations = realisations.count()
+    total_photos = ProRealisationPhoto.objects.filter(
+        realisation__pro=pro, realisation__is_active=True
+    ).count()
+    note_moyenne = pro.note_moyenne
+    total_avis = pro.nb_avis
+    total_favoris = PhotoFavori.objects.filter(
+        photo_pro__realisation__pro=pro
+    ).count()
+
+    context = {
+        'pro': pro,
+        'realisations': realisations,
+        'avis': avis,
+        'demandes': demandes,
+        'demandes_non_lues': demandes_non_lues,
+        'total_realisations': total_realisations,
+        'total_photos': total_photos,
+        'note_moyenne': note_moyenne,
+        'total_avis': total_avis,
+        'total_favoris': total_favoris,
+        'inspiration_choices': Annonce.INSPIRATION_CHOICES,
+    }
+    return render(request, 'listings/pro_dashboard.html', context)
+
+
+@login_required
+def pro_ajouter_realisation(request):
+    """Ajout d'une realisation par un pro"""
+    try:
+        pro = request.user.pro_profile
+    except ProProfile.DoesNotExist:
+        return redirect('listings:pro_inscription')
+
+    if request.method == 'POST':
+        form = ProRealisationForm(request.POST)
+        if form.is_valid():
+            realisation = ProRealisation.objects.create(
+                pro=pro,
+                titre=form.cleaned_data['titre'],
+                description=form.cleaned_data.get('description', ''),
+                categorie=form.cleaned_data.get('categorie', ''),
+            )
+            # Parser les URLs de photos (une par ligne)
+            urls_raw = form.cleaned_data['photo_urls']
+            for i, line in enumerate(urls_raw.strip().split('\n'), 1):
+                url = line.strip()
+                if url and url.startswith('http'):
+                    ProRealisationPhoto.objects.create(
+                        realisation=realisation,
+                        url=url,
+                        ordre=i
+                    )
+            messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
+            return redirect('listings:pro_dashboard')
+    else:
+        form = ProRealisationForm()
+
+    return render(request, 'listings/pro_ajouter_realisation.html', {'form': form})
+
+
+@login_required
+@require_POST
+def pro_supprimer_realisation(request, realisation_id):
+    """Supprime une realisation (soft delete)"""
+    try:
+        pro = request.user.pro_profile
+    except ProProfile.DoesNotExist:
+        return JsonResponse({'error': 'Non autorise'}, status=403)
+
+    realisation = get_object_or_404(ProRealisation, id=realisation_id, pro=pro)
+    realisation.is_active = False
+    realisation.save(update_fields=['is_active'])
+    messages.success(request, f'Realisation "{realisation.titre}" supprimee.')
+    return redirect('listings:pro_dashboard')
+
+
+def pro_profil(request, pro_id):
+    """Page publique d'un professionnel"""
+    pro = get_object_or_404(ProProfile, id=pro_id, is_active=True)
+    realisations = pro.realisations.filter(is_active=True).prefetch_related('photos')
+    avis = pro.avis.select_related('auteur').all()
+
+    # Verifier si l'utilisateur a deja laisse un avis
+    user_avis = None
+    if request.user.is_authenticated:
+        user_avis = ProAvis.objects.filter(pro=pro, auteur=request.user).first()
+
+    context = {
+        'pro': pro,
+        'realisations': realisations,
+        'avis': avis,
+        'user_avis': user_avis,
+    }
+    return render(request, 'listings/pro_profil.html', context)
+
+
+# ============================================================
+# APIS SOCIALES (AJAX)
+# ============================================================
+
+@login_required
+@require_POST
+def toggle_photo_favori(request):
+    """Toggle favori sur une photo (annonce ou pro)"""
+    try:
+        data = json.loads(request.body)
+        photo_id = data.get('photo_id')
+        photo_type = data.get('type', 'annonce')  # 'annonce' ou 'pro'
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if photo_type == 'pro':
+        photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
+        fav, created = PhotoFavori.objects.get_or_create(
+            user=request.user, photo_pro=photo
+        )
+    else:
+        photo = get_object_or_404(Photo, id=photo_id)
+        fav, created = PhotoFavori.objects.get_or_create(
+            user=request.user, photo=photo
+        )
+
+    if not created:
+        fav.delete()
+        liked = False
+    else:
+        liked = True
+
+    return JsonResponse({'liked': liked})
+
+
+@login_required
+@require_POST
+def rate_photo(request):
+    """Note une photo 1-5 etoiles"""
+    try:
+        data = json.loads(request.body)
+        photo_id = data.get('photo_id')
+        note = int(data.get('note', 0))
+        photo_type = data.get('type', 'annonce')
+    except (json.JSONDecodeError, KeyError, ValueError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if note < 1 or note > 5:
+        return JsonResponse({'error': 'Note must be 1-5'}, status=400)
+
+    if photo_type == 'pro':
+        photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
+        obj, created = PhotoNote.objects.update_or_create(
+            user=request.user, photo_pro=photo,
+            defaults={'note': note}
+        )
+        avg = PhotoNote.objects.filter(photo_pro=photo).aggregate(
+            avg=models.Avg('note'), count=models.Count('id')
+        )
+    else:
+        photo = get_object_or_404(Photo, id=photo_id)
+        obj, created = PhotoNote.objects.update_or_create(
+            user=request.user, photo=photo,
+            defaults={'note': note}
+        )
+        avg = PhotoNote.objects.filter(photo=photo).aggregate(
+            avg=models.Avg('note'), count=models.Count('id')
+        )
+
+    return JsonResponse({
+        'note': note,
+        'average': round(avg['avg'], 1) if avg['avg'] else note,
+        'count': avg['count'],
+    })
+
+
+@login_required
+@require_POST
+def envoyer_contact(request):
+    """Envoie une demande de contact a un agent ou pro"""
+    try:
+        data = json.loads(request.body)
+        message_text = data.get('message', '').strip()
+        telephone = data.get('telephone', '').strip()
+        annonce_id = data.get('annonce_id')
+        pro_id = data.get('pro_id')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if not message_text:
+        return JsonResponse({'error': 'Message requis'}, status=400)
+
+    demande = DemandeContact(
+        expediteur=request.user,
+        message=message_text,
+        telephone=telephone,
+    )
+
+    if annonce_id:
+        demande.annonce = get_object_or_404(Annonce, id=annonce_id)
+    elif pro_id:
+        demande.pro = get_object_or_404(ProProfile, id=pro_id)
+    else:
+        return JsonResponse({'error': 'Cible requise'}, status=400)
+
+    demande.save()
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def submit_pro_avis(request):
+    """Soumet un avis sur un pro"""
+    try:
+        data = json.loads(request.body)
+        pro_id = data.get('pro_id')
+        note = int(data.get('note', 0))
+        commentaire = data.get('commentaire', '').strip()
+    except (json.JSONDecodeError, KeyError, ValueError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if note < 1 or note > 5:
+        return JsonResponse({'error': 'Note must be 1-5'}, status=400)
+
+    pro = get_object_or_404(ProProfile, id=pro_id)
+
+    if request.user == pro.user:
+        return JsonResponse({'error': 'Vous ne pouvez pas vous auto-evaluer'}, status=400)
+
+    avis, created = ProAvis.objects.update_or_create(
+        pro=pro, auteur=request.user,
+        defaults={'note': note, 'commentaire': commentaire}
+    )
+
+    return JsonResponse({
+        'success': True,
+        'note_moyenne': pro.note_moyenne,
+        'nb_avis': pro.nb_avis,
+    })
+
+
+@login_required
+@require_POST
+def mark_contact_read(request):
+    """Marque une demande de contact comme lue"""
+    try:
+        data = json.loads(request.body)
+        demande_id = data.get('demande_id')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    demande = get_object_or_404(DemandeContact, id=demande_id)
+
+    # Verifier que l'utilisateur est bien le destinataire
+    is_owner = False
+    if demande.annonce:
+        try:
+            agence = Agence.objects.get(responsable=request.user)
+            is_owner = demande.annonce.client_reference == agence.reference
+        except Agence.DoesNotExist:
+            pass
+    elif demande.pro:
+        is_owner = demande.pro.user == request.user
+
+    if not is_owner and not request.user.is_staff:
+        return JsonResponse({'error': 'Non autorise'}, status=403)
+
+    demande.is_read = True
+    demande.save(update_fields=['is_read'])
+    return JsonResponse({'success': True})
 
 
 def cgu(request):

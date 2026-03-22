@@ -710,3 +710,15 @@ def toggle_inspiration(request):
         'is_inspiration': annonce.is_inspiration,
         'categorie': annonce.inspiration_categorie,
     })
+
+
+def cgu(request):
+    return render(request, 'listings/cgu.html')
+
+
+def mentions_legales(request):
+    return render(request, 'listings/mentions_legales.html')
+
+
+def confidentialite(request):
+    return render(request, 'listings/confidentialite.html')

@@ -132,9 +132,9 @@
                     &copy; 2025 Social Immo. Tous droits réservés.
                 </div>
                 <div class="flex items-center gap-6 text-sm text-apple-gray">
-                    <a href="#" class="hover:text-apple-text transition-colors">Mentions légales</a>
-                    <a href="#" class="hover:text-apple-text transition-colors">Confidentialité</a>
-                    <a href="#" class="hover:text-apple-text transition-colors">CGU</a>
+                    <a href="{% url 'listings:mentions_legales' %}" class="hover:text-apple-text transition-colors">Mentions legales</a>
+                    <a href="{% url 'listings:confidentialite' %}" class="hover:text-apple-text transition-colors">Confidentialite</a>
+                    <a href="{% url 'listings:cgu' %}" class="hover:text-apple-text transition-colors">CGU</a>
                 </div>
             </div>
         </div>

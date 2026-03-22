@@ -22,4 +22,7 @@ urlpatterns = [
     path('gestion/import/<int:agence_id>/', views.lancer_import_agence, name='lancer_import_agence'),
     path('gestion/toggle/<int:agence_id>/', views.toggle_agence_active, name='toggle_agence_active'),
     path('gestion/renvoyer-acces/<int:agence_id>/', views.renvoyer_acces, name='renvoyer_acces'),
+    path('cgu/', views.cgu, name='cgu'),
+    path('mentions-legales/', views.mentions_legales, name='mentions_legales'),
+    path('confidentialite/', views.confidentialite, name='confidentialite'),
 ]

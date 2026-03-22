@@ -1134,8 +1134,10 @@ def gestion_utilisateurs(request):
     users = User.objects.all().prefetch_related('agence').order_by('-date_joined')
 
     # Pre-fetch pro profiles
-    pro_user_ids = set(ProProfile.objects.values_list('user_id', flat=True))
-    pro_profiles = {p.user_id: p for p in ProProfile.objects.all()}
+    try:
+        pro_profiles = {p.user_id: p for p in ProProfile.objects.all()}
+    except Exception:
+        pro_profiles = {}
 
     # Build user list with roles
     users_data = []
@@ -1169,13 +1171,19 @@ def gestion_utilisateurs(request):
 
     # Stats
     total_users = User.objects.count()
-    total_clients = User.objects.filter(is_staff=False).exclude(
-        id__in=ProProfile.objects.values_list('user_id', flat=True)
-    ).exclude(
-        id__in=Agence.objects.values_list('responsable_id', flat=True)
-    ).count()
-    total_pros = ProProfile.objects.count()
+    try:
+        pro_ids = set(ProProfile.objects.values_list('user_id', flat=True))
+        total_pros = len(pro_ids)
+    except Exception:
+        pro_ids = set()
+        total_pros = 0
+    agence_ids = set(Agence.objects.values_list('responsable_id', flat=True))
     total_agences = Agence.objects.count()
+    total_clients = User.objects.filter(is_staff=False).exclude(
+        id__in=pro_ids
+    ).exclude(
+        id__in=agence_ids
+    ).count()
 
     context = {
         'users_data': users_data,

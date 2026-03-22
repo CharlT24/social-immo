@@ -435,6 +435,30 @@ class PhotoNote(models.Model):
         verbose_name_plural = 'Notes Photos'
 
 
+class PhotoCommentaire(models.Model):
+    """Commentaire sur une photo d'inspiration (agence ou pro)"""
+
+    auteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photo_commentaires')
+    photo = models.ForeignKey(
+        Photo, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='commentaires'
+    )
+    photo_pro = models.ForeignKey(
+        ProRealisationPhoto, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='commentaires'
+    )
+    texte = models.TextField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Commentaire Photo'
+        verbose_name_plural = 'Commentaires Photos'
+
+    def __str__(self):
+        return f"{self.auteur.username}: {self.texte[:50]}"
+
+
 class DemandeContact(models.Model):
     """Demande de contact envoyee a un agent immo ou un pro"""
 

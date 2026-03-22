@@ -34,10 +34,13 @@ urlpatterns = [
     path('api/contact/', views.envoyer_contact, name='envoyer_contact'),
     path('api/pro-avis/', views.submit_pro_avis, name='submit_pro_avis'),
     path('api/contact-read/', views.mark_contact_read, name='mark_contact_read'),
+    path('api/photo-comment/', views.post_photo_comment, name='post_photo_comment'),
+    path('api/photo-comments/', views.get_photo_comments, name='get_photo_comments'),
     # Gestion utilisateurs (admin)
     path('gestion/utilisateurs/', views.gestion_utilisateurs, name='gestion_utilisateurs'),
     path('gestion/utilisateurs/export/', views.export_utilisateurs_csv, name='export_utilisateurs_csv'),
     path('gestion/utilisateurs/reset-password/<int:user_id>/', views.admin_reset_password, name='admin_reset_password'),
+    path('gestion/utilisateurs/supprimer/<int:user_id>/', views.admin_delete_user, name='admin_delete_user'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

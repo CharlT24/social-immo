@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <!-- Source Filter Tabs (Agences / Pros / Tous) -->
+    <!-- Source Filter Tabs -->
     <div class="flex items-center justify-center gap-2 mb-6">
         <a href="{% url 'listings:decoration_list' %}{% if current_categorie %}?categorie={{ current_categorie }}{% endif %}"
            class="text-sm font-medium px-4 py-2 rounded-full transition-all {% if not current_source %}bg-apple-text text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
@@ -74,19 +74,16 @@
     </div>
     {% endif %}
 
-    <!-- Moodboard Grid -->
+    <!-- Pinterest Masonry Grid -->
     {% if inspiration_photos or realisations_pro %}
     <div class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
 
-        <!-- Agence Inspirations (individual photos) -->
+        <!-- Agence Inspirations -->
         {% for photo in inspiration_photos %}
-        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl">
-            <a href="{% url 'listings:detail' photo.annonce.reference %}">
-                <img src="{{ photo.url }}"
-                     alt=""
-                     class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                     loading="lazy">
-            </a>
+        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer"
+             onclick="openPhotoModal('{{ photo.url }}', {{ photo.id }}, 'annonce', '{{ photo.get_inspiration_categorie_display|default:"" }}', '{{ photo.annonce.reference }}', '{% url 'listings:detail' photo.annonce.reference %}')">
+            <img src="{{ photo.url }}" alt="" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+
             <!-- Category badge -->
             {% if photo.inspiration_categorie %}
             <div class="absolute top-3 left-3">
@@ -96,27 +93,33 @@
             </div>
             {% endif %}
 
-            <!-- Social buttons (top right) -->
-            <div class="absolute top-3 right-3 flex flex-col gap-2">
+            <!-- Heart + Comment count overlay -->
+            <div class="absolute top-3 right-3 flex flex-col gap-2" onclick="event.stopPropagation()">
                 <button onclick="togglePhotoFav({{ photo.id }}, 'annonce', this)"
                         class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm photo-fav-btn"
-                        data-photo-id="{{ photo.id }}"
-                        data-type="annonce"
-                        title="Ajouter aux favoris">
+                        data-photo-id="{{ photo.id }}" data-type="annonce">
                     <svg class="w-5 h-5 {% if photo.id in user_photo_favs %}text-red-500 fill-red-500{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- Reference + link (bottom) -->
-            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span class="text-xs text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full font-medium">
-                    {{ photo.annonce.reference }}
-                </span>
-                <a href="{% url 'listings:detail' photo.annonce.reference %}" class="text-xs text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full font-medium hover:bg-black/50 transition-all">
-                    Voir le bien
-                </a>
+            <!-- Bottom bar on hover -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <!-- Comment icon -->
+                        <div class="flex items-center gap-1 text-white/90">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <span class="text-xs font-medium">Commenter</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-white/80 font-medium bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                        {{ photo.annonce.reference }}
+                    </span>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -124,13 +127,9 @@
         <!-- Pro Realisations -->
         {% for realisation in realisations_pro %}
         {% for photo in realisation.photos.all %}
-        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl">
-            <a href="{% url 'listings:pro_profil' realisation.pro.id %}">
-                <img src="{{ photo.url }}"
-                     alt="{{ realisation.titre }}"
-                     class="w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                     loading="lazy">
-            </a>
+        <div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer"
+             onclick="openPhotoModal('{{ photo.url }}', {{ photo.id }}, 'pro', '{{ realisation.get_categorie_display|default:"" }}', '{{ realisation.pro.nom_entreprise }}', '{% url 'listings:pro_profil' realisation.pro.id %}')">
+            <img src="{{ photo.url }}" alt="{{ realisation.titre }}" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
 
             <!-- Pro badge + category -->
             <div class="absolute top-3 left-3 flex items-center gap-2">
@@ -144,35 +143,32 @@
                 {% endif %}
             </div>
 
-            <!-- Social buttons (top right) -->
-            <div class="absolute top-3 right-3 flex flex-col gap-2">
+            <!-- Heart -->
+            <div class="absolute top-3 right-3 flex flex-col gap-2" onclick="event.stopPropagation()">
                 <button onclick="togglePhotoFav({{ photo.id }}, 'pro', this)"
                         class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm photo-fav-btn"
-                        data-photo-id="{{ photo.id }}"
-                        data-type="pro"
-                        title="Ajouter aux favoris">
+                        data-photo-id="{{ photo.id }}" data-type="pro">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- Star rating + link (bottom) -->
-            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div class="flex items-center gap-0.5 star-rating" data-photo-id="{{ photo.id }}" data-type="pro">
-                    {% for i in "12345" %}
-                    <button onclick="ratePhoto({{ photo.id }}, 'pro', {{ i }}, this.parentElement)"
-                            class="w-7 h-7 flex items-center justify-center hover:scale-125 transition-transform star-btn"
-                            data-star="{{ i }}">
-                        <svg class="w-5 h-5 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                        </svg>
-                    </button>
-                    {% endfor %}
+            <!-- Bottom bar on hover -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1 text-white/90">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <span class="text-xs font-medium">Commenter</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-white/80 font-medium bg-purple-600/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                        Voir le pro
+                    </span>
                 </div>
-                <a href="{% url 'listings:pro_profil' realisation.pro.id %}" class="text-xs text-white bg-purple-600/80 backdrop-blur-sm px-3 py-1 rounded-full font-medium hover:bg-purple-700/80 transition-all">
-                    Voir le pro
-                </a>
             </div>
         </div>
         {% endfor %}
@@ -189,39 +185,457 @@
         </div>
         <p class="text-xl font-medium text-apple-text mb-2">Aucune inspiration pour le moment</p>
         <p class="text-apple-gray">
-            {% if current_categorie %}
-            Aucune inspiration dans cette categorie.
-            {% else %}
-            Les agences et professionnels selectionnent leurs plus beaux projets pour vous inspirer.
-            {% endif %}
+            {% if current_categorie %}Aucune inspiration dans cette categorie.
+            {% else %}Les agences et professionnels selectionnent leurs plus beaux projets pour vous inspirer.{% endif %}
         </p>
         {% if current_categorie %}
-        <a href="{% url 'listings:decoration_list' %}" class="inline-flex items-center gap-2 text-apple-blue font-medium hover:underline mt-4">
-            Voir toutes les inspirations
-        </a>
+        <a href="{% url 'listings:decoration_list' %}" class="inline-flex items-center gap-2 text-apple-blue font-medium hover:underline mt-4">Voir toutes les inspirations</a>
         {% endif %}
     </div>
     {% endif %}
 
 </div>
 
-<!-- JavaScript for social interactions -->
+<!-- ==================== INSTAGRAM PHOTO MODAL ==================== -->
+<div id="photoModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+    <!-- Backdrop -->
+    <div onclick="closePhotoModal()" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-[95vw] max-w-5xl h-[90vh] max-h-[700px] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row z-10 transform scale-95 transition-transform duration-300" id="photoModalContent">
+
+        <!-- Close button -->
+        <button onclick="closePhotoModal()" class="absolute top-4 right-4 z-20 w-9 h-9 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/50 transition-colors">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <!-- Left: Photo -->
+        <div class="lg:w-3/5 h-64 lg:h-full bg-black flex items-center justify-center flex-shrink-0">
+            <img id="modalPhoto" src="" alt="" class="max-w-full max-h-full object-contain">
+        </div>
+
+        <!-- Right: Instagram-style panel -->
+        <div class="lg:w-2/5 flex flex-col h-full min-h-0">
+
+            <!-- Header -->
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div id="modalBadge" class="w-9 h-9 bg-apple-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p id="modalReference" class="text-sm font-semibold text-apple-text truncate"></p>
+                        <p id="modalCategorie" class="text-xs text-apple-gray"></p>
+                    </div>
+                </div>
+                <a id="modalLink" href="#" class="text-xs font-medium text-apple-blue hover:underline flex-shrink-0">Voir</a>
+            </div>
+
+            <!-- Action bar (heart + stars) -->
+            <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-4 flex-shrink-0">
+                <button id="modalHeartBtn" onclick="modalToggleFav()" class="flex items-center gap-1.5 hover:scale-110 transition-transform">
+                    <svg id="modalHeartSvg" class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-0.5" id="modalStars">
+                    <button onclick="modalRate(1)" class="modal-star hover:scale-125 transition-transform"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>
+                    <button onclick="modalRate(2)" class="modal-star hover:scale-125 transition-transform"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>
+                    <button onclick="modalRate(3)" class="modal-star hover:scale-125 transition-transform"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>
+                    <button onclick="modalRate(4)" class="modal-star hover:scale-125 transition-transform"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>
+                    <button onclick="modalRate(5)" class="modal-star hover:scale-125 transition-transform"><svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>
+                </div>
+                <span id="modalAvgNote" class="text-xs text-apple-gray ml-auto"></span>
+            </div>
+
+            <!-- Comments list (scrollable) -->
+            <div id="modalComments" class="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
+                <div id="commentsLoading" class="flex items-center justify-center py-8">
+                    <div class="w-6 h-6 border-2 border-apple-blue border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div id="commentsEmpty" class="hidden text-center py-8">
+                    <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <p class="text-sm text-gray-400">Soyez le premier a commenter</p>
+                </div>
+                <div id="commentsList"></div>
+            </div>
+
+            <!-- Comment input -->
+            <div class="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                {% if user.is_authenticated %}
+                <form onsubmit="postComment(event)" class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-apple-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-xs font-bold text-white">{{ user.username|slice:":2"|upper }}</span>
+                    </div>
+                    <input id="commentInput" type="text" placeholder="Ajouter un commentaire..." maxlength="500"
+                           class="flex-1 text-sm bg-apple-bg rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all placeholder-gray-400">
+                    <button type="submit" class="text-apple-blue font-semibold text-sm hover:text-blue-700 transition-colors">
+                        Publier
+                    </button>
+                </form>
+                {% else %}
+                <a href="{% url 'account_login' %}" class="flex items-center justify-center gap-2 text-sm text-apple-gray bg-apple-bg rounded-full px-4 py-3 hover:bg-gray-200 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
+                    Connectez-vous pour commenter
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== FAVORITES SIDEBAR ==================== -->
+{% if user.is_authenticated %}
+<button onclick="toggleSidebar()" id="favSidebarToggle"
+        class="fixed bottom-8 right-8 z-40 w-14 h-14 bg-gradient-to-br from-pink-500 to-red-500 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center group">
+    <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+    </svg>
+    <span id="favBadge" class="absolute -top-1 -right-1 w-6 h-6 bg-white text-red-500 text-xs font-bold rounded-full flex items-center justify-center shadow-md">0</span>
+</button>
+
+<div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+<div id="favSidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white/95 backdrop-blur-xl z-50 transform translate-x-full transition-transform duration-500 ease-out shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-red-500 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold tracking-tight">Mes inspirations</h2>
+                <p id="favCount" class="text-xs text-apple-gray">0 photos sauvegardees</p>
+            </div>
+        </div>
+        <button onclick="toggleSidebar()" class="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <div id="favContent" class="flex-1 overflow-y-auto px-5 py-4">
+        <div id="favEmpty" class="hidden flex-col items-center justify-center h-full text-center py-16">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+            <p class="text-sm font-medium text-gray-400">Aucune inspiration sauvegardee</p>
+            <p class="text-xs text-gray-300 mt-1">Cliquez sur le coeur d'une photo pour commencer</p>
+        </div>
+        <div id="favCategories"></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ==================== JAVASCRIPT ==================== -->
 <script>
 function getCookie(name) {
-    let cookieValue = null;
+    let v = null;
     if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.substring(0, name.length + 1) === (name + '='))
+                v = decodeURIComponent(c.substring(name.length + 1));
+        });
     }
-    return cookieValue;
+    return v;
 }
 
+// ========== PHOTO MODAL (Instagram style) ==========
+let currentPhotoId = null;
+let currentPhotoType = null;
+
+function openPhotoModal(url, photoId, type, categorie, reference, link) {
+    currentPhotoId = photoId;
+    currentPhotoType = type;
+
+    document.getElementById('modalPhoto').src = url;
+    document.getElementById('modalReference').textContent = reference;
+    document.getElementById('modalCategorie').textContent = categorie;
+    document.getElementById('modalLink').href = link;
+    document.getElementById('modalLink').textContent = type === 'pro' ? 'Voir le pro' : 'Voir le bien';
+
+    // Badge color
+    const badge = document.getElementById('modalBadge');
+    badge.className = 'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ' + (type === 'pro' ? 'bg-purple-500' : 'bg-apple-blue');
+
+    // Heart state
+    const svg = document.getElementById('modalHeartSvg');
+    const isFav = userFavs.some(f => f.photo_id === photoId && f.type === type);
+    if (isFav) {
+        svg.classList.add('text-red-500', 'fill-red-500');
+        svg.classList.remove('text-gray-400');
+    } else {
+        svg.classList.remove('text-red-500', 'fill-red-500');
+        svg.classList.add('text-gray-400');
+    }
+
+    // Show modal
+    const modal = document.getElementById('photoModal');
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('photoModalContent').classList.remove('scale-95');
+    document.body.style.overflow = 'hidden';
+
+    // Load comments
+    loadComments(photoId, type);
+}
+
+function closePhotoModal() {
+    const modal = document.getElementById('photoModal');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('photoModalContent').classList.add('scale-95');
+    document.body.style.overflow = '';
+    currentPhotoId = null;
+    currentPhotoType = null;
+}
+
+// Close on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+function loadComments(photoId, type) {
+    document.getElementById('commentsLoading').classList.remove('hidden');
+    document.getElementById('commentsEmpty').classList.add('hidden');
+    document.getElementById('commentsList').innerHTML = '';
+
+    fetch(`{% url 'listings:get_photo_comments' %}?photo_id=${photoId}&type=${type}`)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('commentsLoading').classList.add('hidden');
+        if (data.comments.length === 0) {
+            document.getElementById('commentsEmpty').classList.remove('hidden');
+            return;
+        }
+        renderComments(data.comments);
+    });
+}
+
+function renderComments(comments) {
+    const list = document.getElementById('commentsList');
+    list.innerHTML = comments.map(c => `
+        <div class="flex gap-3 group">
+            <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-gray-500">${c.auteur.substring(0,2).toUpperCase()}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-semibold text-apple-text">${c.auteur}</span>
+                    <span class="text-[10px] text-gray-400">${c.created_at}</span>
+                </div>
+                <p class="text-sm text-gray-700 mt-0.5 break-words">${c.texte}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function postComment(e) {
+    e.preventDefault();
+    const input = document.getElementById('commentInput');
+    const texte = input.value.trim();
+    if (!texte || !currentPhotoId) return;
+
+    fetch("{% url 'listings:post_photo_comment' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ photo_id: currentPhotoId, type: currentPhotoType, texte: texte })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.id) {
+            document.getElementById('commentsEmpty').classList.add('hidden');
+            const list = document.getElementById('commentsList');
+            list.innerHTML += `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 bg-apple-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-xs font-bold text-white">${data.auteur.substring(0,2).toUpperCase()}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-sm font-semibold text-apple-text">${data.auteur}</span>
+                            <span class="text-[10px] text-gray-400">${data.created_at}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mt-0.5 break-words">${data.texte}</p>
+                    </div>
+                </div>`;
+            // Scroll to bottom
+            const container = document.getElementById('modalComments');
+            container.scrollTop = container.scrollHeight;
+            input.value = '';
+        }
+    });
+}
+
+function modalToggleFav() {
+    {% if not user.is_authenticated %}
+    window.location.href = "{% url 'account_login' %}";
+    return;
+    {% endif %}
+
+    if (!currentPhotoId) return;
+    fetch("{% url 'listings:toggle_photo_favori' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ photo_id: currentPhotoId, type: currentPhotoType })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const svg = document.getElementById('modalHeartSvg');
+        // Also update grid button
+        const gridBtn = document.querySelector(`.photo-fav-btn[data-photo-id="${currentPhotoId}"][data-type="${currentPhotoType}"]`);
+        if (data.liked) {
+            svg.classList.add('text-red-500', 'fill-red-500');
+            svg.classList.remove('text-gray-400');
+            if (gridBtn) { const gs = gridBtn.querySelector('svg'); gs.classList.add('text-red-500', 'fill-red-500'); gs.classList.remove('text-gray-600'); }
+            if (data.photo) { userFavs.unshift(data.photo); renderSidebar(); }
+        } else {
+            svg.classList.remove('text-red-500', 'fill-red-500');
+            svg.classList.add('text-gray-400');
+            if (gridBtn) { const gs = gridBtn.querySelector('svg'); gs.classList.remove('text-red-500', 'fill-red-500'); gs.classList.add('text-gray-600'); }
+            userFavs = userFavs.filter(f => !(f.photo_id === currentPhotoId && f.type === currentPhotoType));
+            renderSidebar();
+        }
+    });
+}
+
+function modalRate(note) {
+    {% if not user.is_authenticated %}
+    window.location.href = "{% url 'account_login' %}";
+    return;
+    {% endif %}
+
+    fetch("{% url 'listings:rate_photo' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ photo_id: currentPhotoId, type: currentPhotoType, note: note })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const stars = document.querySelectorAll('#modalStars .modal-star svg');
+        stars.forEach((svg, i) => {
+            if (i < data.note) {
+                svg.classList.add('text-yellow-400', 'fill-yellow-400');
+                svg.classList.remove('text-gray-300');
+            } else {
+                svg.classList.remove('text-yellow-400', 'fill-yellow-400');
+                svg.classList.add('text-gray-300');
+            }
+        });
+        document.getElementById('modalAvgNote').textContent = data.average + '/5 (' + data.count + ' avis)';
+    });
+}
+
+// ========== FAVORITES SIDEBAR ==========
+let sidebarOpen = false;
+let userFavs = [];
+try { userFavs = JSON.parse('{{ sidebar_favs_json|escapejs }}'); } catch(e) { userFavs = []; }
+
+function toggleSidebar() {
+    sidebarOpen = !sidebarOpen;
+    const sidebar = document.getElementById('favSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar) return;
+    if (sidebarOpen) {
+        sidebar.classList.remove('translate-x-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100');
+        document.body.style.overflow = 'hidden';
+    } else {
+        sidebar.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        backdrop.classList.remove('opacity-100');
+        document.body.style.overflow = '';
+    }
+}
+
+function renderSidebar() {
+    const container = document.getElementById('favCategories');
+    const emptyState = document.getElementById('favEmpty');
+    const countEl = document.getElementById('favCount');
+    const badgeEl = document.getElementById('favBadge');
+    if (!container) return;
+
+    if (badgeEl) badgeEl.textContent = userFavs.length;
+    if (countEl) countEl.textContent = userFavs.length + ' photo' + (userFavs.length !== 1 ? 's' : '') + ' sauvegardee' + (userFavs.length !== 1 ? 's' : '');
+
+    if (userFavs.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); }
+        return;
+    }
+    if (emptyState) { emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); }
+
+    const groups = {};
+    userFavs.forEach(fav => {
+        if (!groups[fav.categorie]) groups[fav.categorie] = { label: fav.categorie_label, photos: [] };
+        groups[fav.categorie].photos.push(fav);
+    });
+
+    const catColors = {
+        'interieur': 'from-amber-500 to-orange-500', 'jardin': 'from-green-500 to-emerald-500',
+        'cuisine': 'from-red-500 to-pink-500', 'salle_de_bain': 'from-blue-500 to-cyan-500',
+        'chambre': 'from-indigo-500 to-purple-500', 'salon': 'from-yellow-500 to-amber-500',
+        'exterieur': 'from-teal-500 to-green-500', 'pro': 'from-purple-500 to-violet-500',
+        'sans_categorie': 'from-gray-400 to-gray-500',
+    };
+
+    let html = '';
+    Object.keys(groups).forEach(cat => {
+        const g = groups[cat];
+        const color = catColors[cat] || 'from-gray-400 to-gray-500';
+        html += `<div class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-7 h-7 bg-gradient-to-br ${color} rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </div>
+                <span class="text-sm font-semibold text-apple-text">${g.label}</span>
+                <span class="text-xs text-apple-gray bg-gray-100 px-2 py-0.5 rounded-full">${g.photos.length}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">`;
+        g.photos.forEach(photo => {
+            html += `<div class="relative group/fav aspect-square rounded-xl overflow-hidden">
+                    <img src="${photo.url}" alt="" class="w-full h-full object-cover group-hover/fav:scale-110 transition-transform duration-500" loading="lazy">
+                    <button onclick="removeFav(${photo.photo_id}, '${photo.type}')"
+                            class="absolute top-1 right-1 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity hover:bg-red-500">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-1.5 opacity-0 group-hover/fav:opacity-100 transition-opacity">
+                        <p class="text-[10px] text-white font-medium truncate">${photo.reference}</p>
+                    </div>
+                </div>`;
+        });
+        html += `</div></div>`;
+    });
+    container.innerHTML = html;
+}
+
+function removeFav(photoId, type) {
+    fetch("{% url 'listings:toggle_photo_favori' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({photo_id: photoId, type: type})
+    }).then(r => r.json()).then(data => {
+        if (!data.liked) {
+            userFavs = userFavs.filter(f => !(f.photo_id === photoId && f.type === type));
+            renderSidebar();
+            const btn = document.querySelector(`.photo-fav-btn[data-photo-id="${photoId}"][data-type="${type}"]`);
+            if (btn) { const svg = btn.querySelector('svg'); svg.classList.remove('text-red-500', 'fill-red-500'); svg.classList.add('text-gray-600'); }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', renderSidebar);
+
+// ========== GRID FAV TOGGLE ==========
 function togglePhotoFav(photoId, type, btn) {
     {% if not user.is_authenticated %}
     window.location.href = "{% url 'account_login' %}";
@@ -230,10 +644,7 @@ function togglePhotoFav(photoId, type, btn) {
 
     fetch("{% url 'listings:toggle_photo_favori' %}", {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify({photo_id: photoId, type: type})
     })
     .then(r => r.json())
@@ -242,40 +653,14 @@ function togglePhotoFav(photoId, type, btn) {
         if (data.liked) {
             svg.classList.add('text-red-500', 'fill-red-500');
             svg.classList.remove('text-gray-600');
+            if (data.photo) { userFavs.unshift(data.photo); renderSidebar(); }
+            if (!sidebarOpen) toggleSidebar();
         } else {
             svg.classList.remove('text-red-500', 'fill-red-500');
             svg.classList.add('text-gray-600');
+            userFavs = userFavs.filter(f => !(f.photo_id === photoId && f.type === type));
+            renderSidebar();
         }
-    });
-}
-
-function ratePhoto(photoId, type, note, container) {
-    {% if not user.is_authenticated %}
-    window.location.href = "{% url 'account_login' %}";
-    return;
-    {% endif %}
-
-    fetch("{% url 'listings:rate_photo' %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({photo_id: photoId, type: type, note: note})
-    })
-    .then(r => r.json())
-    .then(data => {
-        // Update stars display
-        const stars = container.querySelectorAll('.star-btn svg');
-        stars.forEach((svg, i) => {
-            if (i < data.note) {
-                svg.classList.add('text-yellow-400', 'fill-yellow-400');
-                svg.classList.remove('text-white');
-            } else {
-                svg.classList.remove('text-yellow-400', 'fill-yellow-400');
-                svg.classList.add('text-white');
-            }
-        });
     });
 }
 </script>

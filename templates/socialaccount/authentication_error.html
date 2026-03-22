@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Erreur de connexion - Social Immo{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-md">
+
+        <div class="bg-white rounded-3xl shadow-apple p-10 text-center">
+
+            <!-- Error Icon -->
+            <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-2xl font-semibold tracking-tight mb-2">Erreur de connexion</h1>
+            <p class="text-apple-gray text-sm mb-8">
+                Un probleme est survenu lors de la connexion avec votre compte Google. Veuillez reessayer.
+            </p>
+
+            <div class="space-y-3">
+                <a href="{% url 'account_login' %}"
+                   class="block w-full bg-apple-blue text-white font-semibold py-4 px-6 rounded-xl hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 text-center">
+                    Retour a la connexion
+                </a>
+                <a href="/"
+                   class="block w-full bg-apple-bg text-apple-text font-medium py-3.5 px-6 rounded-xl hover:bg-gray-200 transition-all text-center">
+                    Retour a l'accueil
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

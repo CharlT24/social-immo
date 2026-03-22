@@ -18,7 +18,7 @@ import csv
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, DemandeContact
+    PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact
 )
 from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
@@ -370,6 +370,7 @@ def decoration_list(request):
     # Favoris et notes de l'utilisateur
     user_photo_favs = set()
     user_photo_notes = {}
+    sidebar_favs = []
     if request.user.is_authenticated:
         user_photo_favs = set(PhotoFavori.objects.filter(
             user=request.user, photo__isnull=False
@@ -385,6 +386,22 @@ def decoration_list(request):
             elif pn.photo_pro_id:
                 user_photo_notes[('pro', pn.photo_pro_id)] = pn.note
 
+        # Favoris pour le sidebar
+        for fav in PhotoFavori.objects.filter(user=request.user, photo__isnull=False).select_related('photo__annonce').order_by('-created_at'):
+            cat = fav.photo.inspiration_categorie or 'sans_categorie'
+            cat_label = fav.photo.get_inspiration_categorie_display() if fav.photo.inspiration_categorie else 'Sans categorie'
+            sidebar_favs.append({
+                'id': fav.id, 'photo_id': fav.photo.id, 'url': fav.photo.url,
+                'categorie': cat, 'categorie_label': cat_label, 'type': 'annonce',
+                'reference': fav.photo.annonce.reference,
+            })
+        for fav in PhotoFavori.objects.filter(user=request.user, photo_pro__isnull=False).select_related('photo_pro__realisation__pro').order_by('-created_at'):
+            sidebar_favs.append({
+                'id': fav.id, 'photo_id': fav.photo_pro.id, 'url': fav.photo_pro.url,
+                'categorie': 'pro', 'categorie_label': 'Realisations Pro', 'type': 'pro',
+                'reference': fav.photo_pro.realisation.pro.nom_entreprise if fav.photo_pro.realisation else '',
+            })
+
     # Pros actifs pour le compteur
     total_pros = ProProfile.objects.filter(is_active=True).count()
 
@@ -398,6 +415,7 @@ def decoration_list(request):
         'user_photo_favs': user_photo_favs,
         'user_photo_notes': user_photo_notes,
         'total_pros': total_pros,
+        'sidebar_favs_json': json.dumps(sidebar_favs),
     }
     return render(request, 'listings/decoration_list.html', context)
 
@@ -993,10 +1011,27 @@ def toggle_photo_favori(request):
     if not created:
         fav.delete()
         liked = False
-    else:
-        liked = True
+        return JsonResponse({'liked': False})
 
-    return JsonResponse({'liked': liked})
+    # Return photo data for sidebar
+    if photo_type == 'pro':
+        photo_data = {
+            'photo_id': photo.id, 'url': photo.url, 'type': 'pro',
+            'categorie': 'pro', 'categorie_label': 'Realisations Pro',
+            'reference': photo.realisation.pro.nom_entreprise if photo.realisation else '',
+            'fav_id': fav.id,
+        }
+    else:
+        cat = photo.inspiration_categorie or 'sans_categorie'
+        cat_label = photo.get_inspiration_categorie_display() if photo.inspiration_categorie else 'Sans categorie'
+        photo_data = {
+            'photo_id': photo.id, 'url': photo.url, 'type': 'annonce',
+            'categorie': cat, 'categorie_label': cat_label,
+            'reference': photo.annonce.reference,
+            'fav_id': fav.id,
+        }
+
+    return JsonResponse({'liked': True, 'photo': photo_data})
 
 
 @login_required
@@ -1038,6 +1073,62 @@ def rate_photo(request):
         'average': round(avg['avg'], 1) if avg['avg'] else note,
         'count': avg['count'],
     })
+
+
+@login_required
+@require_POST
+def post_photo_comment(request):
+    """Poster un commentaire sur une photo d'inspiration"""
+    try:
+        data = json.loads(request.body)
+        photo_id = data.get('photo_id')
+        photo_type = data.get('type', 'annonce')
+        texte = data.get('texte', '').strip()
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if not texte or len(texte) > 500:
+        return JsonResponse({'error': 'Texte requis (max 500 caracteres)'}, status=400)
+
+    if photo_type == 'pro':
+        photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
+        comment = PhotoCommentaire.objects.create(
+            auteur=request.user, photo_pro=photo, texte=texte
+        )
+    else:
+        photo = get_object_or_404(Photo, id=photo_id)
+        comment = PhotoCommentaire.objects.create(
+            auteur=request.user, photo=photo, texte=texte
+        )
+
+    return JsonResponse({
+        'id': comment.id,
+        'auteur': comment.auteur.username,
+        'texte': comment.texte,
+        'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+    })
+
+
+def get_photo_comments(request):
+    """Recuperer les commentaires d'une photo"""
+    photo_id = request.GET.get('photo_id')
+    photo_type = request.GET.get('type', 'annonce')
+
+    if photo_type == 'pro':
+        comments = PhotoCommentaire.objects.filter(photo_pro_id=photo_id)
+    else:
+        comments = PhotoCommentaire.objects.filter(photo_id=photo_id)
+
+    comments = comments.select_related('auteur').order_by('created_at')[:50]
+
+    data = [{
+        'id': c.id,
+        'auteur': c.auteur.username,
+        'texte': c.texte,
+        'created_at': c.created_at.strftime('%d/%m/%Y %H:%M'),
+    } for c in comments]
+
+    return JsonResponse({'comments': data, 'count': len(data)})
 
 
 @login_required
@@ -1137,6 +1228,55 @@ def mark_contact_read(request):
 
 
 @login_required
+def mes_inspirations(request):
+    """Portfolio d'inspirations de l'utilisateur (photos favorites groupees par categorie)"""
+    # Favoris photos d'annonces
+    favs_annonce = PhotoFavori.objects.filter(
+        user=request.user, photo__isnull=False
+    ).select_related('photo__annonce').order_by('-created_at')
+
+    # Favoris photos de pros
+    favs_pro = PhotoFavori.objects.filter(
+        user=request.user, photo_pro__isnull=False
+    ).select_related('photo_pro__realisation__pro').order_by('-created_at')
+
+    # Grouper par categorie
+    categories = {}
+    for fav in favs_annonce:
+        cat = fav.photo.inspiration_categorie or 'sans_categorie'
+        cat_label = fav.photo.get_inspiration_categorie_display() if fav.photo.inspiration_categorie else 'Sans categorie'
+        if cat not in categories:
+            categories[cat] = {'label': cat_label, 'photos': []}
+        categories[cat]['photos'].append({
+            'url': fav.photo.url,
+            'reference': fav.photo.annonce.reference,
+            'type': 'annonce',
+            'fav_id': fav.id,
+            'photo_id': fav.photo.id,
+        })
+
+    for fav in favs_pro:
+        cat = 'pro'
+        if cat not in categories:
+            categories[cat] = {'label': 'Realisations Pro', 'photos': []}
+        categories[cat]['photos'].append({
+            'url': fav.photo_pro.url,
+            'pro_name': fav.photo_pro.realisation.pro.nom_entreprise if fav.photo_pro.realisation else '',
+            'type': 'pro',
+            'fav_id': fav.id,
+            'photo_id': fav.photo_pro.id,
+        })
+
+    total_favs = favs_annonce.count() + favs_pro.count()
+
+    context = {
+        'categories': categories,
+        'total_favs': total_favs,
+    }
+    return render(request, 'listings/mes_inspirations.html', context)
+
+
+@login_required
 def gestion_utilisateurs(request):
     """Liste de tous les utilisateurs avec filtre par role"""
     if not request.user.is_staff:
@@ -1226,6 +1366,25 @@ def admin_reset_password(request, user_id):
         request,
         f'Mot de passe de {target_user.username} ({target_user.email}) reinitialise : {new_password}'
     )
+    return redirect('listings:gestion_utilisateurs')
+
+
+@login_required
+@require_POST
+def admin_delete_user(request, user_id):
+    """Admin supprime un utilisateur (sauf admin)"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user.is_staff:
+        messages.error(request, "Impossible de supprimer un administrateur.")
+        return redirect('listings:gestion_utilisateurs')
+
+    username = target_user.username
+    email = target_user.email
+    target_user.delete()
+    messages.success(request, f'Utilisateur {username} ({email}) supprime.')
     return redirect('listings:gestion_utilisateurs')
 
 

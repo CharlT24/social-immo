@@ -57,6 +57,7 @@ class Command(BaseCommand):
         # Compteurs
         created = 0
         updated = 0
+        unchanged = 0
         errors = 0
         references_recues = set()
 
@@ -82,6 +83,8 @@ class Command(BaseCommand):
                     created += 1
                 elif result == 'updated':
                     updated += 1
+                elif result == 'unchanged':
+                    unchanged += 1
             except Exception as e:
                 errors += 1
                 ref = self.get_text(annonce_xml, 'reference', 'INCONNU')
@@ -108,7 +111,7 @@ class Command(BaseCommand):
         prefix = '[DRY-RUN] ' if dry_run else ''
         self.stdout.write(self.style.SUCCESS(
             f'\n{prefix}Import termine: {created} creees, {updated} mises a jour, '
-            f'{deleted} desactivees, {errors} erreurs'
+            f'{unchanged} inchangees, {deleted} desactivees, {errors} erreurs'
         ))
 
     def _get_xml_content(self, options):
@@ -255,27 +258,52 @@ class Command(BaseCommand):
             self.stdout.write(f'  [{action.upper()}] {reference} - {data.get("titre", "")[:40]}')
             return reference, action
 
-        # Creer ou mettre a jour l'annonce
-        annonce, created = Annonce.objects.update_or_create(
-            reference=reference,
-            defaults=data
-        )
+        # Creer ou mettre a jour (incremental : skip si rien n'a change)
+        annonce_changed = False
+        try:
+            annonce = Annonce.objects.get(reference=reference)
+            is_new = False
+            for field, value in data.items():
+                if getattr(annonce, field) != value:
+                    setattr(annonce, field, value)
+                    annonce_changed = True
+            if annonce_changed:
+                annonce.save()
+        except Annonce.DoesNotExist:
+            annonce = Annonce.objects.create(reference=reference, **data)
+            is_new = True
+            annonce_changed = True
 
-        # Gerer les photos
+        # Gerer les photos (incremental : ne toucher que si changement)
+        photos_changed = False
         photos_xml = annonce_xml.find('.//photos')
         if photos_xml is not None:
-            annonce.photos.all().delete()
+            new_photos = []
             for photo_xml in photos_xml.findall('photo'):
                 url = (photo_xml.text or '').strip()
                 if url and url.startswith('http'):
                     ordre = int(photo_xml.get('ordre', 1))
-                    Photo.objects.create(
-                        annonce=annonce,
-                        url=url,
-                        ordre=ordre
-                    )
+                    new_photos.append((url, ordre))
 
-        action = 'created' if created else 'updated'
-        self.stdout.write(f'  [{action.upper()}] {reference} - {data.get("titre", "")[:40]}')
+            existing = set(
+                annonce.photos.values_list('url', 'ordre')
+            )
+            if existing != set(new_photos):
+                annonce.photos.all().delete()
+                Photo.objects.bulk_create([
+                    Photo(annonce=annonce, url=url, ordre=ordre)
+                    for url, ordre in new_photos
+                ])
+                photos_changed = True
+
+        if is_new:
+            action = 'created'
+        elif annonce_changed or photos_changed:
+            action = 'updated'
+        else:
+            action = 'unchanged'
+
+        label = {'created': 'CREE', 'updated': 'MAJ', 'unchanged': 'INCHANGE'}[action]
+        self.stdout.write(f'  [{label}] {reference} - {data.get("titre", "")[:40]}')
 
         return reference, action

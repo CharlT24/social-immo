@@ -16,7 +16,7 @@
                 </a>
                 <h1 class="text-3xl font-semibold tracking-tight">Utilisateurs</h1>
             </div>
-            <p class="text-apple-gray mt-1">{{ users_data|length }} utilisateur{{ users_data|length|pluralize }} affiche{{ users_data|length|pluralize:"","s" }}</p>
+            <p class="text-apple-gray mt-1">{{ users_data|length }} utilisateur{{ users_data|length|pluralize }}</p>
         </div>
         <a href="{% url 'listings:export_utilisateurs_csv' %}"
            class="inline-flex items-center gap-2 bg-green-600 text-white font-medium px-5 py-3 rounded-xl hover:bg-green-700 transition-colors shadow-sm">

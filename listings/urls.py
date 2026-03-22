@@ -34,6 +34,9 @@ urlpatterns = [
     path('api/contact/', views.envoyer_contact, name='envoyer_contact'),
     path('api/pro-avis/', views.submit_pro_avis, name='submit_pro_avis'),
     path('api/contact-read/', views.mark_contact_read, name='mark_contact_read'),
+    # Gestion utilisateurs (admin)
+    path('gestion/utilisateurs/', views.gestion_utilisateurs, name='gestion_utilisateurs'),
+    path('gestion/utilisateurs/export/', views.export_utilisateurs_csv, name='export_utilisateurs_csv'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

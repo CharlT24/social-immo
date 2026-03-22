@@ -3,15 +3,17 @@ from django.db import models
 from django.db.models import Prefetch, Avg, Sum, Count, F, Value, FloatField
 from django.db.models.functions import Cast
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from django.utils import timezone
 from django.contrib import messages
 from django.core.management import call_command
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 import json
+import csv
 
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
@@ -253,9 +255,17 @@ def dashboard(request):
 
     # Commentaires non lus (dernières 24h)
     hier = timezone.now() - timedelta(days=1)
+    semaine = timezone.now() - timedelta(days=7)
     nouveaux_commentaires = Commentaire.objects.filter(
         created_at__gte=hier
     ).count()
+
+    # Stats utilisateurs
+    total_users = User.objects.count()
+    total_pros = ProProfile.objects.filter(is_active=True).count()
+    total_agences_count = Agence.objects.filter(is_active=True).count()
+    nouveaux_users_semaine = User.objects.filter(date_joined__gte=semaine).count()
+    derniers_users = User.objects.order_by('-date_joined')[:5]
 
     context = {
         'total_annonces': total_annonces,
@@ -265,6 +275,11 @@ def dashboard(request):
         'annonces_aujourdhui': annonces_aujourdhui,
         'dernieres_annonces': dernieres_annonces,
         'nouveaux_commentaires': nouveaux_commentaires,
+        'total_users': total_users,
+        'total_pros': total_pros,
+        'total_agences_count': total_agences_count,
+        'nouveaux_users_semaine': nouveaux_users_semaine,
+        'derniers_users': derniers_users,
     }
     return render(request, 'listings/dashboard.html', context)
 
@@ -1106,6 +1121,122 @@ def mark_contact_read(request):
     demande.is_read = True
     demande.save(update_fields=['is_read'])
     return JsonResponse({'success': True})
+
+
+@login_required
+def gestion_utilisateurs(request):
+    """Liste de tous les utilisateurs avec filtre par role"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    role_filter = request.GET.get('role', '').strip()
+
+    users = User.objects.all().prefetch_related('agence').order_by('-date_joined')
+
+    # Pre-fetch pro profiles
+    pro_user_ids = set(ProProfile.objects.values_list('user_id', flat=True))
+    pro_profiles = {p.user_id: p for p in ProProfile.objects.all()}
+
+    # Build user list with roles
+    users_data = []
+    for u in users:
+        # Determine role
+        role = 'client'
+        role_label = 'Client'
+        pro = pro_profiles.get(u.id)
+        agence = u.agence.first() if u.agence.exists() else None
+
+        if u.is_staff:
+            role = 'admin'
+            role_label = 'Admin'
+        elif pro:
+            role = 'pro'
+            role_label = 'Pro - ' + pro.get_metier_display()
+        elif agence:
+            role = 'agence'
+            role_label = 'Agence - ' + agence.nom
+
+        if role_filter and role != role_filter:
+            continue
+
+        users_data.append({
+            'user': u,
+            'role': role,
+            'role_label': role_label,
+            'pro_profile': pro,
+            'agence': agence,
+        })
+
+    # Stats
+    total_users = User.objects.count()
+    total_clients = User.objects.filter(is_staff=False).exclude(
+        id__in=ProProfile.objects.values_list('user_id', flat=True)
+    ).exclude(
+        id__in=Agence.objects.values_list('responsable_id', flat=True)
+    ).count()
+    total_pros = ProProfile.objects.count()
+    total_agences = Agence.objects.count()
+
+    context = {
+        'users_data': users_data,
+        'current_role': role_filter,
+        'total_users': total_users,
+        'total_clients': total_clients,
+        'total_pros': total_pros,
+        'total_agences': total_agences,
+    }
+    return render(request, 'listings/gestion_utilisateurs.html', context)
+
+
+@login_required
+def export_utilisateurs_csv(request):
+    """Export CSV de tous les utilisateurs"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="utilisateurs_social_immo.csv"'
+    response.write('\ufeff')  # BOM for Excel
+
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['Username', 'Email', 'Role', 'Detail', 'Ville', 'Telephone', 'Date inscription', 'Derniere connexion'])
+
+    users = User.objects.all().prefetch_related('agence').order_by('-date_joined')
+    pro_profiles = {p.user_id: p for p in ProProfile.objects.all()}
+
+    for u in users:
+        role = 'Client'
+        detail = ''
+        ville = ''
+        telephone = ''
+        pro = pro_profiles.get(u.id)
+
+        if u.is_staff:
+            role = 'Admin'
+        elif pro:
+            role = 'Pro'
+            detail = pro.nom_entreprise + ' (' + pro.get_metier_display() + ')'
+            ville = pro.ville
+            telephone = pro.telephone
+        elif u.agence.exists():
+            agence = u.agence.first()
+            role = 'Agence'
+            detail = agence.nom
+            ville = getattr(agence, 'adresse', '')
+            telephone = getattr(agence, 'contact_telephone', '')
+
+        writer.writerow([
+            u.username,
+            u.email,
+            role,
+            detail,
+            ville,
+            telephone,
+            u.date_joined.strftime('%d/%m/%Y %H:%M'),
+            u.last_login.strftime('%d/%m/%Y %H:%M') if u.last_login else 'Jamais',
+        ])
+
+    return response
 
 
 def cgu(request):

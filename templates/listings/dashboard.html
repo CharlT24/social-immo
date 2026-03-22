@@ -95,6 +95,28 @@
 
     </div>
 
+    <!-- User Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <p class="text-sm text-apple-gray font-medium">Utilisateurs</p>
+            <p class="text-2xl font-semibold mt-1">{{ total_users }}</p>
+            <p class="text-xs text-green-600 mt-1">+{{ nouveaux_users_semaine }} cette semaine</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <p class="text-sm text-apple-gray font-medium">Agences</p>
+            <p class="text-2xl font-semibold mt-1">{{ total_agences_count }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-apple">
+            <p class="text-sm text-purple-600 font-medium">Pros</p>
+            <p class="text-2xl font-semibold mt-1">{{ total_pros }}</p>
+        </div>
+        <a href="{% url 'listings:gestion_utilisateurs' %}" class="bg-apple-blue rounded-2xl p-5 shadow-apple text-white hover:bg-blue-600 transition-colors">
+            <p class="text-sm font-medium opacity-80">Gestion</p>
+            <p class="text-lg font-semibold mt-1">Voir tous les utilisateurs</p>
+            <p class="text-xs opacity-70 mt-1">Liste + export CSV</p>
+        </a>
+    </div>
+
     <!-- Two Columns Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

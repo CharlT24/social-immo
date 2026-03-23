@@ -39,30 +39,6 @@
         {% endif %}
     </div>
 
-    <!-- Carousel Fullscreen -->
-    <div id="carousel-overlay" class="hidden fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onclick="if(event.target===this)closeCarousel()">
-        <!-- Close -->
-        <button onclick="closeCarousel()" class="absolute top-6 right-6 text-white/70 hover:text-white z-10 p-2">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-        <!-- Counter -->
-        <div class="absolute top-6 left-6 text-white/70 text-sm font-medium z-10">
-            <span id="carousel-counter"></span>
-        </div>
-        <!-- Prev -->
-        <button onclick="carouselNav(-1)" class="absolute left-4 md:left-8 text-white/70 hover:text-white z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <!-- Image -->
-        <img id="carousel-img" src="" alt="" class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg select-none">
-        <!-- Next -->
-        <button onclick="carouselNav(1)" class="absolute right-4 md:right-8 text-white/70 hover:text-white z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-        <!-- Thumbnails -->
-        <div id="carousel-thumbs" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90vw] px-4 py-2"></div>
-    </div>
-
     <!-- Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
@@ -663,18 +639,39 @@ function envoyerContact(targetId, targetType) {
     });
 }
 
-// ========== Carousel ==========
-const carouselPhotos = [{% for photo in annonce.photos.all %}"{{ photo.url }}"{% if not forloop.last %},{% endif %}{% endfor %}];
-let carouselIdx = 0;
+}
+</script>
+
+<!-- Carousel Fullscreen (hors de tout conteneur) -->
+<div id="carousel-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.95); justify-content:center; align-items:center;">
+    <button onclick="closeCarousel()" style="position:absolute; top:24px; right:24px; color:rgba(255,255,255,0.7); background:none; border:none; cursor:pointer; padding:8px; z-index:10;">
+        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <div id="carousel-counter" style="position:absolute; top:28px; left:28px; color:rgba(255,255,255,0.7); font-size:14px; font-weight:600; z-index:10;"></div>
+    <button onclick="carouselNav(-1)" style="position:absolute; left:16px; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.1); border:none; cursor:pointer; padding:14px; border-radius:50%; z-index:10;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <img id="carousel-img" src="" alt="" style="max-height:85vh; max-width:90vw; object-fit:contain; border-radius:8px; user-select:none;">
+    <button onclick="carouselNav(1)" style="position:absolute; right:16px; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.1); border:none; cursor:pointer; padding:14px; border-radius:50%; z-index:10;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <div id="carousel-thumbs" style="position:absolute; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:8px; overflow-x:auto; max-width:90vw; padding:8px 16px;"></div>
+</div>
+
+<script>
+// ========== Carousel (script isole) ==========
+var carouselPhotos = [{% for photo in annonce.photos.all %}"{{ photo.url|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+var carouselIdx = 0;
 
 function openCarousel(idx) {
     carouselIdx = idx;
     updateCarousel();
-    document.getElementById('carousel-overlay').classList.remove('hidden');
+    var overlay = document.getElementById('carousel-overlay');
+    overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 function closeCarousel() {
-    document.getElementById('carousel-overlay').classList.add('hidden');
+    document.getElementById('carousel-overlay').style.display = 'none';
     document.body.style.overflow = '';
 }
 function carouselNav(dir) {
@@ -684,20 +681,23 @@ function carouselNav(dir) {
 function updateCarousel() {
     document.getElementById('carousel-img').src = carouselPhotos[carouselIdx];
     document.getElementById('carousel-counter').textContent = (carouselIdx + 1) + ' / ' + carouselPhotos.length;
-    // Thumbnails
-    const thumbs = document.getElementById('carousel-thumbs');
+    var thumbs = document.getElementById('carousel-thumbs');
     thumbs.innerHTML = '';
-    carouselPhotos.forEach((url, i) => {
-        const t = document.createElement('img');
-        t.src = url;
-        t.className = 'w-16 h-12 object-cover rounded-lg cursor-pointer transition-all flex-shrink-0 ' +
-            (i === carouselIdx ? 'ring-2 ring-white opacity-100' : 'opacity-50 hover:opacity-80');
-        t.onclick = (e) => { e.stopPropagation(); carouselIdx = i; updateCarousel(); };
+    for (var i = 0; i < carouselPhotos.length; i++) {
+        var t = document.createElement('img');
+        t.src = carouselPhotos[i];
+        t.style.cssText = 'width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;transition:opacity 0.2s;opacity:' + (i === carouselIdx ? '1' : '0.4');
+        if (i === carouselIdx) t.style.outline = '2px solid white';
+        t.setAttribute('data-idx', i);
+        t.onclick = function(e) { e.stopPropagation(); carouselIdx = parseInt(this.getAttribute('data-idx')); updateCarousel(); };
         thumbs.appendChild(t);
-    });
+    }
 }
-document.addEventListener('keydown', (e) => {
-    if (document.getElementById('carousel-overlay').classList.contains('hidden')) return;
+document.getElementById('carousel-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeCarousel();
+});
+document.addEventListener('keydown', function(e) {
+    if (document.getElementById('carousel-overlay').style.display === 'none') return;
     if (e.key === 'Escape') closeCarousel();
     if (e.key === 'ArrowLeft') carouselNav(-1);
     if (e.key === 'ArrowRight') carouselNav(1);

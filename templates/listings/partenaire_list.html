@@ -9,38 +9,43 @@
 
     {% if not dept and not q %}
     <!-- ========== VUE CARTE ========== -->
-    <div class="text-center mb-10">
+    <div class="text-center mb-8">
         <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-3">Annuaire</h1>
         <p class="text-lg text-apple-gray max-w-xl mx-auto">Cliquez sur un departement pour trouver les agences immobilieres et professionnels pres de chez vous.</p>
     </div>
 
-    <!-- Carte de France (tile map) -->
-    <div class="max-w-xl mx-auto mb-12 relative">
-        <div id="france-map" style="display:grid; grid-template-columns:repeat(12,1fr); grid-template-rows:repeat(15,1fr); gap:3px; aspect-ratio:11/14;"></div>
+    <!-- Carte de France SVG -->
+    <div class="max-w-2xl mx-auto mb-12 relative">
+        <div id="map-loading" class="text-center py-20 text-apple-gray">
+            <svg class="w-8 h-8 animate-spin mx-auto mb-3 text-apple-blue" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            Chargement de la carte...
+        </div>
+        <svg id="france-svg" viewBox="0 0 700 700" style="display:none; width:100%; height:auto;"></svg>
+        <div id="dept-tooltip" style="display:none; position:absolute; background:white; padding:8px 14px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); font-size:13px; font-weight:600; pointer-events:none; z-index:20; white-space:nowrap;"></div>
+    </div>
 
-        <!-- Popup choix type -->
-        <div id="dept-popup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-            <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
-                <button onclick="closePopup()" class="absolute top-4 right-4 text-apple-gray hover:text-apple-text">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-                <div id="popup-dept-icon" class="w-16 h-16 rounded-2xl bg-apple-blue/10 flex items-center justify-center mx-auto mb-4">
-                    <span id="popup-dept-code" class="text-2xl font-bold text-apple-blue"></span>
-                </div>
-                <h3 id="popup-dept-name" class="text-xl font-semibold mb-1"></h3>
-                <p class="text-sm text-apple-gray mb-6">Que recherchez-vous ?</p>
-                <div class="flex flex-col gap-3">
-                    <a id="popup-link-immo" href="#"
-                       class="flex items-center justify-center gap-3 bg-apple-blue text-white font-medium py-4 px-6 rounded-2xl hover:bg-blue-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        Agences / Reseaux immobiliers
-                    </a>
-                    <a id="popup-link-pro" href="#"
-                       class="flex items-center justify-center gap-3 bg-purple-600 text-white font-medium py-4 px-6 rounded-2xl hover:bg-purple-700 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        Professionnels / Artisans
-                    </a>
-                </div>
+    <!-- Popup choix type -->
+    <div id="dept-popup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center relative">
+            <button onclick="closePopup()" class="absolute top-4 right-4 text-apple-gray hover:text-apple-text">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="w-16 h-16 rounded-2xl bg-apple-blue/10 flex items-center justify-center mx-auto mb-4">
+                <span id="popup-dept-code" class="text-2xl font-bold text-apple-blue"></span>
+            </div>
+            <h3 id="popup-dept-name" class="text-xl font-semibold mb-1"></h3>
+            <p class="text-sm text-apple-gray mb-6">Que recherchez-vous ?</p>
+            <div class="flex flex-col gap-3">
+                <a id="popup-link-immo" href="#"
+                   class="flex items-center justify-center gap-3 bg-apple-blue text-white font-medium py-4 px-6 rounded-2xl hover:bg-blue-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    Agences / Reseaux immobiliers
+                </a>
+                <a id="popup-link-pro" href="#"
+                   class="flex items-center justify-center gap-3 bg-purple-600 text-white font-medium py-4 px-6 rounded-2xl hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Professionnels / Artisans
+                </a>
             </div>
         </div>
     </div>
@@ -57,12 +62,10 @@
     {% else %}
     <!-- ========== VUE RESULTATS ========== -->
 
-    <!-- Breadcrumb -->
     <nav class="mb-6">
         <a href="{% url 'listings:partenaire_list' %}" class="text-apple-blue text-sm font-medium hover:underline">&larr; Retour a la carte</a>
     </nav>
 
-    <!-- Header departement -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-semibold tracking-tight">
@@ -73,8 +76,6 @@
                 {% if q %} - Recherche : "{{ q }}"{% endif %}
             </p>
         </div>
-
-        <!-- Onglets type -->
         <div class="flex gap-2">
             <a href="?dept={{ dept }}&type=immo{% if q %}&q={{ q }}{% endif %}"
                class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all {% if type_filter == 'immo' %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
@@ -87,7 +88,6 @@
         </div>
     </div>
 
-    <!-- Barre de recherche -->
     <form method="get" class="mb-8">
         <input type="hidden" name="dept" value="{{ dept }}">
         <input type="hidden" name="type" value="{{ type_filter }}">
@@ -95,21 +95,16 @@
             <input type="text" name="q" value="{{ q }}"
                    placeholder="Affiner par ville ou code postal..."
                    class="flex-1 px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent transition-all shadow-apple">
-            <button type="submit"
-                    class="bg-apple-blue text-white font-medium px-6 py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">
-                Rechercher
-            </button>
+            <button type="submit" class="bg-apple-blue text-white font-medium px-6 py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">Rechercher</button>
         </div>
     </form>
 
-    <!-- Resultats: Agences -->
     {% if type_filter != 'pro' and agences %}
     <div class="mb-10">
         <h2 class="text-lg font-semibold mb-4">Agences immobilieres <span class="text-apple-gray font-normal">({{ agences|length }})</span></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for agence in agences %}
-            <a href="{% url 'listings:agence_profil' agence.id %}"
-               class="bg-white rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-0.5 block">
+            <a href="{% url 'listings:agence_profil' agence.id %}" class="bg-white rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-0.5 block">
                 <div class="flex items-center gap-4 mb-4">
                     {% if agence.logo_url %}
                     <img src="{{ agence.logo_url }}" alt="{{ agence.nom }}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0">
@@ -139,14 +134,12 @@
     </div>
     {% endif %}
 
-    <!-- Resultats: Pros -->
     {% if type_filter != 'immo' and pros %}
     <div class="mb-10">
         <h2 class="text-lg font-semibold mb-4">Professionnels <span class="text-apple-gray font-normal">({{ pros|length }})</span></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for pro in pros %}
-            <a href="{% url 'listings:pro_profil' pro.id %}"
-               class="bg-white rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-0.5 block">
+            <a href="{% url 'listings:pro_profil' pro.id %}" class="bg-white rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-0.5 block">
                 <div class="flex items-center gap-4 mb-4">
                     {% if pro.photo_url %}
                     <img src="{{ pro.photo_url }}" alt="{{ pro.nom_entreprise }}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0">
@@ -181,7 +174,6 @@
     </div>
     {% endif %}
 
-    <!-- Empty state -->
     {% if not agences and not pros %}
     <div class="text-center py-20">
         <div class="w-20 h-20 bg-apple-bg rounded-full flex items-center justify-center mx-auto mb-6">
@@ -197,42 +189,96 @@
 </div>
 
 <script>
-// Departements avec positions dans la grille (code, nom, row, col)
-const DEPTS = [
-    ['62','Pas-de-Calais',0,6],['59','Nord',0,7],
-    ['80','Somme',1,5],['02','Aisne',1,7],['08','Ardennes',1,8],
-    ['76','Seine-Maritime',2,3],['60','Oise',2,5],['51','Marne',2,7],['55','Meuse',2,8],['57','Moselle',2,9],
-    ['14','Calvados',3,2],['27','Eure',3,3],['95',"Val-d'Oise",3,5],['93','Seine-St-Denis',3,6],['54','Meurthe-et-Mos.',3,9],['67','Bas-Rhin',3,10],
-    ['50','Manche',4,1],['61','Orne',4,2],['78','Yvelines',4,4],['92','Hauts-de-Seine',4,5],['75','Paris',4,6],['77','Seine-et-Marne',4,7],['88','Vosges',4,9],['68','Haut-Rhin',4,10],
-    ['29','Finistere',5,0],['22',"Cotes-d'Armor",5,1],['35','Ille-et-Vilaine',5,2],['53','Mayenne',5,3],['28','Eure-et-Loir',5,4],['91','Essonne',5,5],['94','Val-de-Marne',5,6],['10','Aube',5,7],['52','Haute-Marne',5,8],['70','Haute-Saone',5,9],['90','Belfort',5,10],
-    ['56','Morbihan',6,0],['44','Loire-Atlantique',6,1],['72','Sarthe',6,3],['45','Loiret',6,5],['89','Yonne',6,7],['21',"Cote-d'Or",6,8],['39','Jura',6,9],['25','Doubs',6,10],
-    ['85','Vendee',7,1],['49','Maine-et-Loire',7,2],['37','Indre-et-Loire',7,3],['41','Loir-et-Cher',7,4],['18','Cher',7,5],['58','Nievre',7,7],['71','Saone-et-Loire',7,8],['01','Ain',7,9],['74','Haute-Savoie',7,10],
-    ['17','Charente-Mar.',8,1],['79','Deux-Sevres',8,2],['86','Vienne',8,3],['36','Indre',8,4],['03','Allier',8,5],['42','Loire',8,7],['69','Rhone',8,8],['73','Savoie',8,9],['38','Isere',8,10],
-    ['33','Gironde',9,1],['16','Charente',9,2],['87','Haute-Vienne',9,3],['23','Creuse',9,4],['63','Puy-de-Dome',9,5],['43','Haute-Loire',9,7],['07','Ardeche',9,8],['26','Drome',9,9],['05','Hautes-Alpes',9,10],
-    ['40','Landes',10,0],['47','Lot-et-Garonne',10,1],['24','Dordogne',10,2],['19','Correze',10,3],['15','Cantal',10,4],['48','Lozere',10,6],['30','Gard',10,7],['84','Vaucluse',10,8],['04','Alpes-de-Hte-Pr.',10,9],['06','Alpes-Maritimes',10,10],
-    ['64','Pyr.-Atlantiques',11,0],['65','Hautes-Pyrenees',11,1],['32','Gers',11,2],['46','Lot',11,3],['82','Tarn-et-Garonne',11,4],['12','Aveyron',11,5],['34','Herault',11,7],['13','Bouches-du-Rhone',11,8],['83','Var',11,9],
-    ['09','Ariege',12,1],['31','Haute-Garonne',12,2],['81','Tarn',12,3],['11','Aude',12,5],['66','Pyr.-Orientales',12,6],
-    ['2B','Haute-Corse',11,11],['2A','Corse-du-Sud',12,11],
-];
+// ========== Carte de France GeoJSON ==========
+(function() {
+    var svg = document.getElementById('france-svg');
+    if (!svg) return;
 
-const map = document.getElementById('france-map');
-if (map) {
-    DEPTS.forEach(([code, name, row, col]) => {
-        const tile = document.createElement('div');
-        tile.style.gridRow = row + 1;
-        tile.style.gridColumn = col + 1;
-        tile.className = 'flex items-center justify-center rounded-lg text-[10px] sm:text-xs font-bold cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10 hover:shadow-lg select-none';
-        tile.style.background = '#E8F0FE';
-        tile.style.color = '#0071E3';
-        tile.style.aspectRatio = '1';
-        tile.textContent = code;
-        tile.title = name + ' (' + code + ')';
-        tile.addEventListener('click', () => showPopup(code, name));
-        tile.addEventListener('mouseenter', () => { tile.style.background = '#0071E3'; tile.style.color = '#fff'; });
-        tile.addEventListener('mouseleave', () => { tile.style.background = '#E8F0FE'; tile.style.color = '#0071E3'; });
-        map.appendChild(tile);
-    });
-}
+    var GEOJSON_URL = 'https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson';
+
+    fetch(GEOJSON_URL)
+        .then(function(r) { return r.json(); })
+        .then(function(geojson) {
+            document.getElementById('map-loading').style.display = 'none';
+            svg.style.display = 'block';
+            renderMap(geojson);
+        })
+        .catch(function() {
+            document.getElementById('map-loading').innerHTML = '<p class="text-apple-gray">Impossible de charger la carte. <a href="?dept=75&type=immo" class="text-apple-blue hover:underline">Rechercher par departement</a></p>';
+        });
+
+    function projectPoint(lon, lat) {
+        // Projection simple pour la France metropolitaine
+        var minLon = -5.2, maxLon = 9.6, minLat = 41.3, maxLat = 51.2;
+        var x = (lon - minLon) / (maxLon - minLon) * 620 + 20;
+        var y = (maxLat - lat) / (maxLat - minLat) * 620 + 20;
+        return [x, y];
+    }
+
+    function polygonToPath(coords) {
+        var d = '';
+        for (var i = 0; i < coords.length; i++) {
+            var ring = coords[i];
+            for (var j = 0; j < ring.length; j++) {
+                var pt = projectPoint(ring[j][0], ring[j][1]);
+                d += (j === 0 ? 'M' : 'L') + pt[0].toFixed(1) + ',' + pt[1].toFixed(1);
+            }
+            d += 'Z';
+        }
+        return d;
+    }
+
+    function renderMap(geojson) {
+        var features = geojson.features;
+        for (var i = 0; i < features.length; i++) {
+            var f = features[i];
+            var code = f.properties.code;
+            var nom = f.properties.nom;
+            var geom = f.geometry;
+            var d = '';
+
+            if (geom.type === 'Polygon') {
+                d = polygonToPath(geom.coordinates);
+            } else if (geom.type === 'MultiPolygon') {
+                for (var p = 0; p < geom.coordinates.length; p++) {
+                    d += polygonToPath(geom.coordinates[p]);
+                }
+            }
+
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', '#E8F0FE');
+            path.setAttribute('stroke', '#ffffff');
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('data-code', code);
+            path.setAttribute('data-nom', nom);
+            path.style.cursor = 'pointer';
+            path.style.transition = 'fill 0.2s, transform 0.15s';
+
+            path.addEventListener('mouseenter', function(e) {
+                this.setAttribute('fill', '#0071E3');
+                var tooltip = document.getElementById('dept-tooltip');
+                tooltip.textContent = this.getAttribute('data-nom') + ' (' + this.getAttribute('data-code') + ')';
+                tooltip.style.display = 'block';
+            });
+            path.addEventListener('mousemove', function(e) {
+                var tooltip = document.getElementById('dept-tooltip');
+                var rect = svg.parentElement.getBoundingClientRect();
+                tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+                tooltip.style.top = (e.clientY - rect.top - 36) + 'px';
+            });
+            path.addEventListener('mouseleave', function() {
+                this.setAttribute('fill', '#E8F0FE');
+                document.getElementById('dept-tooltip').style.display = 'none';
+            });
+            path.addEventListener('click', function() {
+                showPopup(this.getAttribute('data-code'), this.getAttribute('data-nom'));
+            });
+
+            svg.appendChild(path);
+        }
+    }
+})();
 
 function showPopup(code, name) {
     document.getElementById('popup-dept-code').textContent = code;

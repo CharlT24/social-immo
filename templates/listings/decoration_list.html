@@ -427,6 +427,7 @@ function closePhotoModal() {
 // Close on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
 
+let userIsStaff = false;
 function loadComments(photoId, type) {
     document.getElementById('commentsLoading').classList.remove('hidden');
     document.getElementById('commentsEmpty').classList.add('hidden');
@@ -435,6 +436,7 @@ function loadComments(photoId, type) {
     fetch(`{% url 'listings:get_photo_comments' %}?photo_id=${photoId}&type=${type}`)
     .then(r => r.json())
     .then(data => {
+        userIsStaff = data.is_staff || false;
         document.getElementById('commentsLoading').classList.add('hidden');
         if (data.comments.length === 0) {
             document.getElementById('commentsEmpty').classList.remove('hidden');
@@ -460,19 +462,38 @@ function loadComments(photoId, type) {
 function renderComments(comments) {
     const list = document.getElementById('commentsList');
     list.innerHTML = comments.map(c => `
-        <div class="flex gap-3 group">
+        <div class="flex gap-3 group" id="comment-${c.id}">
             <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                 <span class="text-xs font-bold text-gray-500">${c.auteur.substring(0,2).toUpperCase()}</span>
             </div>
             <div class="flex-1 min-w-0">
-                <div class="flex items-baseline gap-2">
+                <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-apple-text">${c.auteur}</span>
                     <span class="text-[10px] text-gray-400">${c.created_at}</span>
+                    ${userIsStaff ? `<button onclick="deleteComment(${c.id})" class="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-red-500 hover:text-red-700 ml-auto" title="Supprimer">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>` : ''}
                 </div>
                 <p class="text-sm text-gray-700 mt-0.5 break-words">${c.texte}</p>
             </div>
         </div>
     `).join('');
+}
+
+function deleteComment(commentId) {
+    if (!confirm('Supprimer ce commentaire ?')) return;
+    fetch("{% url 'listings:delete_photo_comment' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ comment_id: commentId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'deleted') {
+            const el = document.getElementById('comment-' + commentId);
+            if (el) el.remove();
+        }
+    });
 }
 
 function postComment(e) {

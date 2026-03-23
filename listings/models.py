@@ -574,6 +574,125 @@ class DemandeContact(models.Model):
         return f"{self.expediteur.username} -> {target}"
 
 
+class AgenceOptions(models.Model):
+    """Options activables par agence (futures options payantes)"""
+
+    agence = models.OneToOneField(
+        Agence, on_delete=models.CASCADE, related_name='options'
+    )
+
+    # --- VISIBILITE ---
+    mise_en_avant = models.BooleanField(
+        default=False, verbose_name='Mise a la une',
+        help_text='Permet de mettre des annonces a la une (priorite dans les recherches)'
+    )
+    nb_mises_en_avant = models.PositiveIntegerField(
+        default=0, verbose_name='Nb annonces a la une autorisees'
+    )
+    remontee_auto = models.BooleanField(
+        default=False, verbose_name='Remontee automatique',
+        help_text='Remonter les annonces en tete toutes les 48h'
+    )
+    badge_premium = models.BooleanField(
+        default=False, verbose_name='Badge Premium',
+        help_text='Badge dore "Premium" sur toutes les annonces de l\'agence'
+    )
+
+    # --- BRANDING ---
+    logo_sur_annonces = models.BooleanField(
+        default=False, verbose_name='Logo sur annonces',
+        help_text='Afficher le logo de l\'agence sur chaque annonce'
+    )
+    page_vitrine = models.BooleanField(
+        default=False, verbose_name='Page vitrine personnalisee',
+        help_text='Page agence enrichie avec description, photos, avis'
+    )
+    bandeau_exclusif = models.BooleanField(
+        default=False, verbose_name='Bandeau Exclusif',
+        help_text='Afficher "Exclusivite" sur certaines annonces'
+    )
+
+    # --- LEADS & CONTACT ---
+    estimation_forward = models.BooleanField(
+        default=False, verbose_name='Reception estimations',
+        help_text='Recevoir les demandes d\'estimation de sa zone'
+    )
+    contact_prioritaire = models.BooleanField(
+        default=False, verbose_name='Contact prioritaire',
+        help_text='Formulaire de contact enrichi avec rappel telephonique'
+    )
+    alertes_email = models.BooleanField(
+        default=False, verbose_name='Alertes email acheteurs',
+        help_text='Envoyer les nouvelles annonces aux acheteurs inscrits dans la zone'
+    )
+
+    # --- STATS & DATA ---
+    stats_avancees = models.BooleanField(
+        default=False, verbose_name='Statistiques avancees',
+        help_text='Nombre de vues, clics, favoris par annonce + tendances'
+    )
+    rapport_mensuel = models.BooleanField(
+        default=False, verbose_name='Rapport mensuel',
+        help_text='Email recapitulatif mensuel avec performances'
+    )
+    donnees_marche = models.BooleanField(
+        default=False, verbose_name='Donnees de marche',
+        help_text='Prix au m2, tendances du secteur, comparatifs'
+    )
+
+    # --- CONTENU ENRICHI ---
+    visite_virtuelle = models.BooleanField(
+        default=False, verbose_name='Visite virtuelle',
+        help_text='Integration de visites 3D (Matterport, etc.)'
+    )
+    video = models.BooleanField(
+        default=False, verbose_name='Videos',
+        help_text='Integrer des videos YouTube/Vimeo sur les annonces'
+    )
+    photos_illimitees = models.BooleanField(
+        default=False, verbose_name='Photos illimitees',
+        help_text='Pas de limite sur le nombre de photos par annonce'
+    )
+
+    # --- DIFFUSION ---
+    multidiffusion = models.BooleanField(
+        default=False, verbose_name='Multidiffusion',
+        help_text='Diffuser sur SeLoger, LeBonCoin, Bien\'ici, etc.'
+    )
+    export_portails = models.BooleanField(
+        default=False, verbose_name='Export portails',
+        help_text='Generer un flux XML compatible portails immobiliers'
+    )
+
+    # --- META ---
+    updated_at = models.DateTimeField(auto_now=True)
+    notes_admin = models.TextField(
+        blank=True, default='', verbose_name='Notes internes',
+        help_text='Notes visibles uniquement par l\'admin'
+    )
+
+    class Meta:
+        verbose_name = 'Options agence'
+        verbose_name_plural = 'Options agences'
+
+    def __str__(self):
+        return f'Options - {self.agence.nom}'
+
+    @property
+    def options_actives(self):
+        """Retourne la liste des options activees"""
+        opts = []
+        for f in self._meta.get_fields():
+            if isinstance(f, models.BooleanField) and f.name != 'id':
+                if getattr(self, f.name):
+                    opts.append(f.verbose_name)
+        return opts
+
+    @property
+    def nb_options_actives(self):
+        return len(self.options_actives)
+
+
 class Estimation(models.Model):
     """Demande d'estimation immobiliere"""
 

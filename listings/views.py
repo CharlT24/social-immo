@@ -23,7 +23,7 @@ from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
-    Estimation
+    Estimation, AgenceOptions
 )
 from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
@@ -1447,6 +1447,7 @@ def get_photo_comments(request):
         'auteur': c.auteur.get_full_name() or c.auteur.username,
         'texte': c.texte,
         'created_at': c.created_at.strftime('%d/%m/%Y %H:%M'),
+        'auteur_id': c.auteur_id,
     } for c in comments]
 
     # Note de l'utilisateur connecte
@@ -1465,7 +1466,22 @@ def get_photo_comments(request):
         'user_note': user_note,
         'average': round(avg_data['avg'], 1) if avg_data['avg'] else 0,
         'note_count': avg_data['count'],
+        'is_staff': request.user.is_staff if request.user.is_authenticated else False,
     })
+
+
+@login_required
+@require_POST
+def delete_photo_comment(request):
+    """Supprimer un commentaire photo - admin uniquement"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Non autorise'}, status=403)
+
+    data = json.loads(request.body)
+    comment_id = data.get('comment_id')
+    comment = get_object_or_404(PhotoCommentaire, id=comment_id)
+    comment.delete()
+    return JsonResponse({'status': 'deleted'})
 
 
 @login_required
@@ -2021,6 +2037,123 @@ def locaux_pro(request):
         'current_tri': tri,
     }
     return render(request, 'listings/locaux_pro.html', context)
+
+
+@login_required
+def gestion_options_agence(request, agence_id):
+    """Gestion des options d'une agence - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agence = get_object_or_404(Agence, id=agence_id)
+    options, created = AgenceOptions.objects.get_or_create(agence=agence)
+
+    if request.method == 'POST':
+        # Toggle les options booleennes
+        bool_fields = [
+            'mise_en_avant', 'remontee_auto', 'badge_premium',
+            'logo_sur_annonces', 'page_vitrine', 'bandeau_exclusif',
+            'estimation_forward', 'contact_prioritaire', 'alertes_email',
+            'stats_avancees', 'rapport_mensuel', 'donnees_marche',
+            'visite_virtuelle', 'video', 'photos_illimitees',
+            'multidiffusion', 'export_portails',
+        ]
+        for field in bool_fields:
+            setattr(options, field, field in request.POST)
+
+        nb = request.POST.get('nb_mises_en_avant', '0')
+        try:
+            options.nb_mises_en_avant = int(nb)
+        except ValueError:
+            options.nb_mises_en_avant = 0
+
+        options.notes_admin = request.POST.get('notes_admin', '')
+        options.save()
+        messages.success(request, f'Options de {agence.nom} mises a jour.')
+        return redirect('listings:gestion_options_agence', agence_id=agence.id)
+
+    # Grouper les options pour l'affichage
+    option_groups = [
+        {
+            'title': 'Visibilite',
+            'icon': 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
+            'color': 'amber',
+            'fields': [
+                ('mise_en_avant', options.mise_en_avant),
+                ('remontee_auto', options.remontee_auto),
+                ('badge_premium', options.badge_premium),
+            ]
+        },
+        {
+            'title': 'Branding',
+            'icon': 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
+            'color': 'purple',
+            'fields': [
+                ('logo_sur_annonces', options.logo_sur_annonces),
+                ('page_vitrine', options.page_vitrine),
+                ('bandeau_exclusif', options.bandeau_exclusif),
+            ]
+        },
+        {
+            'title': 'Leads & Contact',
+            'icon': 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+            'color': 'green',
+            'fields': [
+                ('estimation_forward', options.estimation_forward),
+                ('contact_prioritaire', options.contact_prioritaire),
+                ('alertes_email', options.alertes_email),
+            ]
+        },
+        {
+            'title': 'Stats & Data',
+            'icon': 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+            'color': 'blue',
+            'fields': [
+                ('stats_avancees', options.stats_avancees),
+                ('rapport_mensuel', options.rapport_mensuel),
+                ('donnees_marche', options.donnees_marche),
+            ]
+        },
+        {
+            'title': 'Contenu enrichi',
+            'icon': 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+            'color': 'pink',
+            'fields': [
+                ('visite_virtuelle', options.visite_virtuelle),
+                ('video', options.video),
+                ('photos_illimitees', options.photos_illimitees),
+            ]
+        },
+        {
+            'title': 'Diffusion',
+            'icon': 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            'color': 'indigo',
+            'fields': [
+                ('multidiffusion', options.multidiffusion),
+                ('export_portails', options.export_portails),
+            ]
+        },
+    ]
+
+    # Enrichir avec les meta du modele
+    for group in option_groups:
+        enriched = []
+        for field_name, value in group['fields']:
+            field = AgenceOptions._meta.get_field(field_name)
+            enriched.append({
+                'name': field_name,
+                'label': field.verbose_name,
+                'help': field.help_text,
+                'value': value,
+            })
+        group['fields'] = enriched
+
+    context = {
+        'agence': agence,
+        'options': options,
+        'option_groups': option_groups,
+    }
+    return render(request, 'listings/gestion_options.html', context)
 
 
 def cgu(request):

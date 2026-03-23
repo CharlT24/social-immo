@@ -25,6 +25,7 @@ urlpatterns = [
     path('gestion/toggle/<int:agence_id>/', views.toggle_agence_active, name='toggle_agence_active'),
     path('gestion/renvoyer-acces/<int:agence_id>/', views.renvoyer_acces, name='renvoyer_acces'),
     path('gestion/conseillers/<int:agence_id>/', views.gestion_conseillers, name='gestion_conseillers'),
+    path('gestion/options/<int:agence_id>/', views.gestion_options_agence, name='gestion_options_agence'),
     path('gestion/conseillers/renvoyer/<int:conseiller_id>/', views.renvoyer_acces_conseiller, name='renvoyer_acces_conseiller'),
     # Espace Pro
     path('pro/inscription/', views.pro_inscription, name='pro_inscription'),
@@ -40,6 +41,7 @@ urlpatterns = [
     path('api/contact-read/', views.mark_contact_read, name='mark_contact_read'),
     path('api/photo-comment/', views.post_photo_comment, name='post_photo_comment'),
     path('api/photo-comments/', views.get_photo_comments, name='get_photo_comments'),
+    path('api/photo-comment/delete/', views.delete_photo_comment, name='delete_photo_comment'),
     # Gestion utilisateurs (admin)
     path('gestion/utilisateurs/', views.gestion_utilisateurs, name='gestion_utilisateurs'),
     path('gestion/utilisateurs/export/', views.export_utilisateurs_csv, name='export_utilisateurs_csv'),

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier {{ agence.nom }} - Admin | Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <nav class="mb-2">
+                <a href="{% url 'listings:gestion_agences' %}" class="text-apple-blue text-sm font-medium hover:underline">&larr; Retour aux agences</a>
+            </nav>
+            <h1 class="text-3xl font-semibold tracking-tight">{{ agence.nom }}</h1>
+            <p class="text-apple-gray mt-1">Reference : <span class="font-mono bg-gray-100 px-2 py-0.5 rounded text-xs">{{ agence.reference }}</span></p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'listings:agence_profil' agence.id %}" target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-apple-blue hover:underline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                Page publique
+            </a>
+            {% if agence.is_active %}
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Active
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2.5 py-1 rounded-full">
+                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Inactive
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl flex items-center gap-3 {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span class="text-sm font-medium">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Stats rapides -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-2xl p-4 shadow-apple text-center">
+            <div class="text-2xl font-bold text-apple-text">{{ nb_biens }}</div>
+            <div class="text-xs text-apple-gray mt-1">Biens actifs</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-apple text-center">
+            <div class="text-2xl font-bold text-apple-text">{{ conseillers.count }}</div>
+            <div class="text-xs text-apple-gray mt-1">Conseillers</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-apple text-center">
+            <div class="text-sm font-semibold text-apple-text">{% if agence.departement %}{{ agence.departement }}{% else %}-{% endif %}</div>
+            <div class="text-xs text-apple-gray mt-1">Departement</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-apple text-center">
+            <div class="text-sm font-semibold text-apple-text">{% if agence.last_import %}{{ agence.last_import|date:"d/m/Y H:i" }}{% else %}Jamais{% endif %}</div>
+            <div class="text-xs text-apple-gray mt-1">Dernier import</div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Identite -->
+        <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Identite</h2>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Nom de l'agence *</label>
+                        <input type="text" name="nom" value="{{ agence.nom }}" required class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Reference</label>
+                        <input type="text" name="reference" value="{{ agence.reference }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono">
+                        <p class="text-xs text-apple-gray mt-1">Identifiant utilise pour lier les biens (client_reference)</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Description</label>
+                    <textarea name="description" rows="4" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="Presentation de l'agence...">{{ agence.description }}</textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">SIRET / RCS</label>
+                        <input type="text" name="siret" value="{{ agence.siret }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="123 456 789 00012">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">URL du logo</label>
+                        <input type="url" name="logo_url" value="{{ agence.logo_url }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="https://...">
+                        {% if agence.logo_url %}
+                        <div class="mt-2 flex items-center gap-3">
+                            <img src="{{ agence.logo_url }}" alt="Logo" class="w-12 h-12 rounded-lg object-cover border">
+                            <span class="text-xs text-apple-gray">Apercu</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Localisation -->
+        <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Localisation</h2>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Adresse</label>
+                    <input type="text" name="adresse" value="{{ agence.adresse }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="12 rue de la Paix">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Code postal</label>
+                        <input type="text" name="code_postal" value="{{ agence.code_postal }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="75001">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold mb-1.5">Ville</label>
+                        <input type="text" name="ville" value="{{ agence.ville }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="Paris">
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                    <p class="text-xs text-blue-700">
+                        {% if agence.departement %}
+                        Departement detecte : <strong>{{ agence.departement }}</strong> — l'agence est visible sur la carte de l'annuaire.
+                        {% else %}
+                        Renseignez un code postal pour que l'agence apparaisse sur la carte de l'annuaire.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Contact</h2>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Nom du contact</label>
+                        <input type="text" name="contact_nom" value="{{ agence.contact_nom }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Telephone</label>
+                        <input type="tel" name="contact_telephone" value="{{ agence.contact_telephone }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Email</label>
+                        <input type="email" name="contact_email" value="{{ agence.contact_email }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Site web</label>
+                        <input type="url" name="site_web" value="{{ agence.site_web }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="https://www.mon-agence.fr">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Horaires d'ouverture</label>
+                    <input type="text" name="horaires" value="{{ agence.horaires }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="Lun-Ven 9h-18h, Sam 10h-13h">
+                </div>
+            </div>
+        </div>
+
+        <!-- Flux XML -->
+        <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Flux XML</h2>
+            </div>
+            <div class="p-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">URL du flux</label>
+                    <input type="url" name="feed_url" value="{{ agence.feed_url }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="https://logiciel-immo-clean.vercel.app/api/export/socialimmo/...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4">
+            <button type="submit" class="bg-apple-blue text-white font-semibold px-8 py-3 rounded-full hover:bg-blue-600 transition-colors text-sm">
+                Enregistrer les modifications
+            </button>
+            <a href="{% url 'listings:gestion_agences' %}" class="text-sm text-apple-gray hover:text-apple-text transition-colors">Annuler</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

@@ -273,8 +273,16 @@ class Command(BaseCommand):
         if prestation is not None:
             type_trans = self.get_text(prestation, 'type', 'V')
             valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
+            if type_trans not in valid_types:
+                type_trans = 'V'
+
+            # Auto-detect biens pro via libelle_type
+            libelle = data.get('libelle_type', '').lower()
+            if libelle == 'local commercial' and type_trans not in ['F', 'B']:
+                type_trans = 'F'  # Classer en fonds de commerce
+
             data.update({
-                'type_transaction': type_trans if type_trans in valid_types else 'V',
+                'type_transaction': type_trans,
                 'prix': self.get_decimal(prestation, 'prix', Decimal('0')),
                 'frais_agence': self.get_decimal(prestation, 'frais_agence'),
                 'honoraires_payeurs': self.get_text(prestation, 'honoraires_payeurs'),

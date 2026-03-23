@@ -34,16 +34,20 @@ def homepage(request):
     count_vente = Annonce.objects.filter(is_active=True, type_transaction='V').count()
     count_location = Annonce.objects.filter(is_active=True, type_transaction='L').count()
 
-    # 3 biens Prestige (> 500 000 €)
+    # 3 biens Prestige (> 500 000 €, hors pro)
     biens_prestige = Annonce.objects.filter(
         is_active=True, prix__gt=500000
+    ).exclude(
+        type_transaction__in=['F', 'B']
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
     ).order_by('-created_at')[:3]
 
-    # 3 biens accessibles (<= 500 000 €)
+    # 3 biens accessibles (<= 500 000 €, hors pro)
     biens_accessibles = Annonce.objects.filter(
         is_active=True, prix__gt=0, prix__lte=500000
+    ).exclude(
+        type_transaction__in=['F', 'B']
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
     ).order_by('-created_at')[:3]

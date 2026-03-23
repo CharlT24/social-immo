@@ -164,20 +164,26 @@
     <div id="recently-viewed-grid" class="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style="-ms-overflow-style:none;scrollbar-width:none;"></div>
 </section>
 
-<!-- ==================== DERNIERES ARRIVEES ==================== -->
+<!-- ==================== BIENS PRESTIGE ==================== -->
+{% if biens_prestige %}
 <section class="max-w-7xl mx-auto px-6 mb-16">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold tracking-tight">Dernieres arrivees</h2>
-        <a href="{% url 'listings:search_results' %}?tri=date" class="text-sm font-semibold text-apple-blue hover:underline flex items-center gap-1">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                Prestige
+            </h2>
+            <p class="text-sm text-apple-gray mt-1">Nos biens d'exception</p>
+        </div>
+        <a href="{% url 'listings:search_results' %}?prix_min=500000&tri=prix_desc" class="text-sm font-semibold text-apple-blue hover:underline flex items-center gap-1">
             Voir tout
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for annonce in dernieres_annonces %}
-        <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1">
-            <!-- Image -->
+        {% for annonce in biens_prestige %}
+        <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1 ring-1 ring-amber-200/50">
             <div class="aspect-[4/3] overflow-hidden relative">
                 {% if annonce.photo_principale %}
                 <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}"
@@ -187,16 +193,16 @@
                     <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
                 </div>
                 {% endif %}
-                <!-- Badge nouveau -->
-                <span class="absolute top-3 left-3 bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Nouveau</span>
-                <!-- Photo count -->
+                <span class="absolute top-3 left-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    Prestige
+                </span>
                 {% if annonce.photos.count > 1 %}
                 <span class="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-lg flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     {{ annonce.photos.count }}
                 </span>
                 {% endif %}
-                <!-- Favori -->
                 <button type="button"
                         class="favorite-btn absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all {% if annonce.id in user_favorites %}is-liked{% endif %}"
                         data-annonce-id="{{ annonce.id }}"
@@ -207,14 +213,8 @@
                     </svg>
                 </button>
             </div>
-            <!-- Content -->
             <div class="p-5">
-                <div class="flex items-start justify-between gap-2 mb-2">
-                    <div class="text-xl font-bold tracking-tight">{{ annonce.prix_format }}</div>
-                    {% if annonce.surface and annonce.prix %}
-                    <span class="text-xs text-apple-gray bg-gray-100 px-2 py-1 rounded-md whitespace-nowrap">{{ annonce.prix|floatformat:0 }} / {{ annonce.surface|floatformat:0 }} = ~prix/m2</span>
-                    {% endif %}
-                </div>
+                <div class="text-xl font-bold tracking-tight mb-2">{{ annonce.prix_format }}</div>
                 <h3 class="text-sm text-apple-gray font-medium mb-2 line-clamp-1">{{ annonce.titre }}</h3>
                 <div class="flex items-center gap-3 text-xs text-apple-gray">
                     {% if annonce.surface %}<span>{{ annonce.surface }} m2</span>{% endif %}
@@ -239,6 +239,78 @@
         {% endfor %}
     </div>
 </section>
+{% endif %}
+
+<!-- ==================== VOTRE FUTUR CHEZ VOUS ==================== -->
+{% if biens_accessibles %}
+<section class="max-w-7xl mx-auto px-6 mb-16">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight">Votre futur chez vous</h2>
+            <p class="text-sm text-apple-gray mt-1">Des biens a votre portee, prets a devenir votre cocon</p>
+        </div>
+        <a href="{% url 'listings:search_results' %}?prix_max=500000&tri=date" class="text-sm font-semibold text-apple-blue hover:underline flex items-center gap-1">
+            Voir tout
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for annonce in biens_accessibles %}
+        <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1">
+            <div class="aspect-[4/3] overflow-hidden relative">
+                {% if annonce.photo_principale %}
+                <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                {% else %}
+                <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                </div>
+                {% endif %}
+                <span class="absolute top-3 left-3 bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Nouveau</span>
+                {% if annonce.photos.count > 1 %}
+                <span class="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-lg flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    {{ annonce.photos.count }}
+                </span>
+                {% endif %}
+                <button type="button"
+                        class="favorite-btn absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all {% if annonce.id in user_favorites %}is-liked{% endif %}"
+                        data-annonce-id="{{ annonce.id }}"
+                        {% if not user.is_authenticated %}data-login-url="{% url 'account_login' %}"{% endif %}
+                        onclick="event.preventDefault();event.stopPropagation();toggleFav(this);">
+                    <svg class="w-4 h-4 heart-icon" viewBox="0 0 24 24" fill="{% if annonce.id in user_favorites %}#EF4444{% else %}none{% endif %}" stroke="{% if annonce.id in user_favorites %}#EF4444{% else %}#6B7280{% endif %}" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-5">
+                <div class="text-xl font-bold tracking-tight mb-2">{{ annonce.prix_format }}</div>
+                <h3 class="text-sm text-apple-gray font-medium mb-2 line-clamp-1">{{ annonce.titre }}</h3>
+                <div class="flex items-center gap-3 text-xs text-apple-gray">
+                    {% if annonce.surface %}<span>{{ annonce.surface }} m2</span>{% endif %}
+                    {% if annonce.nb_pieces %}<span>{{ annonce.nb_pieces }} p.</span>{% endif %}
+                    {% if annonce.nb_chambres %}<span>{{ annonce.nb_chambres }} ch.</span>{% endif %}
+                </div>
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                    <span class="text-xs text-apple-gray">{{ annonce.ville }} ({{ annonce.code_postal }})</span>
+                    {% if annonce.dpe_etiquette_conso %}
+                    <span class="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold
+                        {% if annonce.dpe_etiquette_conso == 'A' %}bg-green-100 text-green-700
+                        {% elif annonce.dpe_etiquette_conso == 'B' %}bg-lime-100 text-lime-700
+                        {% elif annonce.dpe_etiquette_conso == 'C' %}bg-yellow-100 text-yellow-700
+                        {% elif annonce.dpe_etiquette_conso == 'D' %}bg-orange-100 text-orange-700
+                        {% elif annonce.dpe_etiquette_conso == 'E' %}bg-red-100 text-red-600
+                        {% elif annonce.dpe_etiquette_conso == 'F' %}bg-red-200 text-red-700
+                        {% else %}bg-red-300 text-red-800{% endif %}">{{ annonce.dpe_etiquette_conso }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 
 <!-- ==================== SEO LINKS ==================== -->
 {% if villes_populaires %}

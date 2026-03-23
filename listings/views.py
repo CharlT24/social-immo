@@ -34,10 +34,19 @@ def homepage(request):
     count_vente = Annonce.objects.filter(is_active=True, type_transaction='V').count()
     count_location = Annonce.objects.filter(is_active=True, type_transaction='L').count()
 
-    # 6 dernieres annonces
-    dernieres_annonces = Annonce.objects.filter(is_active=True).prefetch_related(
+    # 3 biens Prestige (> 500 000 €)
+    biens_prestige = Annonce.objects.filter(
+        is_active=True, prix__gt=500000
+    ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).order_by('-created_at')[:6]
+    ).order_by('-created_at')[:3]
+
+    # 3 biens accessibles (<= 500 000 €)
+    biens_accessibles = Annonce.objects.filter(
+        is_active=True, prix__gt=0, prix__lte=500000
+    ).prefetch_related(
+        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+    ).order_by('-created_at')[:3]
 
     # Villes populaires (top 12 par nombre d'annonces)
     villes_populaires = Annonce.objects.filter(
@@ -57,7 +66,8 @@ def homepage(request):
         'total_annonces': total_annonces,
         'count_vente': count_vente,
         'count_location': count_location,
-        'dernieres_annonces': dernieres_annonces,
+        'biens_prestige': biens_prestige,
+        'biens_accessibles': biens_accessibles,
         'villes_populaires': villes_populaires,
         'user_favorites': user_favorites,
     }
@@ -279,6 +289,13 @@ def dashboard(request):
     nouveaux_users_semaine = User.objects.filter(date_joined__gte=semaine).count()
     derniers_users = User.objects.order_by('-date_joined')[:5]
 
+    # Estimations
+    estimations_en_attente = Estimation.objects.filter(is_treated=False).order_by('-created_at')
+    estimations_traitees = Estimation.objects.filter(is_treated=True).select_related('agence_assignee').order_by('-created_at')[:10]
+    total_estimations = Estimation.objects.count()
+    total_estimations_en_attente = estimations_en_attente.count()
+    agences_actives = Agence.objects.filter(is_active=True).order_by('nom')
+
     context = {
         'total_annonces': total_annonces,
         'prix_moyen': stats['prix_moyen'] or 0,
@@ -292,6 +309,11 @@ def dashboard(request):
         'total_agences_count': total_agences_count,
         'nouveaux_users_semaine': nouveaux_users_semaine,
         'derniers_users': derniers_users,
+        'estimations_en_attente': estimations_en_attente,
+        'estimations_traitees': estimations_traitees,
+        'total_estimations': total_estimations,
+        'total_estimations_en_attente': total_estimations_en_attente,
+        'agences_actives': agences_actives,
     }
     return render(request, 'listings/dashboard.html', context)
 
@@ -1860,6 +1882,57 @@ def estimation(request):
         messages.success(request, 'Votre demande d\'estimation a bien ete envoyee ! Nous vous recontacterons rapidement.')
         return redirect('listings:estimation')
     return render(request, 'listings/estimation.html')
+
+
+@login_required
+@require_POST
+def assigner_estimation(request, estimation_id):
+    """Assigner une demande d'estimation a une agence"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    est = get_object_or_404(Estimation, id=estimation_id)
+    agence_id = request.POST.get('agence_id')
+
+    if not agence_id:
+        messages.error(request, 'Veuillez selectionner une agence.')
+        return redirect('listings:dashboard')
+
+    agence = get_object_or_404(Agence, id=agence_id, is_active=True)
+    est.agence_assignee = agence
+    est.is_treated = True
+    est.save()
+
+    # Envoyer un email a l'agence
+    if agence.contact_email:
+        try:
+            site_url = request.build_absolute_uri('/')[:-1]
+            send_mail(
+                subject=f'[Social Immo] Nouvelle demande d\'estimation - {est.ville}',
+                message=(
+                    f'Bonjour {agence.contact_nom or agence.nom},\n\n'
+                    f'Une demande d\'estimation vous a ete transmise via Social Immo.\n\n'
+                    f'--- Details de la demande ---\n'
+                    f'Nom du demandeur: {est.nom}\n'
+                    f'Email: {est.email}\n'
+                    f'Telephone: {est.telephone or "Non renseigne"}\n\n'
+                    f'Type de bien: {est.get_type_bien_display()}\n'
+                    f'Localisation: {est.ville} ({est.code_postal})\n'
+                    f'Surface: {est.surface or "?"} m2\n'
+                    f'Pieces: {est.nb_pieces or "?"}\n\n'
+                    f'Message du demandeur:\n{est.message or "(aucun)"}\n\n'
+                    f'---\n'
+                    f'Connectez-vous sur {site_url}/mon-agence/ pour gerer vos demandes.\n\n'
+                    f'L\'equipe Social Immo'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[agence.contact_email],
+            )
+        except Exception:
+            pass
+
+    messages.success(request, f'Estimation de {est.nom} assignee a {agence.nom}.')
+    return redirect('listings:dashboard')
 
 
 def cgu(request):

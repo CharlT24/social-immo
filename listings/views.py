@@ -15,10 +15,15 @@ from datetime import timedelta
 import json
 import csv
 
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db.models import Q
+
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller
+    PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
+    Estimation
 )
 from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
@@ -423,37 +428,85 @@ def decoration_list(request):
     return render(request, 'listings/decoration_list.html', context)
 
 
+DEPARTEMENTS = {
+    '01': 'Ain', '02': 'Aisne', '03': 'Allier', '04': 'Alpes-de-Haute-Provence',
+    '05': 'Hautes-Alpes', '06': 'Alpes-Maritimes', '07': 'Ardeche', '08': 'Ardennes',
+    '09': 'Ariege', '10': 'Aube', '11': 'Aude', '12': 'Aveyron',
+    '13': 'Bouches-du-Rhone', '14': 'Calvados', '15': 'Cantal', '16': 'Charente',
+    '17': 'Charente-Maritime', '18': 'Cher', '19': 'Correze', '2A': 'Corse-du-Sud',
+    '2B': 'Haute-Corse', '21': 'Cote-d\'Or', '22': 'Cotes-d\'Armor', '23': 'Creuse',
+    '24': 'Dordogne', '25': 'Doubs', '26': 'Drome', '27': 'Eure',
+    '28': 'Eure-et-Loir', '29': 'Finistere', '30': 'Gard', '31': 'Haute-Garonne',
+    '32': 'Gers', '33': 'Gironde', '34': 'Herault', '35': 'Ille-et-Vilaine',
+    '36': 'Indre', '37': 'Indre-et-Loire', '38': 'Isere', '39': 'Jura',
+    '40': 'Landes', '41': 'Loir-et-Cher', '42': 'Loire', '43': 'Haute-Loire',
+    '44': 'Loire-Atlantique', '45': 'Loiret', '46': 'Lot', '47': 'Lot-et-Garonne',
+    '48': 'Lozere', '49': 'Maine-et-Loire', '50': 'Manche', '51': 'Marne',
+    '52': 'Haute-Marne', '53': 'Mayenne', '54': 'Meurthe-et-Moselle', '55': 'Meuse',
+    '56': 'Morbihan', '57': 'Moselle', '58': 'Nievre', '59': 'Nord',
+    '60': 'Oise', '61': 'Orne', '62': 'Pas-de-Calais', '63': 'Puy-de-Dome',
+    '64': 'Pyrenees-Atlantiques', '65': 'Hautes-Pyrenees', '66': 'Pyrenees-Orientales',
+    '67': 'Bas-Rhin', '68': 'Haut-Rhin', '69': 'Rhone', '70': 'Haute-Saone',
+    '71': 'Saone-et-Loire', '72': 'Sarthe', '73': 'Savoie', '74': 'Haute-Savoie',
+    '75': 'Paris', '76': 'Seine-Maritime', '77': 'Seine-et-Marne', '78': 'Yvelines',
+    '79': 'Deux-Sevres', '80': 'Somme', '81': 'Tarn', '82': 'Tarn-et-Garonne',
+    '83': 'Var', '84': 'Vaucluse', '85': 'Vendee', '86': 'Vienne',
+    '87': 'Haute-Vienne', '88': 'Vosges', '89': 'Yonne', '90': 'Territoire de Belfort',
+    '91': 'Essonne', '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis',
+    '94': 'Val-de-Marne', '95': 'Val-d\'Oise',
+}
+
+
 def partenaire_list(request):
-    """Vue liste des partenaires pro (admin-created + auto-registered)"""
-    partenaires = Partenaire.objects.filter(is_active=True)
-    pros = ProProfile.objects.filter(is_active=True).prefetch_related('realisations', 'avis')
+    """Annuaire: carte de France par departement, agences et pros"""
+    dept = request.GET.get('dept', '').strip()
+    type_filter = request.GET.get('type', '').strip()
+    q = request.GET.get('q', '').strip()
 
-    current_metier = request.GET.get('metier', '').strip()
+    agences = []
+    pros = []
 
-    # Metiers from both sources
-    metiers_partenaire = set(Partenaire.objects.filter(is_active=True).values_list('metier', flat=True))
-    metiers_pro = set(ProProfile.objects.filter(is_active=True).values_list('metier', flat=True))
-    metier_labels = dict(ProProfile.METIER_CHOICES)
-    all_metiers = sorted(metiers_partenaire | {metier_labels.get(m, m) for m in metiers_pro})
+    if dept or q:
+        # Agences immobilieres
+        if type_filter != 'pro':
+            agences_qs = Agence.objects.filter(is_active=True).prefetch_related('conseillers')
+            if dept:
+                agences_qs = agences_qs.filter(departement=dept)
+            if q:
+                agences_qs = agences_qs.filter(
+                    Q(nom__icontains=q) | Q(ville__icontains=q) | Q(code_postal__startswith=q)
+                )
+            agences = list(agences_qs)
+            # Attach nb_biens to each agence
+            biens_counts = dict(
+                Annonce.objects.filter(is_active=True)
+                .values('client_reference')
+                .annotate(count=Count('id'))
+                .values_list('client_reference', 'count')
+            )
+            for agence in agences:
+                agence.nb_biens_count = biens_counts.get(agence.reference, 0)
 
-    if current_metier:
-        partenaires = partenaires.filter(metier=current_metier)
-        # Match pro by choice value or display label
-        pro_key = None
-        for k, v in ProProfile.METIER_CHOICES:
-            if v == current_metier or k == current_metier:
-                pro_key = k
-                break
-        if pro_key:
-            pros = pros.filter(metier=pro_key)
-        else:
-            pros = pros.none()
+        # Professionnels
+        if type_filter != 'immo':
+            pros_qs = ProProfile.objects.filter(is_active=True).prefetch_related('realisations', 'avis')
+            if dept:
+                pros_qs = pros_qs.filter(departement=dept)
+            if q:
+                pros_qs = pros_qs.filter(
+                    Q(nom_entreprise__icontains=q) | Q(ville__icontains=q) | Q(code_postal__startswith=q)
+                )
+            pros = list(pros_qs)
+
+    dept_name = DEPARTEMENTS.get(dept, '')
 
     context = {
-        'partenaires': partenaires,
+        'dept': dept,
+        'dept_name': dept_name,
+        'type_filter': type_filter,
+        'q': q,
+        'agences': agences,
         'pros': pros,
-        'metiers': all_metiers,
-        'current_metier': current_metier,
     }
     return render(request, 'listings/partenaire_list.html', context)
 
@@ -996,6 +1049,7 @@ def pro_inscription(request):
                 password=form.cleaned_data['password1'],
             )
 
+            cp = form.cleaned_data.get('code_postal', '')
             ProProfile.objects.create(
                 user=user,
                 nom_entreprise=form.cleaned_data['nom_entreprise'],
@@ -1003,6 +1057,8 @@ def pro_inscription(request):
                 description=form.cleaned_data.get('description', ''),
                 telephone=form.cleaned_data.get('telephone', ''),
                 ville=form.cleaned_data.get('ville', ''),
+                code_postal=cp,
+                departement=cp[:2] if len(cp) >= 2 else '',
                 site_web=form.cleaned_data.get('site_web', ''),
                 email=form.cleaned_data['email'],
             )
@@ -1644,6 +1700,61 @@ def export_utilisateurs_csv(request):
         ])
 
     return response
+
+
+def agence_profil(request, agence_id):
+    """Page publique d'une agence immobiliere"""
+    agence = get_object_or_404(Agence, id=agence_id, is_active=True)
+    biens = Annonce.objects.filter(
+        client_reference=agence.reference, is_active=True
+    ).prefetch_related('photos')[:24]
+    conseillers = agence.conseillers.filter(is_active=True)
+    nb_biens_total = Annonce.objects.filter(
+        client_reference=agence.reference, is_active=True
+    ).count()
+    context = {
+        'agence': agence,
+        'biens': biens,
+        'conseillers': conseillers,
+        'nb_biens_total': nb_biens_total,
+    }
+    return render(request, 'listings/agence_profil.html', context)
+
+
+def estimation(request):
+    """Formulaire de demande d'estimation immobiliere"""
+    if request.method == 'POST':
+        est = Estimation.objects.create(
+            type_bien=request.POST.get('type_bien', 'autre'),
+            ville=request.POST.get('ville', ''),
+            code_postal=request.POST.get('code_postal', ''),
+            surface=int(request.POST.get('surface') or 0) or None,
+            nb_pieces=int(request.POST.get('nb_pieces') or 0) or None,
+            nom=request.POST.get('nom', ''),
+            email=request.POST.get('email', ''),
+            telephone=request.POST.get('telephone', ''),
+            message=request.POST.get('message', ''),
+        )
+        # Email a l'admin
+        try:
+            send_mail(
+                subject=f'[Social Immo] Demande estimation - {est.nom} ({est.ville})',
+                message=(
+                    f'Nouvelle demande d\'estimation:\n\n'
+                    f'Nom: {est.nom}\nEmail: {est.email}\nTelephone: {est.telephone}\n\n'
+                    f'Type de bien: {est.get_type_bien_display()}\n'
+                    f'Localisation: {est.ville} ({est.code_postal})\n'
+                    f'Surface: {est.surface or "?"} m2\nPieces: {est.nb_pieces or "?"}\n\n'
+                    f'Message:\n{est.message or "(aucun)"}'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+            )
+        except Exception:
+            pass
+        messages.success(request, 'Votre demande d\'estimation a bien ete envoyee ! Nous vous recontacterons rapidement.')
+        return redirect('listings:estimation')
+    return render(request, 'listings/estimation.html')
 
 
 def cgu(request):

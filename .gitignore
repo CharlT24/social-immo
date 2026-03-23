@@ -54,3 +54,6 @@ Thumbs.db
 *.pem
 *.key
 credentials.json
+
+# Notes internes
+ETAT_PROJET.md

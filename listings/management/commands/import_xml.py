@@ -5,6 +5,7 @@ from lxml import etree
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.db.models import Count
 from listings.models import Annonce, Photo, Agence, Conseiller
 
 
@@ -107,6 +108,36 @@ class Command(BaseCommand):
                 annonces_a_supprimer.update(is_active=False)
                 for ref in refs_supprimees:
                     self.stdout.write(self.style.WARNING(f'  [DESACTIVE] {ref}'))
+
+        # Auto-set departement sur l'agence si pas encore defini
+        if not dry_run and client_ref:
+            try:
+                agence = Agence.objects.get(reference=client_ref)
+                if not agence.departement:
+                    most_common = (Annonce.objects.filter(
+                        client_reference=client_ref, is_active=True
+                    ).exclude(code_postal='')
+                     .values('code_postal')
+                     .annotate(n=Count('id'))
+                     .order_by('-n')
+                     .first())
+                    if most_common:
+                        cp = most_common['code_postal']
+                        agence.departement = cp[:2]
+                        if not agence.code_postal:
+                            agence.code_postal = cp
+                        if not agence.ville:
+                            first_a = Annonce.objects.filter(
+                                code_postal=cp, client_reference=client_ref, is_active=True
+                            ).first()
+                            if first_a and first_a.ville:
+                                agence.ville = first_a.ville
+                        agence.save(update_fields=['departement', 'code_postal', 'ville'])
+                        self.stdout.write(
+                            f'  [AGENCE] Departement auto-defini: {agence.departement} ({agence.ville})'
+                        )
+            except Agence.DoesNotExist:
+                pass
 
         # Resume
         prefix = '[DRY-RUN] ' if dry_run else ''

@@ -13,21 +13,15 @@
     </nav>
 
     <!-- Photo Gallery -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 rounded-3xl overflow-hidden">
+    <div class="relative grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 rounded-3xl overflow-hidden">
         {% for photo in annonce.photos.all %}
             {% if forloop.first %}
-            <!-- Main Photo -->
-            <div class="{% if annonce.photos.count > 1 %}md:row-span-2{% endif %} aspect-[4/3] md:aspect-auto">
-                <img src="{{ photo.url }}"
-                     alt="{{ annonce.titre }}"
-                     class="w-full h-full object-cover">
+            <div class="{% if annonce.photos.count > 1 %}md:row-span-2{% endif %} aspect-[4/3] md:aspect-auto cursor-pointer" onclick="openCarousel(0)">
+                <img src="{{ photo.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
             </div>
             {% elif forloop.counter <= 3 %}
-            <!-- Secondary Photos -->
-            <div class="hidden md:block aspect-[4/3]">
-                <img src="{{ photo.url }}"
-                     alt="{{ annonce.titre }} - Photo {{ forloop.counter }}"
-                     class="w-full h-full object-cover">
+            <div class="hidden md:block aspect-[4/3] cursor-pointer" onclick="openCarousel({{ forloop.counter0 }})">
+                <img src="{{ photo.url }}" alt="{{ annonce.titre }} - Photo {{ forloop.counter }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
             </div>
             {% endif %}
         {% empty %}
@@ -37,6 +31,36 @@
             </svg>
         </div>
         {% endfor %}
+        {% if annonce.photos.count > 3 %}
+        <button onclick="openCarousel(0)" class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-apple-text text-sm font-medium px-4 py-2.5 rounded-xl shadow-apple hover:bg-white transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            Voir les {{ annonce.photos.count }} photos
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Carousel Fullscreen -->
+    <div id="carousel-overlay" class="hidden fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onclick="if(event.target===this)closeCarousel()">
+        <!-- Close -->
+        <button onclick="closeCarousel()" class="absolute top-6 right-6 text-white/70 hover:text-white z-10 p-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <!-- Counter -->
+        <div class="absolute top-6 left-6 text-white/70 text-sm font-medium z-10">
+            <span id="carousel-counter"></span>
+        </div>
+        <!-- Prev -->
+        <button onclick="carouselNav(-1)" class="absolute left-4 md:left-8 text-white/70 hover:text-white z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <!-- Image -->
+        <img id="carousel-img" src="" alt="" class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg select-none">
+        <!-- Next -->
+        <button onclick="carouselNav(1)" class="absolute right-4 md:right-8 text-white/70 hover:text-white z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <!-- Thumbnails -->
+        <div id="carousel-thumbs" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90vw] px-4 py-2"></div>
     </div>
 
     <!-- Content Grid -->
@@ -638,5 +662,45 @@ function envoyerContact(targetId, targetType) {
         }
     });
 }
+
+// ========== Carousel ==========
+const carouselPhotos = [{% for photo in annonce.photos.all %}"{{ photo.url }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+let carouselIdx = 0;
+
+function openCarousel(idx) {
+    carouselIdx = idx;
+    updateCarousel();
+    document.getElementById('carousel-overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closeCarousel() {
+    document.getElementById('carousel-overlay').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+function carouselNav(dir) {
+    carouselIdx = (carouselIdx + dir + carouselPhotos.length) % carouselPhotos.length;
+    updateCarousel();
+}
+function updateCarousel() {
+    document.getElementById('carousel-img').src = carouselPhotos[carouselIdx];
+    document.getElementById('carousel-counter').textContent = (carouselIdx + 1) + ' / ' + carouselPhotos.length;
+    // Thumbnails
+    const thumbs = document.getElementById('carousel-thumbs');
+    thumbs.innerHTML = '';
+    carouselPhotos.forEach((url, i) => {
+        const t = document.createElement('img');
+        t.src = url;
+        t.className = 'w-16 h-12 object-cover rounded-lg cursor-pointer transition-all flex-shrink-0 ' +
+            (i === carouselIdx ? 'ring-2 ring-white opacity-100' : 'opacity-50 hover:opacity-80');
+        t.onclick = (e) => { e.stopPropagation(); carouselIdx = i; updateCarousel(); };
+        thumbs.appendChild(t);
+    });
+}
+document.addEventListener('keydown', (e) => {
+    if (document.getElementById('carousel-overlay').classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeCarousel();
+    if (e.key === 'ArrowLeft') carouselNav(-1);
+    if (e.key === 'ArrowRight') carouselNav(1);
+});
 </script>
 {% endblock %}

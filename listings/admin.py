@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, DemandeContact, Conseiller
+    PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation
 )
 
 
@@ -46,9 +46,9 @@ class ConseillerInline(admin.TabularInline):
 
 @admin.register(Agence)
 class AgenceAdmin(admin.ModelAdmin):
-    list_display = ['nom', 'reference', 'responsable', 'nb_conseillers', 'feed_type', 'is_active', 'last_import']
-    list_filter = ['is_active', 'feed_type']
-    search_fields = ['nom', 'reference', 'contact_nom']
+    list_display = ['nom', 'reference', 'departement', 'ville', 'responsable', 'nb_conseillers', 'feed_type', 'is_active', 'last_import']
+    list_filter = ['is_active', 'feed_type', 'departement']
+    search_fields = ['nom', 'reference', 'contact_nom', 'ville']
     inlines = [ConseillerInline]
 
     def nb_conseillers(self, obj):
@@ -118,3 +118,10 @@ class DemandeContactAdmin(admin.ModelAdmin):
     list_display = ['expediteur', 'annonce', 'pro', 'is_read', 'created_at']
     list_filter = ['is_read', 'created_at']
     search_fields = ['expediteur__username', 'message']
+
+
+@admin.register(Estimation)
+class EstimationAdmin(admin.ModelAdmin):
+    list_display = ['nom', 'type_bien', 'ville', 'code_postal', 'email', 'is_treated', 'agence_assignee', 'created_at']
+    list_filter = ['type_bien', 'is_treated', 'created_at']
+    search_fields = ['nom', 'email', 'ville']

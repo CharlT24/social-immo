@@ -254,6 +254,11 @@ class Agence(models.Model):
     contact_email = models.EmailField(blank=True)
     contact_telephone = models.CharField(max_length=20, blank=True)
     adresse = models.TextField(blank=True)
+    ville = models.CharField(max_length=100, blank=True, default='')
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    departement = models.CharField(max_length=3, blank=True, default='')
+    siret = models.CharField(max_length=20, blank=True, default='', verbose_name='SIRET/RCS')
+    description = models.TextField(blank=True, default='')
     responsable = models.ForeignKey(
         User,
         null=True,
@@ -398,6 +403,9 @@ class ProProfile(models.Model):
     email = models.EmailField(blank=True)
     ville = models.CharField(max_length=100, blank=True)
     site_web = models.URLField(max_length=500, blank=True)
+    departement = models.CharField(max_length=3, blank=True, default='')
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    siret = models.CharField(max_length=20, blank=True, default='', verbose_name='SIRET/RCS')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -560,3 +568,39 @@ class DemandeContact(models.Model):
     def __str__(self):
         target = self.annonce.reference if self.annonce else self.pro.nom_entreprise
         return f"{self.expediteur.username} -> {target}"
+
+
+class Estimation(models.Model):
+    """Demande d'estimation immobiliere"""
+
+    TYPE_BIEN_CHOICES = [
+        ('appartement', 'Appartement'),
+        ('maison', 'Maison'),
+        ('terrain', 'Terrain'),
+        ('commerce', 'Local commercial'),
+        ('bureau', 'Bureau'),
+        ('autre', 'Autre'),
+    ]
+
+    type_bien = models.CharField(max_length=50, choices=TYPE_BIEN_CHOICES)
+    ville = models.CharField(max_length=100)
+    code_postal = models.CharField(max_length=10)
+    surface = models.PositiveIntegerField(null=True, blank=True)
+    nb_pieces = models.PositiveIntegerField(null=True, blank=True)
+    nom = models.CharField(max_length=100)
+    email = models.EmailField()
+    telephone = models.CharField(max_length=20, blank=True)
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_treated = models.BooleanField(default=False)
+    agence_assignee = models.ForeignKey(
+        'Agence', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='estimations'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Demande d'estimation"
+
+    def __str__(self):
+        return f"{self.nom} - {self.ville} ({self.get_type_bien_display()})"

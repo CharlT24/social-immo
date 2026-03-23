@@ -154,6 +154,11 @@ class ProInscriptionForm(forms.Form):
         widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': 'Votre ville'}),
         label='Ville'
     )
+    code_postal = forms.CharField(
+        max_length=10, required=False,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': 'Ex: 75001'}),
+        label='Code postal'
+    )
     description = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': PRO_INPUT, 'rows': 3, 'placeholder': 'Decrivez votre activite en quelques mots...'}),

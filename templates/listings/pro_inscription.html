@@ -263,6 +263,15 @@
                     {% endif %}
                 </div>
 
+                <!-- Code postal -->
+                <div>
+                    <label for="id_code_postal" class="block text-sm font-medium text-apple-text mb-2">Code postal</label>
+                    <input type="text" name="code_postal" id="id_code_postal"
+                           value="{{ form.code_postal.value|default:'' }}"
+                           class="w-full px-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all"
+                           placeholder="Ex: 75001" maxlength="10">
+                </div>
+
                 <!-- Description -->
                 <div>
                     <label for="id_description" class="block text-sm font-medium text-apple-text mb-2">

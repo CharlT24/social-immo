@@ -46,6 +46,10 @@ urlpatterns = [
     # Espace Conseiller
     path('mon-espace/', views.conseiller_dashboard, name='conseiller_dashboard'),
     path('mon-espace/mot-de-passe/', views.conseiller_set_password, name='conseiller_set_password'),
+    # Annuaire
+    path('agence/<int:agence_id>/', views.agence_profil, name='agence_profil'),
+    # Estimation
+    path('estimer/', views.estimation, name='estimation'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

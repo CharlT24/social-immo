@@ -77,6 +77,7 @@ class Annonce(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_inspiration = models.BooleanField(default=False)
+    mise_en_avant = models.BooleanField(default=False, verbose_name='Mise à la une')
 
     INSPIRATION_CHOICES = [
         ('chaleureux', 'Foyer chaleureux'),

@@ -48,10 +48,6 @@
                     <div class="text-2xl font-bold text-apple-text">{{ nb_biens_total }}</div>
                     <div class="text-xs text-apple-gray mt-1">Biens actifs</div>
                 </div>
-                <div class="text-center p-4 bg-apple-bg rounded-xl">
-                    <div class="text-2xl font-bold text-apple-text">{{ conseillers.count }}</div>
-                    <div class="text-xs text-apple-gray mt-1">Conseillers</div>
-                </div>
                 {% if agence.contact_telephone %}
                 <div class="text-center p-4 bg-apple-bg rounded-xl">
                     <a href="tel:{{ agence.contact_telephone }}" class="text-apple-blue font-semibold hover:underline">{{ agence.contact_telephone }}</a>
@@ -110,25 +106,6 @@
             {% endif %}
         </div>
     </div>
-
-    <!-- Conseillers -->
-    {% if conseillers %}
-    <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-4">Nos conseillers</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {% for c in conseillers %}
-            <div class="bg-white rounded-2xl p-5 shadow-apple text-center">
-                <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span class="text-sm font-bold text-white">{{ c.nom|truncatechars:2|upper }}</span>
-                </div>
-                <h3 class="font-semibold text-sm">{{ c.nom }}</h3>
-                {% if c.telephone %}<p class="text-xs text-apple-gray mt-1">{{ c.telephone }}</p>{% endif %}
-                <a href="mailto:{{ c.email }}" class="text-xs text-apple-blue hover:underline mt-1 block">{{ c.email }}</a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Biens de l'agence -->
     <div>

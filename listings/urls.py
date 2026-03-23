@@ -52,6 +52,8 @@ urlpatterns = [
     path('agence/<int:agence_id>/', views.agence_profil, name='agence_profil'),
     # Locaux pro
     path('locaux-professionnels/', views.locaux_pro, name='locaux_pro'),
+    # Mise en avant
+    path('gestion/annonce/<int:annonce_id>/une/', views.toggle_mise_en_avant, name='toggle_mise_en_avant'),
     # Moderation
     path('gestion/commentaire/<int:commentaire_id>/supprimer/', views.supprimer_commentaire, name='supprimer_commentaire'),
     # Estimation

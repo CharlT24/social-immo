@@ -34,23 +34,23 @@ def homepage(request):
     count_vente = Annonce.objects.filter(is_active=True, type_transaction='V').count()
     count_location = Annonce.objects.filter(is_active=True, type_transaction='L').count()
 
-    # 3 biens Prestige (> 500 000 €, hors pro)
+    # 3 biens Prestige (> 500 000 €, hors pro) - aleatoire a chaque refresh
     biens_prestige = Annonce.objects.filter(
         is_active=True, prix__gt=500000
     ).exclude(
         type_transaction__in=['F', 'B']
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).order_by('-created_at')[:3]
+    ).order_by('-mise_en_avant', '?')[:3]
 
-    # 3 biens accessibles (<= 500 000 €, hors pro)
+    # 3 biens accessibles (<= 500 000 €, hors pro) - aleatoire a chaque refresh
     biens_accessibles = Annonce.objects.filter(
         is_active=True, prix__gt=0, prix__lte=500000
     ).exclude(
         type_transaction__in=['F', 'B']
     ).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).order_by('-created_at')[:3]
+    ).order_by('-mise_en_avant', '?')[:3]
 
     # Villes populaires (top 12 par nombre d'annonces)
     villes_populaires = Annonce.objects.filter(
@@ -126,14 +126,14 @@ def search_results(request):
         if valid_dpe:
             annonces = annonces.filter(dpe_etiquette_conso__in=valid_dpe)
 
-    # Tri
+    # Tri - mise en avant toujours en premier
     sort_map = {
         'prix_asc': 'prix',
         'prix_desc': '-prix',
         'surface': '-surface',
         'date': '-created_at',
     }
-    annonces = annonces.order_by(sort_map.get(tri, '-created_at'))
+    annonces = annonces.order_by('-mise_en_avant', sort_map.get(tri, '-created_at'))
 
     result_count = annonces.count()
 
@@ -1841,15 +1841,13 @@ def agence_profil(request, agence_id):
     agence = get_object_or_404(Agence, id=agence_id, is_active=True)
     biens = Annonce.objects.filter(
         client_reference=agence.reference, is_active=True
-    ).prefetch_related('photos')[:24]
-    conseillers = agence.conseillers.filter(is_active=True)
+    ).prefetch_related('photos').order_by('-mise_en_avant', '-created_at')[:24]
     nb_biens_total = Annonce.objects.filter(
         client_reference=agence.reference, is_active=True
     ).count()
     context = {
         'agence': agence,
         'biens': biens,
-        'conseillers': conseillers,
         'nb_biens_total': nb_biens_total,
     }
     return render(request, 'listings/agence_profil.html', context)
@@ -1943,6 +1941,26 @@ def assigner_estimation(request, estimation_id):
 
 
 @login_required
+def toggle_mise_en_avant(request, annonce_id):
+    """Toggle mise a la une d'une annonce - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    annonce = get_object_or_404(Annonce, id=annonce_id)
+    annonce.mise_en_avant = not annonce.mise_en_avant
+    annonce.save(update_fields=['mise_en_avant'])
+
+    status = 'mise a la une' if annonce.mise_en_avant else 'retiree de la une'
+    messages.success(request, f'{annonce.reference} {status}.')
+
+    # Rediriger vers la page d'origine
+    next_url = request.GET.get('next', request.META.get('HTTP_REFERER', ''))
+    if next_url:
+        return redirect(next_url)
+    return redirect('listings:dashboard')
+
+
+@login_required
 @require_POST
 def supprimer_commentaire(request, commentaire_id):
     """Suppression d'un commentaire - admin uniquement"""
@@ -1977,7 +1995,7 @@ def locaux_pro(request):
         'surface': '-surface',
         'date': '-created_at',
     }
-    annonces = annonces.order_by(sort_map.get(tri, '-created_at'))
+    annonces = annonces.order_by('-mise_en_avant', sort_map.get(tri, '-created_at'))
 
     result_count = annonces.count()
 

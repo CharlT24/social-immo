@@ -15,6 +15,7 @@ urlpatterns = [
     path('dashboard/import/', views.run_import, name='run_import'),
     path('mon-agence/', views.agence_dashboard, name='agence_dashboard'),
     path('mon-agence/import/', views.agence_run_import, name='agence_run_import'),
+    path('mon-agence/parametres/', views.agence_settings, name='agence_settings'),
     path('api/toggle-favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('api/toggle-inspiration/', views.toggle_inspiration, name='toggle_inspiration'),
     path('gestion/', views.gestion_agences, name='gestion_agences'),

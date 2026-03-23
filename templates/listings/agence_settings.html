@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametres - {{ agence.nom }} | Social Immo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lbc-navy': '#0B1330',
+                        'lbc-blue': '#3961F0',
+                        'lbc-blue-dark': '#223A90',
+                        'lbc-bg': '#EDF2F8',
+                        'lbc-text': '#0F1824',
+                        'lbc-gray': '#6B7280',
+                        'lbc-success': '#278456',
+                        'lbc-error': '#DA3150',
+                    },
+                    fontFamily: {
+                        'nunito': ['"Nunito Sans"', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; font-size: 13px; }
+        .sidebar-scroll::-webkit-scrollbar { width: 0; }
+    </style>
+</head>
+<body class="bg-lbc-bg text-lbc-text font-nunito min-h-screen">
+
+    <!-- Top Bar -->
+    <header class="bg-white sticky top-0 z-50 border-b border-gray-200/60">
+        <div class="flex items-center justify-between px-6 py-3">
+            <a href="{% url 'listings:search_results' %}" class="flex items-center gap-2">
+                <span class="text-xl font-bold tracking-tight">Social<span class="text-lbc-blue">Immo</span></span>
+                <span class="bg-lbc-blue text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pro</span>
+            </a>
+            <div class="flex items-center gap-5">
+                <a href="{% url 'listings:search_results' %}" class="text-sm text-lbc-gray hover:text-lbc-text transition-colors">Voir le site</a>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <span class="text-sm font-semibold">{{ user.username }}</span>
+                <a href="{% url 'account_logout' %}" class="text-sm text-lbc-gray hover:text-lbc-error transition-colors">Deconnexion</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex min-h-[calc(100vh-57px)]">
+
+        <!-- Sidebar -->
+        <aside class="w-[280px] bg-lbc-navy flex-shrink-0 flex flex-col sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto sidebar-scroll">
+            <nav class="flex-1 px-3 py-6 space-y-1">
+                <a href="{% url 'listings:agence_dashboard' %}" class="flex items-center gap-3 px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-xl text-sm font-semibold transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Accueil
+                </a>
+                <a href="{% url 'listings:agence_settings' %}" class="flex items-center gap-3 px-4 py-2.5 bg-lbc-blue text-white rounded-full text-sm font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Ma fiche agence
+                </a>
+            </nav>
+            <div class="px-4 py-4 border-t border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-lbc-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-bold text-white">{{ user.username|slice:":2"|upper }}</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-white text-sm font-bold truncate">{{ user.username }}</p>
+                        <p class="text-white/50 text-xs truncate">{{ user.email|default:"Pro" }}</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 p-8 overflow-y-auto">
+
+            {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for message in messages %}
+                <div class="p-4 rounded-2xl flex items-center gap-3 {% if message.tags == 'success' %}bg-green-50 text-lbc-success border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-lbc-error border border-red-200{% else %}bg-blue-50 text-lbc-blue border border-blue-200{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="text-sm font-semibold">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-extrabold tracking-tight">Ma fiche agence</h1>
+                <p class="text-lbc-gray text-sm mt-1">Ces informations apparaitront sur votre page publique dans l'annuaire.</p>
+                {% if agence.id %}
+                <a href="{% url 'listings:agence_profil' agence.id %}" target="_blank" class="inline-flex items-center gap-1.5 mt-2 text-sm text-lbc-blue hover:underline font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Voir ma page publique
+                </a>
+                {% endif %}
+            </div>
+
+            <form method="post" class="max-w-3xl space-y-8">
+                {% csrf_token %}
+
+                <!-- Identite -->
+                <div class="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-lbc-gray">Identite de l'agence</h2>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Nom de l'agence *</label>
+                            <input type="text" name="nom" value="{{ agence.nom }}" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Description</label>
+                            <textarea name="description" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="Presentez votre agence, vos specialites, votre equipe...">{{ agence.description }}</textarea>
+                            <p class="text-xs text-lbc-gray mt-1">Visible sur votre page publique</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">SIRET / RCS</label>
+                                <input type="text" name="siret" value="{{ agence.siret }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="123 456 789 00012">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">URL du logo</label>
+                                <input type="url" name="logo_url" value="{{ agence.logo_url }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="https://...">
+                                {% if agence.logo_url %}
+                                <div class="mt-2 flex items-center gap-3">
+                                    <img src="{{ agence.logo_url }}" alt="Logo" class="w-12 h-12 rounded-lg object-cover border">
+                                    <span class="text-xs text-lbc-gray">Apercu actuel</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localisation -->
+                <div class="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-lbc-gray">Localisation</h2>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Adresse</label>
+                            <input type="text" name="adresse" value="{{ agence.adresse }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="12 rue de la Paix">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">Code postal</label>
+                                <input type="text" name="code_postal" value="{{ agence.code_postal }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="75001">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold mb-1.5">Ville</label>
+                                <input type="text" name="ville" value="{{ agence.ville }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="Paris">
+                            </div>
+                        </div>
+                        <p class="text-xs text-lbc-gray">Le departement sera detecte automatiquement a partir du code postal. Votre agence apparaitra sur la carte de l'annuaire.</p>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-lbc-gray">Contact</h2>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">Nom du contact</label>
+                                <input type="text" name="contact_nom" value="{{ agence.contact_nom }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="Jean Dupont">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">Telephone</label>
+                                <input type="tel" name="contact_telephone" value="{{ agence.contact_telephone }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="01 23 45 67 89">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">Email</label>
+                                <input type="email" name="contact_email" value="{{ agence.contact_email }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="contact@agence.fr">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1.5">Site web</label>
+                                <input type="url" name="site_web" value="{{ agence.site_web }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="https://www.mon-agence.fr">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Horaires d'ouverture</label>
+                            <input type="text" name="horaires" value="{{ agence.horaires }}" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-lbc-blue focus:border-transparent outline-none transition" placeholder="Lun-Ven 9h-18h, Sam 10h-13h">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Apercu -->
+                <div class="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 class="text-sm font-bold uppercase tracking-wide text-lbc-gray">Recapitulatif</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-lbc-bg rounded-xl p-5 space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                {% if agence.departement %}
+                                <span class="bg-lbc-blue text-white text-xs font-bold px-2 py-0.5 rounded-full">Dept {{ agence.departement }}</span>
+                                {% else %}
+                                <span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">Departement non defini</span>
+                                {% endif %}
+                                {% if agence.ville %}
+                                <span class="text-lbc-gray">{{ agence.ville }}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-xs text-lbc-gray">
+                                {% if agence.departement %}
+                                Votre agence est visible sur la carte de l'annuaire dans le departement {{ agence.departement }}.
+                                {% else %}
+                                Renseignez un code postal pour apparaitre sur la carte de l'annuaire.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="bg-lbc-blue text-white font-bold px-8 py-3 rounded-xl hover:bg-lbc-blue-dark transition-colors text-sm">
+                        Enregistrer les modifications
+                    </button>
+                    <a href="{% url 'listings:agence_dashboard' %}" class="text-sm text-lbc-gray hover:text-lbc-text transition-colors">Annuler</a>
+                </div>
+            </form>
+
+            <div class="h-12"></div>
+        </main>
+    </div>
+
+</body>
+</html>

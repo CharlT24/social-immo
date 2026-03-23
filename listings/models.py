@@ -259,6 +259,8 @@ class Agence(models.Model):
     departement = models.CharField(max_length=3, blank=True, default='')
     siret = models.CharField(max_length=20, blank=True, default='', verbose_name='SIRET/RCS')
     description = models.TextField(blank=True, default='')
+    site_web = models.URLField(max_length=500, blank=True, default='')
+    horaires = models.CharField(max_length=200, blank=True, default='', verbose_name='Horaires d\'ouverture')
     responsable = models.ForeignKey(
         User,
         null=True,

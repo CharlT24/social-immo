@@ -713,6 +713,37 @@ def agence_run_import(request):
 
 
 @login_required
+def agence_settings(request):
+    """Page de parametres de l'agence : modifier ses informations publiques"""
+    try:
+        agence = Agence.objects.get(responsable=request.user)
+    except Agence.DoesNotExist:
+        return HttpResponseForbidden("Vous n'etes pas rattache a une agence.")
+
+    if request.method == 'POST':
+        agence.nom = request.POST.get('nom', agence.nom).strip()
+        agence.description = request.POST.get('description', '').strip()
+        agence.logo_url = request.POST.get('logo_url', '').strip()
+        agence.adresse = request.POST.get('adresse', '').strip()
+        agence.ville = request.POST.get('ville', '').strip()
+        agence.code_postal = request.POST.get('code_postal', '').strip()
+        agence.siret = request.POST.get('siret', '').strip()
+        agence.site_web = request.POST.get('site_web', '').strip()
+        agence.horaires = request.POST.get('horaires', '').strip()
+        agence.contact_nom = request.POST.get('contact_nom', '').strip()
+        agence.contact_email = request.POST.get('contact_email', '').strip()
+        agence.contact_telephone = request.POST.get('contact_telephone', '').strip()
+        # Auto-set departement from code_postal
+        if agence.code_postal and len(agence.code_postal) >= 2:
+            agence.departement = agence.code_postal[:2]
+        agence.save()
+        messages.success(request, "Informations mises a jour avec succes !")
+        return redirect('listings:agence_settings')
+
+    return render(request, 'listings/agence_settings.html', {'agence': agence})
+
+
+@login_required
 def gestion_agences(request):
     """Page de gestion admin : liste des agences + creation"""
     if not request.user.is_staff:

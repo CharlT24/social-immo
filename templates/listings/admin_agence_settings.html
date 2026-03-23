@@ -64,7 +64,7 @@
     </div>
 
     <!-- Formulaire -->
-    <form method="post" class="space-y-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
 
         <!-- Identite -->
@@ -94,12 +94,17 @@
                         <input type="text" name="siret" value="{{ agence.siret }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="123 456 789 00012">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1.5">URL du logo</label>
-                        <input type="url" name="logo_url" value="{{ agence.logo_url }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none" placeholder="https://...">
-                        {% if agence.logo_url %}
+                        <label class="block text-sm font-semibold mb-1.5">Logo</label>
+                        <input type="file" name="logo" accept="image/*" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-apple-blue/10 file:text-apple-blue">
+                        {% if agence.logo %}
+                        <div class="mt-2 flex items-center gap-3">
+                            <img src="{{ agence.logo.url }}" alt="Logo" class="w-12 h-12 rounded-lg object-cover border">
+                            <span class="text-xs text-apple-gray">Logo actuel</span>
+                        </div>
+                        {% elif agence.logo_url %}
                         <div class="mt-2 flex items-center gap-3">
                             <img src="{{ agence.logo_url }}" alt="Logo" class="w-12 h-12 rounded-lg object-cover border">
-                            <span class="text-xs text-apple-gray">Apercu</span>
+                            <span class="text-xs text-apple-gray">Logo actuel (URL)</span>
                         </div>
                         {% endif %}
                     </div>

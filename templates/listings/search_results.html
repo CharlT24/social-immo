@@ -401,6 +401,37 @@
         {% endfor %}
     </div>
 
+    <!-- Pagination -->
+    {% if annonces_page and annonces_page.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-10">
+        {% if annonces_page.has_previous %}
+        <a href="?page={{ annonces_page.previous_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+           class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">
+            &larr; Precedent
+        </a>
+        {% endif %}
+
+        <div class="flex items-center gap-1">
+            {% for num in annonces_page.paginator.page_range %}
+                {% if annonces_page.number == num %}
+                <span class="w-10 h-10 flex items-center justify-center bg-apple-blue text-white text-sm font-bold rounded-xl">{{ num }}</span>
+                {% elif num > annonces_page.number|add:"-3" and num < annonces_page.number|add:"3" %}
+                <a href="?page={{ num }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+                   class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if annonces_page.has_next %}
+        <a href="?page={{ annonces_page.next_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+           class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">
+            Suivant &rarr;
+        </a>
+        {% endif %}
+    </div>
+    <p class="text-center text-sm text-apple-gray mt-3">Page {{ annonces_page.number }} sur {{ annonces_page.paginator.num_pages }}</p>
+    {% endif %}
+
 </div>
 
 <!-- ==================== JAVASCRIPT ==================== -->

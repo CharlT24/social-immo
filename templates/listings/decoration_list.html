@@ -397,13 +397,21 @@ function openPhotoModal(url, photoId, type, categorie, reference, link) {
         svg.classList.add('text-gray-400');
     }
 
+    // Reset stars to gray
+    const stars = document.querySelectorAll('#modalStars .modal-star svg');
+    stars.forEach(function(svg) {
+        svg.classList.remove('text-yellow-400', 'fill-yellow-400');
+        svg.classList.add('text-gray-300');
+    });
+    document.getElementById('modalAvgNote').textContent = '';
+
     // Show modal
     const modal = document.getElementById('photoModal');
     modal.classList.remove('opacity-0', 'pointer-events-none');
     document.getElementById('photoModalContent').classList.remove('scale-95');
     document.body.style.overflow = 'hidden';
 
-    // Load comments
+    // Load comments + user rating
     loadComments(photoId, type);
 }
 
@@ -430,9 +438,22 @@ function loadComments(photoId, type) {
         document.getElementById('commentsLoading').classList.add('hidden');
         if (data.comments.length === 0) {
             document.getElementById('commentsEmpty').classList.remove('hidden');
-            return;
+        } else {
+            renderComments(data.comments);
         }
-        renderComments(data.comments);
+        // Init stars with user's existing rating
+        if (data.user_note > 0) {
+            const stars = document.querySelectorAll('#modalStars .modal-star svg');
+            stars.forEach(function(svg, i) {
+                if (i < data.user_note) {
+                    svg.classList.add('text-yellow-400', 'fill-yellow-400');
+                    svg.classList.remove('text-gray-300');
+                }
+            });
+        }
+        if (data.average > 0) {
+            document.getElementById('modalAvgNote').textContent = data.average + '/5 (' + data.note_count + ' avis)';
+        }
     });
 }
 

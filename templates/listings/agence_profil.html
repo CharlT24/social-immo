@@ -14,7 +14,9 @@
     <div class="bg-white rounded-3xl shadow-apple overflow-hidden mb-8">
         <div class="bg-gradient-to-r from-apple-blue to-blue-600 px-8 py-10 text-white">
             <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-                {% if agence.logo_url %}
+                {% if agence.logo %}
+                <img src="{{ agence.logo.url }}" alt="{{ agence.nom }}" class="w-20 h-20 rounded-2xl object-cover bg-white/20 flex-shrink-0">
+                {% elif agence.logo_url %}
                 <img src="{{ agence.logo_url }}" alt="{{ agence.nom }}" class="w-20 h-20 rounded-2xl object-cover bg-white/20 flex-shrink-0">
                 {% else %}
                 <div class="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">

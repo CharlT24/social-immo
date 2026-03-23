@@ -120,6 +120,12 @@ def search_results(request):
 
     result_count = annonces.count()
 
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(annonces, 24)
+    page_number = request.GET.get('page', 1)
+    annonces_page = paginator.get_page(page_number)
+
     # Villes pour autocomplete fallback
     villes_disponibles = Annonce.objects.filter(
         is_active=True
@@ -136,7 +142,8 @@ def search_results(request):
     seuil_nouveau = timezone.now() - timedelta(days=7)
 
     context = {
-        'annonces': annonces,
+        'annonces': annonces_page,
+        'annonces_page': annonces_page,
         'result_count': result_count,
         'villes_disponibles': villes_disponibles,
         'user_favorites': user_favorites,
@@ -733,6 +740,9 @@ def agence_settings(request):
         agence.contact_nom = request.POST.get('contact_nom', '').strip()
         agence.contact_email = request.POST.get('contact_email', '').strip()
         agence.contact_telephone = request.POST.get('contact_telephone', '').strip()
+        # Upload logo
+        if 'logo' in request.FILES:
+            agence.logo = request.FILES['logo']
         # Auto-set departement from code_postal
         if agence.code_postal and len(agence.code_postal) >= 2:
             agence.departement = agence.code_postal[:2]
@@ -766,6 +776,8 @@ def admin_agence_settings(request, agence_id):
         agence.contact_telephone = request.POST.get('contact_telephone', '').strip()
         agence.feed_url = request.POST.get('feed_url', '').strip()
         agence.reference = request.POST.get('reference', agence.reference).strip()
+        if 'logo' in request.FILES:
+            agence.logo = request.FILES['logo']
         if agence.code_postal and len(agence.code_postal) >= 2:
             agence.departement = agence.code_postal[:2]
         agence.save()
@@ -1377,32 +1389,54 @@ def post_photo_comment(request):
 
     return JsonResponse({
         'id': comment.id,
-        'auteur': comment.auteur.username,
+        'auteur': comment.auteur.get_full_name() or comment.auteur.username,
         'texte': comment.texte,
         'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
     })
 
 
 def get_photo_comments(request):
-    """Recuperer les commentaires d'une photo"""
+    """Recuperer les commentaires d'une photo + note utilisateur + moyenne"""
     photo_id = request.GET.get('photo_id')
     photo_type = request.GET.get('type', 'annonce')
 
     if photo_type == 'pro':
         comments = PhotoCommentaire.objects.filter(photo_pro_id=photo_id)
+        avg_data = PhotoNote.objects.filter(photo_pro_id=photo_id).aggregate(
+            avg=models.Avg('note'), count=models.Count('id')
+        )
     else:
         comments = PhotoCommentaire.objects.filter(photo_id=photo_id)
+        avg_data = PhotoNote.objects.filter(photo_id=photo_id).aggregate(
+            avg=models.Avg('note'), count=models.Count('id')
+        )
 
     comments = comments.select_related('auteur').order_by('created_at')[:50]
 
     data = [{
         'id': c.id,
-        'auteur': c.auteur.username,
+        'auteur': c.auteur.get_full_name() or c.auteur.username,
         'texte': c.texte,
         'created_at': c.created_at.strftime('%d/%m/%Y %H:%M'),
     } for c in comments]
 
-    return JsonResponse({'comments': data, 'count': len(data)})
+    # Note de l'utilisateur connecte
+    user_note = 0
+    if request.user.is_authenticated:
+        if photo_type == 'pro':
+            un = PhotoNote.objects.filter(user=request.user, photo_pro_id=photo_id).first()
+        else:
+            un = PhotoNote.objects.filter(user=request.user, photo_id=photo_id).first()
+        if un:
+            user_note = un.note
+
+    return JsonResponse({
+        'comments': data,
+        'count': len(data),
+        'user_note': user_note,
+        'average': round(avg_data['avg'], 1) if avg_data['avg'] else 0,
+        'note_count': avg_data['count'],
+    })
 
 
 @login_required

@@ -248,6 +248,7 @@ class Agence(models.Model):
     nom = models.CharField(max_length=200)
     reference = models.CharField(max_length=50, unique=True)
     logo_url = models.URLField(max_length=500, blank=True)
+    logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     feed_url = models.URLField(max_length=500, blank=True)
     feed_type = models.CharField(max_length=10, choices=FEED_TYPE_CHOICES, default='url')
     contact_nom = models.CharField(max_length=100, blank=True)

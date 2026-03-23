@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Locaux professionnels - Social Immo{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="bg-white border-b border-gray-200/60">
+    <div class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight">Locaux professionnels</h1>
+        </div>
+        <p class="text-apple-gray">Fonds de commerce et baux commerciaux</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="sticky top-[65px] z-40 bg-white/95 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
+    <form method="get" class="max-w-7xl mx-auto px-4 py-3">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <input type="text" name="ville" value="{{ current_ville }}"
+                       class="pl-8 pr-3 py-2 text-sm font-medium border {% if current_ville %}border-apple-blue bg-blue-50 text-apple-blue{% else %}border-gray-200 bg-white text-apple-text{% endif %} rounded-full focus:outline-none focus:ring-2 focus:ring-apple-blue w-48"
+                       placeholder="Ville ou CP">
+                <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 {% if current_ville %}text-apple-blue{% else %}text-gray-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+            </div>
+            <select name="tri" onchange="this.form.submit()"
+                    class="px-4 py-2 text-sm font-medium border border-gray-200 bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer">
+                <option value="date" {% if current_tri == 'date' %}selected{% endif %}>Plus recents</option>
+                <option value="prix_asc" {% if current_tri == 'prix_asc' %}selected{% endif %}>Prix croissant</option>
+                <option value="prix_desc" {% if current_tri == 'prix_desc' %}selected{% endif %}>Prix decroissant</option>
+                <option value="surface" {% if current_tri == 'surface' %}selected{% endif %}>Surface</option>
+            </select>
+            <button type="submit" class="px-4 py-2 text-sm font-medium bg-apple-blue text-white rounded-full hover:bg-blue-600 transition-colors">
+                Rechercher
+            </button>
+            {% if current_ville %}
+            <a href="{% url 'listings:locaux_pro' %}" class="text-xs text-apple-gray hover:text-red-500 transition-colors">Effacer</a>
+            {% endif %}
+            <span class="ml-auto text-sm text-apple-gray">{{ result_count }} resultat{{ result_count|pluralize }}</span>
+        </div>
+    </form>
+</div>
+
+<!-- Results -->
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for annonce in annonces %}
+        <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1">
+            <div class="aspect-[4/3] overflow-hidden relative">
+                {% if annonce.photo_principale %}
+                <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                {% else %}
+                <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                </div>
+                {% endif %}
+                <!-- Badge type -->
+                <span class="absolute top-3 left-3 bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
+                    {{ annonce.get_type_transaction_display }}
+                </span>
+                {% if annonce.photos.count > 1 %}
+                <span class="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-lg flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    {{ annonce.photos.count }}
+                </span>
+                {% endif %}
+                <!-- Favori -->
+                <button type="button"
+                        class="favorite-btn absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all {% if annonce.id in user_favorites %}is-liked{% endif %}"
+                        data-annonce-id="{{ annonce.id }}"
+                        {% if not user.is_authenticated %}data-login-url="{% url 'account_login' %}"{% endif %}
+                        onclick="event.preventDefault();event.stopPropagation();toggleFav(this);">
+                    <svg class="w-4 h-4 heart-icon" viewBox="0 0 24 24" fill="{% if annonce.id in user_favorites %}#EF4444{% else %}none{% endif %}" stroke="{% if annonce.id in user_favorites %}#EF4444{% else %}#6B7280{% endif %}" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-5">
+                <div class="text-xl font-bold tracking-tight mb-2">{{ annonce.prix_format }}</div>
+                <h3 class="text-sm text-apple-gray font-medium mb-2 line-clamp-1">{{ annonce.titre }}</h3>
+                <div class="flex items-center gap-3 text-xs text-apple-gray">
+                    {% if annonce.surface %}<span>{{ annonce.surface }} m2</span>{% endif %}
+                    {% if annonce.nb_pieces %}<span>{{ annonce.nb_pieces }} p.</span>{% endif %}
+                </div>
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                    <span class="text-xs text-apple-gray">{{ annonce.ville }} ({{ annonce.code_postal }})</span>
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                        {{ annonce.get_type_transaction_display }}
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full py-20 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+            <p class="text-lg font-semibold text-apple-text mb-1">Aucun local professionnel</p>
+            <p class="text-apple-gray">Revenez bientot pour decouvrir nos offres.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if annonces.has_other_pages %}
+    <div class="mt-10 flex justify-center">
+        <nav class="inline-flex items-center gap-1 bg-white rounded-full shadow-apple px-2 py-1">
+            {% if annonces.has_previous %}
+            <a href="?page={{ annonces.previous_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}&tri={{ current_tri }}"
+               class="w-9 h-9 flex items-center justify-center rounded-full text-apple-gray hover:bg-gray-100 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            {% endif %}
+            {% for num in annonces.paginator.page_range %}
+                {% if annonces.number == num %}
+                <span class="w-9 h-9 flex items-center justify-center rounded-full bg-apple-blue text-white text-sm font-semibold">{{ num }}</span>
+                {% elif num > annonces.number|add:"-3" and num < annonces.number|add:"3" %}
+                <a href="?page={{ num }}{% if current_ville %}&ville={{ current_ville }}{% endif %}&tri={{ current_tri }}"
+                   class="w-9 h-9 flex items-center justify-center rounded-full text-apple-gray hover:bg-gray-100 transition-colors text-sm">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if annonces.has_next %}
+            <a href="?page={{ annonces.next_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}&tri={{ current_tri }}"
+               class="w-9 h-9 flex items-center justify-center rounded-full text-apple-gray hover:bg-gray-100 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Toggle Favori JS -->
+<script>
+function toggleFav(btn) {
+    const loginUrl = btn.dataset.loginUrl;
+    if (loginUrl) { window.location.href = loginUrl; return; }
+    const id = btn.dataset.annonceId;
+    fetch("{% url 'listings:toggle_favorite' %}", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}"},
+        body: JSON.stringify({annonce_id: id})
+    }).then(r => r.json()).then(data => {
+        const svg = btn.querySelector('.heart-icon');
+        if (data.status === 'added') {
+            svg.setAttribute('fill', '#EF4444');
+            svg.setAttribute('stroke', '#EF4444');
+            btn.classList.add('is-liked');
+        } else {
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', '#6B7280');
+            btn.classList.remove('is-liked');
+        }
+    });
+}
+</script>
+
+{% endblock %}

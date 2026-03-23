@@ -50,6 +50,10 @@ urlpatterns = [
     path('mon-espace/mot-de-passe/', views.conseiller_set_password, name='conseiller_set_password'),
     # Annuaire
     path('agence/<int:agence_id>/', views.agence_profil, name='agence_profil'),
+    # Locaux pro
+    path('locaux-professionnels/', views.locaux_pro, name='locaux_pro'),
+    # Moderation
+    path('gestion/commentaire/<int:commentaire_id>/supprimer/', views.supprimer_commentaire, name='supprimer_commentaire'),
     # Estimation
     path('estimer/', views.estimation, name='estimation'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),

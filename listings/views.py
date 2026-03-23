@@ -101,6 +101,9 @@ def search_results(request):
     valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
     if type_transaction in valid_types:
         annonces = annonces.filter(type_transaction=type_transaction)
+    else:
+        # Par defaut, exclure les biens pro (fonds de commerce, bail commercial)
+        annonces = annonces.exclude(type_transaction__in=['F', 'B'])
 
     for param, lookup in [
         (prix_min, 'prix__gte'), (prix_max, 'prix__lte'),
@@ -1933,6 +1936,69 @@ def assigner_estimation(request, estimation_id):
 
     messages.success(request, f'Estimation de {est.nom} assignee a {agence.nom}.')
     return redirect('listings:dashboard')
+
+
+@login_required
+@require_POST
+def supprimer_commentaire(request, commentaire_id):
+    """Suppression d'un commentaire - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    commentaire = get_object_or_404(Commentaire, id=commentaire_id)
+    annonce_ref = commentaire.annonce.reference
+    commentaire.delete()
+    messages.success(request, 'Commentaire supprime.')
+    return redirect('listings:detail', reference=annonce_ref)
+
+
+def locaux_pro(request):
+    """Page des locaux commerciaux et fonds de commerce"""
+    annonces = Annonce.objects.filter(
+        is_active=True,
+        type_transaction__in=['F', 'B']
+    ).prefetch_related(
+        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+    )
+
+    ville = request.GET.get('ville', '').strip()
+    tri = request.GET.get('tri', 'date').strip()
+
+    if ville:
+        annonces = annonces.filter(ville__icontains=ville)
+
+    sort_map = {
+        'prix_asc': 'prix',
+        'prix_desc': '-prix',
+        'surface': '-surface',
+        'date': '-created_at',
+    }
+    annonces = annonces.order_by(sort_map.get(tri, '-created_at'))
+
+    result_count = annonces.count()
+
+    from django.core.paginator import Paginator
+    paginator = Paginator(annonces, 24)
+    page_number = request.GET.get('page', 1)
+    annonces_page = paginator.get_page(page_number)
+
+    user_favorites = []
+    if request.user.is_authenticated:
+        user_favorites = list(Favori.objects.filter(
+            user=request.user
+        ).values_list('annonce_id', flat=True))
+
+    seuil_nouveau = timezone.now() - timedelta(days=7)
+
+    context = {
+        'annonces': annonces_page,
+        'result_count': result_count,
+        'user_favorites': user_favorites,
+        'seuil_nouveau': seuil_nouveau,
+        'current_ville': ville,
+        'current_tri': tri,
+    }
+    return render(request, 'listings/locaux_pro.html', context)
 
 
 def cgu(request):

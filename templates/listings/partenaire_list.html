@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}
-{% if dept %}{{ dept_name }} ({{ dept }}) - Annuaire{% else %}Annuaire{% endif %} | Social Immo
-{% endblock %}
+{% block title %}{% if dept %}{{ dept_name }} ({{ dept }}) - Annuaire{% else %}Annuaire des professionnels{% endif %} | Social Immo{% endblock %}
+{% block meta_description %}{% if dept %}Professionnels de l'immobilier dans le {{ dept_name }} ({{ dept }}).{% else %}Annuaire des professionnels : agences immobilieres, decorateurs, architectes.{% endif %} Trouvez un pro pres de chez vous sur Social Immo.{% endblock %}
+{% block og_title %}{% if dept %}Pros immobilier {{ dept_name }}{% else %}Annuaire des professionnels{% endif %} | Social Immo{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">

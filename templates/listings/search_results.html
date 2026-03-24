@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}
-{% if current_ville %}Immobilier {{ current_ville }}{% else %}Recherche{% endif %} - Social Immo
-{% endblock %}
+{% block title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Annonces immobilieres{% endif %} - Social Immo{% endblock %}
+{% block meta_description %}{% if current_ville %}Annonces immobilieres a {{ current_ville }}.{% else %}Toutes les annonces immobilieres.{% endif %} {{ total_count }} biens disponibles en vente et location sur Social Immo.{% endblock %}
+{% block og_title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Recherche immobiliere{% endif %} - Social Immo{% endblock %}
+{% block og_description %}{% if current_ville %}Decouvrez les annonces immobilieres a {{ current_ville }}{% else %}Recherchez parmi {{ total_count }} annonces{% endif %} sur Social Immo.{% endblock %}
 
 {% block content %}
 

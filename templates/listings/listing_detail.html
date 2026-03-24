@@ -1,6 +1,46 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ annonce.titre }} - Social Immo{% endblock %}
+{% block title %}{{ annonce.titre }} - {{ annonce.ville }} | Social Immo{% endblock %}
+{% block meta_description %}{{ annonce.titre }} a {{ annonce.ville }} ({{ annonce.code_postal }}). {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}. Consultez l'annonce sur Social Immo.{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
+{% block og_description %}{{ annonce.titre }} a {{ annonce.ville }}. {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}{% endblock %}
+{% block og_image %}{% if annonce.photo_principale %}<meta property="og:image" content="{{ annonce.photo_principale.url }}">{% endif %}{% endblock %}
+{% block twitter_card %}summary_large_image{% endblock %}
+{% block twitter_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
+{% block twitter_description %}{{ annonce.titre }} a {{ annonce.ville }} - {{ annonce.prix_format }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateListing",
+  "name": "{{ annonce.titre }}",
+  "description": "{{ annonce.texte|truncatewords:50|escapejs }}",
+  "url": "https://social-immo.com{% url 'listings:detail' annonce.reference %}",
+  {% if annonce.photo_principale %}"image": "{{ annonce.photo_principale.url }}",{% endif %}
+  "datePosted": "{{ annonce.created_at|date:'Y-m-d' }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ annonce.prix }}",
+    "priceCurrency": "EUR",
+    "availability": "https://schema.org/InStock"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "{{ annonce.ville }}",
+    "postalCode": "{{ annonce.code_postal }}",
+    "addressCountry": "FR"
+  }{% if annonce.surface %},
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "{{ annonce.surface }}",
+    "unitCode": "MTK"
+  }{% endif %}{% if annonce.nb_pieces %},
+  "numberOfRooms": "{{ annonce.nb_pieces }}"{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-8">

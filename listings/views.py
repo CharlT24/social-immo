@@ -59,6 +59,23 @@ def homepage(request):
         count=Count('id')
     ).order_by('-count')[:12]
 
+    # Annoter les biens prestige/accessibles avec options agence (logo, badge, exclusif)
+    agences_with_options = Agence.objects.filter(is_active=True).select_related('options')
+    agence_data = {}
+    for a in agences_with_options:
+        opts = getattr(a, 'options', None)
+        agence_data[a.reference] = {
+            'nom': a.nom, 'logo_url': a.logo_url, 'id': a.id,
+            'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
+            'badge_premium': opts.badge_premium if opts else False,
+            'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
+        }
+    for ann in list(biens_prestige) + list(biens_accessibles):
+        ad = agence_data.get(ann.client_reference, {})
+        ann.agence_logo = ad.get('logo_url', '') if ad.get('logo_sur_annonces') else ''
+        ann.agence_nom = ad.get('nom', '')
+        ann.badge_premium = ad.get('badge_premium', False)
+
     # Pros a la une (agences + pros)
     agences_vedettes = Agence.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
     pros_vedettes = ProProfile.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
@@ -164,6 +181,29 @@ def search_results(request):
     # Seuil "nouveau" = 7 jours
     seuil_nouveau = timezone.now() - timedelta(days=7)
 
+    # Charger les options agences pour logo, badge, exclusif
+    agences_with_options = Agence.objects.filter(is_active=True).select_related('options')
+    agence_data = {}
+    for a in agences_with_options:
+        opts = getattr(a, 'options', None)
+        agence_data[a.reference] = {
+            'nom': a.nom,
+            'logo_url': a.logo_url,
+            'id': a.id,
+            'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
+            'badge_premium': opts.badge_premium if opts else False,
+            'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
+        }
+
+    # Annoter les annonces de la page courante
+    for ann in annonces_page:
+        ad = agence_data.get(ann.client_reference, {})
+        ann.agence_logo = ad.get('logo_url', '') if ad.get('logo_sur_annonces') else ''
+        ann.agence_nom = ad.get('nom', '')
+        ann.agence_id = ad.get('id')
+        ann.badge_premium = ad.get('badge_premium', False)
+        ann.bandeau_exclusif = ad.get('bandeau_exclusif', False)
+
     context = {
         'annonces': annonces_page,
         'annonces_page': annonces_page,
@@ -233,10 +273,27 @@ def listing_detail(request, reference):
     else:
         form = CommentaireForm()
 
+    # Charger options agence pour logo, badge, exclusif
+    agence_opts = {}
+    try:
+        agence = Agence.objects.select_related('options').get(reference=annonce.client_reference, is_active=True)
+        opts = getattr(agence, 'options', None)
+        agence_opts = {
+            'nom': agence.nom,
+            'logo_url': agence.logo_url,
+            'id': agence.id,
+            'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
+            'badge_premium': opts.badge_premium if opts else False,
+            'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
+        }
+    except Agence.DoesNotExist:
+        pass
+
     context = {
         'annonce': annonce,
         'commentaires': annonce.commentaires.all(),
         'form': form,
+        'agence_opts': agence_opts,
     }
     return render(request, 'listings/listing_detail.html', context)
 

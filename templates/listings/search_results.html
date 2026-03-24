@@ -325,7 +325,23 @@
                     {% elif annonce.created_at >= seuil_nouveau %}
                     <span class="bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">Nouveau</span>
                     {% endif %}
+                    {% if annonce.badge_premium %}
+                    <span class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Premium
+                    </span>
+                    {% endif %}
+                    {% if annonce.bandeau_exclusif %}
+                    <span class="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">Exclusivite</span>
+                    {% endif %}
                 </div>
+
+                <!-- Logo agence bottom-left -->
+                {% if annonce.agence_logo %}
+                <div class="absolute bottom-3 left-3">
+                    <img src="{{ annonce.agence_logo }}" alt="{{ annonce.agence_nom }}" class="h-8 w-auto max-w-[80px] rounded-md bg-white/90 backdrop-blur-sm p-0.5 shadow-sm object-contain">
+                </div>
+                {% endif %}
 
                 <!-- Photo count bottom-right -->
                 {% if annonce.photos.count > 1 %}

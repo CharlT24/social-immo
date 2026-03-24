@@ -180,12 +180,49 @@
         <!-- Flux XML -->
         <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Flux XML</h2>
+                <h2 class="text-sm font-bold uppercase tracking-wide text-apple-gray">Import des annonces</h2>
             </div>
-            <div class="p-6">
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Type de source</label>
+                        <select name="feed_type" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                            <option value="url" {% if agence.feed_type == 'url' %}selected{% endif %}>URL publique</option>
+                            <option value="ftp" {% if agence.feed_type == 'ftp' %}selected{% endif %}>FTP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5">Format du flux</label>
+                        <select name="feed_format" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none">
+                            <option value="ac3" {% if agence.feed_format == 'ac3' %}selected{% endif %}>XML (AC3/Ubiflow)</option>
+                            <option value="poliris" {% if agence.feed_format == 'poliris' %}selected{% endif %}>CSV (Poliris)</option>
+                        </select>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-semibold mb-1.5">URL du flux</label>
-                    <input type="url" name="feed_url" value="{{ agence.feed_url }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="https://logiciel-immo-clean.vercel.app/api/export/socialimmo/...">
+                    <input type="url" name="feed_url" value="{{ agence.feed_url }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="https://...">
+                </div>
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-semibold text-apple-gray mb-3 uppercase tracking-wide">Parametres FTP (si source = FTP)</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Serveur FTP</label>
+                            <input type="text" name="ftp_host" value="{{ agence.ftp_host }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="ftp.agence.fr">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Chemin</label>
+                            <input type="text" name="ftp_path" value="{{ agence.ftp_path }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="/">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Utilisateur FTP</label>
+                            <input type="text" name="ftp_user" value="{{ agence.ftp_user }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="user">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5">Mot de passe FTP</label>
+                            <input type="password" name="ftp_password" value="{{ agence.ftp_password }}" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-apple-blue focus:border-transparent outline-none font-mono text-xs" placeholder="********">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -249,12 +249,23 @@ class Agence(models.Model):
         ('ftp', 'FTP'),
     ]
 
+    FEED_FORMAT_CHOICES = [
+        ('ac3', 'XML (AC3/Ubiflow)'),
+        ('poliris', 'CSV (Poliris)'),
+    ]
+
     nom = models.CharField(max_length=200)
     reference = models.CharField(max_length=50, unique=True)
     logo_url = models.URLField(max_length=500, blank=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     feed_url = models.URLField(max_length=500, blank=True)
     feed_type = models.CharField(max_length=10, choices=FEED_TYPE_CHOICES, default='url')
+    feed_format = models.CharField(max_length=10, choices=FEED_FORMAT_CHOICES, default='ac3', verbose_name='Format du flux')
+    # FTP
+    ftp_host = models.CharField(max_length=200, blank=True, default='', verbose_name='Serveur FTP')
+    ftp_user = models.CharField(max_length=100, blank=True, default='', verbose_name='Utilisateur FTP')
+    ftp_password = models.CharField(max_length=100, blank=True, default='', verbose_name='Mot de passe FTP')
+    ftp_path = models.CharField(max_length=500, blank=True, default='/', verbose_name='Chemin FTP')
     contact_nom = models.CharField(max_length=100, blank=True)
     contact_email = models.EmailField(blank=True)
     contact_telephone = models.CharField(max_length=20, blank=True)

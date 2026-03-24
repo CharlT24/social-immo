@@ -856,14 +856,14 @@ def agence_run_import(request):
     except Agence.DoesNotExist:
         return HttpResponseForbidden("Agence non trouvee.")
 
-    if not agence.feed_url:
-        messages.error(request, "Aucune URL de flux configuree pour votre agence.")
+    if not agence.feed_url and not (agence.feed_type == 'ftp' and agence.ftp_host):
+        messages.error(request, "Aucune source de flux configuree pour votre agence.")
         return redirect('listings:agence_dashboard')
 
     try:
         from io import StringIO
         out = StringIO()
-        call_command('import_xml', url=agence.feed_url, stdout=out)
+        call_command('import_xml', agence_id=agence.reference, stdout=out)
         agence.last_import = timezone.now()
         agence.save(update_fields=['last_import'])
         messages.success(request, "Import termine avec succes !")
@@ -929,6 +929,12 @@ def admin_agence_settings(request, agence_id):
         agence.contact_email = request.POST.get('contact_email', '').strip()
         agence.contact_telephone = request.POST.get('contact_telephone', '').strip()
         agence.feed_url = request.POST.get('feed_url', '').strip()
+        agence.feed_type = request.POST.get('feed_type', agence.feed_type).strip()
+        agence.feed_format = request.POST.get('feed_format', agence.feed_format).strip()
+        agence.ftp_host = request.POST.get('ftp_host', '').strip()
+        agence.ftp_user = request.POST.get('ftp_user', '').strip()
+        agence.ftp_password = request.POST.get('ftp_password', '').strip()
+        agence.ftp_path = request.POST.get('ftp_path', '/').strip()
         agence.reference = request.POST.get('reference', agence.reference).strip()
         if 'logo' in request.FILES:
             agence.logo = request.FILES['logo']
@@ -1057,14 +1063,14 @@ def lancer_import_agence(request, agence_id):
 
     agence = get_object_or_404(Agence, id=agence_id)
 
-    if not agence.feed_url:
-        messages.error(request, f"Aucun flux configure pour {agence.nom}.")
+    if not agence.feed_url and not (agence.feed_type == 'ftp' and agence.ftp_host):
+        messages.error(request, f"Aucune source de flux configuree pour {agence.nom}.")
         return redirect('listings:gestion_agences')
 
     try:
         from io import StringIO
         out = StringIO()
-        call_command('import_xml', url=agence.feed_url, stdout=out)
+        call_command('import_xml', agence_id=agence.reference, stdout=out)
         output = out.getvalue()
         agence.last_import = timezone.now()
         agence.save(update_fields=['last_import'])

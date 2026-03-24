@@ -378,5 +378,98 @@
 
     </div>
 
+    <!-- ==================== PRO A LA UNE ==================== -->
+    <div class="mt-10">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold tracking-tight">Professionnels a la une</h2>
+                <p class="text-sm text-apple-gray">Choisissez les agences et pros affiches sur la homepage</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Agences -->
+            <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="font-semibold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Agences
+                    </h3>
+                    <span class="text-xs text-apple-gray">{{ all_agences|length }} agences</span>
+                </div>
+                <div class="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+                    {% for agence in all_agences %}
+                    <div class="flex items-center justify-between px-6 py-3 hover:bg-gray-50/50 transition-colors">
+                        <div class="flex items-center gap-3 min-w-0">
+                            {% if agence.logo_url %}
+                            <img src="{{ agence.logo_url }}" class="w-8 h-8 rounded-lg object-cover flex-shrink-0">
+                            {% else %}
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
+                            </div>
+                            {% endif %}
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-apple-text truncate">{{ agence.nom }}</p>
+                                <p class="text-xs text-apple-gray">{{ agence.ville }}</p>
+                            </div>
+                        </div>
+                        <form method="post" action="{% url 'listings:toggle_vedette_agence' agence.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all {% if agence.mise_en_avant %}bg-indigo-100 text-indigo-700 hover:bg-indigo-200{% else %}bg-gray-100 text-apple-gray hover:bg-gray-200{% endif %}">
+                                <svg class="w-3.5 h-3.5" fill="{% if agence.mise_en_avant %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                {% if agence.mise_en_avant %}A la une{% else %}Mettre a la une{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-apple-gray text-sm">Aucune agence</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pros -->
+            <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="font-semibold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Professionnels
+                    </h3>
+                    <span class="text-xs text-apple-gray">{{ all_pros|length }} pros</span>
+                </div>
+                <div class="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+                    {% for pro in all_pros %}
+                    <div class="flex items-center justify-between px-6 py-3 hover:bg-gray-50/50 transition-colors">
+                        <div class="flex items-center gap-3 min-w-0">
+                            {% if pro.photo_url %}
+                            <img src="{{ pro.photo_url }}" class="w-8 h-8 rounded-lg object-cover flex-shrink-0">
+                            {% else %}
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                            {% endif %}
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-apple-text truncate">{{ pro.nom_entreprise }}</p>
+                                <p class="text-xs text-apple-gray">{{ pro.get_metier_display }} - {{ pro.ville }}</p>
+                            </div>
+                        </div>
+                        <form method="post" action="{% url 'listings:toggle_vedette_pro' pro.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all {% if pro.mise_en_avant %}bg-purple-100 text-purple-700 hover:bg-purple-200{% else %}bg-gray-100 text-apple-gray hover:bg-gray-200{% endif %}">
+                                <svg class="w-3.5 h-3.5" fill="{% if pro.mise_en_avant %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                {% if pro.mise_en_avant %}A la une{% else %}Mettre a la une{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-apple-gray text-sm">Aucun professionnel inscrit</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

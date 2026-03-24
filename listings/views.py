@@ -59,6 +59,10 @@ def homepage(request):
         count=Count('id')
     ).order_by('-count')[:12]
 
+    # Pros a la une (agences + pros)
+    agences_vedettes = Agence.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
+    pros_vedettes = ProProfile.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
+
     # Favoris user
     user_favorites = []
     if request.user.is_authenticated:
@@ -74,6 +78,8 @@ def homepage(request):
         'biens_accessibles': biens_accessibles,
         'villes_populaires': villes_populaires,
         'user_favorites': user_favorites,
+        'agences_vedettes': agences_vedettes,
+        'pros_vedettes': pros_vedettes,
     }
     return render(request, 'listings/homepage.html', context)
 
@@ -303,6 +309,10 @@ def dashboard(request):
     total_estimations_en_attente = estimations_en_attente.count()
     agences_actives = Agence.objects.filter(is_active=True).order_by('nom')
 
+    # Vedettes (pour section "A la une" du dashboard)
+    all_agences = Agence.objects.filter(is_active=True).order_by('nom')
+    all_pros = ProProfile.objects.filter(is_active=True).order_by('nom_entreprise')
+
     context = {
         'total_annonces': total_annonces,
         'prix_moyen': stats['prix_moyen'] or 0,
@@ -321,6 +331,8 @@ def dashboard(request):
         'total_estimations': total_estimations,
         'total_estimations_en_attente': total_estimations_en_attente,
         'agences_actives': agences_actives,
+        'all_agences': all_agences,
+        'all_pros': all_pros,
     }
     return render(request, 'listings/dashboard.html', context)
 
@@ -1981,6 +1993,46 @@ def toggle_mise_en_avant(request, annonce_id):
     messages.success(request, f'{annonce.reference} {status}.')
 
     # Rediriger vers la page d'origine
+    next_url = request.GET.get('next', request.META.get('HTTP_REFERER', ''))
+    if next_url:
+        return redirect(next_url)
+    return redirect('listings:dashboard')
+
+
+@login_required
+@require_POST
+def toggle_vedette_agence(request, agence_id):
+    """Toggle mise a la une d'une agence sur la homepage - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    agence = get_object_or_404(Agence, id=agence_id)
+    agence.mise_en_avant = not agence.mise_en_avant
+    agence.save(update_fields=['mise_en_avant'])
+
+    status = 'mise a la une' if agence.mise_en_avant else 'retiree de la une'
+    messages.success(request, f'{agence.nom} {status}.')
+
+    next_url = request.GET.get('next', request.META.get('HTTP_REFERER', ''))
+    if next_url:
+        return redirect(next_url)
+    return redirect('listings:dashboard')
+
+
+@login_required
+@require_POST
+def toggle_vedette_pro(request, pro_id):
+    """Toggle mise a la une d'un pro sur la homepage - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    pro = get_object_or_404(ProProfile, id=pro_id)
+    pro.mise_en_avant = not pro.mise_en_avant
+    pro.save(update_fields=['mise_en_avant'])
+
+    status = 'mis a la une' if pro.mise_en_avant else 'retire de la une'
+    messages.success(request, f'{pro.nom_entreprise} {status}.')
+
     next_url = request.GET.get('next', request.META.get('HTTP_REFERER', ''))
     if next_url:
         return redirect(next_url)

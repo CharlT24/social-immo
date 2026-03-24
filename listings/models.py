@@ -271,6 +271,7 @@ class Agence(models.Model):
         related_name='agence'
     )
     is_active = models.BooleanField(default=True)
+    mise_en_avant = models.BooleanField(default=False, verbose_name='A la une sur la homepage')
     created_at = models.DateTimeField(auto_now_add=True)
     last_import = models.DateTimeField(null=True, blank=True)
 
@@ -411,6 +412,7 @@ class ProProfile(models.Model):
     code_postal = models.CharField(max_length=10, blank=True, default='')
     siret = models.CharField(max_length=20, blank=True, default='', verbose_name='SIRET/RCS')
     is_active = models.BooleanField(default=True)
+    mise_en_avant = models.BooleanField(default=False, verbose_name='A la une sur la homepage')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -56,6 +56,8 @@ urlpatterns = [
     path('locaux-professionnels/', views.locaux_pro, name='locaux_pro'),
     # Mise en avant
     path('gestion/annonce/<int:annonce_id>/une/', views.toggle_mise_en_avant, name='toggle_mise_en_avant'),
+    path('gestion/vedette/agence/<int:agence_id>/', views.toggle_vedette_agence, name='toggle_vedette_agence'),
+    path('gestion/vedette/pro/<int:pro_id>/', views.toggle_vedette_pro, name='toggle_vedette_pro'),
     # Moderation
     path('gestion/commentaire/<int:commentaire_id>/supprimer/', views.supprimer_commentaire, name='supprimer_commentaire'),
     # Estimation

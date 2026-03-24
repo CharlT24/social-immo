@@ -2475,3 +2475,13 @@ def conseiller_set_password(request):
             messages.success(request, 'Mot de passe defini avec succes !')
             return redirect('listings:conseiller_dashboard')
     return render(request, 'listings/conseiller_set_password.html')
+
+
+def agence_immo(request):
+    """Page vitrine pour inviter les agences immo a rejoindre Social Immo"""
+    nb_agences = Agence.objects.filter(is_active=True).count()
+    nb_annonces = Annonce.objects.filter(is_active=True).count()
+    return render(request, 'listings/agence_immo.html', {
+        'nb_agences': nb_agences,
+        'nb_annonces': nb_annonces,
+    })

@@ -63,6 +63,8 @@ urlpatterns = [
     # Estimation
     path('estimer/', views.estimation, name='estimation'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),
+    # Page agence immo (landing)
+    path('agence-immobiliere/', views.agence_immo, name='agence_immo'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

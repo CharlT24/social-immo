@@ -352,7 +352,11 @@
     <div class="flex flex-wrap justify-center gap-6">
         {% for agence in agences_vedettes %}
         <a href="{% url 'listings:agence_profil' agence.id %}" class="group flex flex-col items-center gap-3 bg-white rounded-2xl p-6 shadow-apple hover:shadow-apple-hover hover:-translate-y-1 transition-all w-44">
-            {% if agence.logo_url %}
+            {% if agence.logo %}
+            <div class="w-24 h-24 rounded-xl bg-gray-50 flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
+                <img src="{{ agence.logo.url }}" alt="{{ agence.nom }}" class="max-w-full max-h-full object-contain">
+            </div>
+            {% elif agence.logo_url %}
             <div class="w-24 h-24 rounded-xl bg-gray-50 flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
                 <img src="{{ agence.logo_url }}" alt="{{ agence.nom }}" class="max-w-full max-h-full object-contain">
             </div>

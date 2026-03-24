@@ -460,8 +460,18 @@ def decoration_list(request):
         'user_photo_notes': user_photo_notes,
         'total_pros': total_pros,
         'sidebar_favs_json': json.dumps(sidebar_favs),
-        'agences_map': {a.reference: a for a in Agence.objects.filter(is_active=True)},
     }
+
+    # Annoter chaque photo avec son agence (nom + id) pour le template
+    agences_map = {a.reference: a for a in Agence.objects.filter(is_active=True)}
+    photos_list = list(context['inspiration_photos'])
+    for photo in photos_list:
+        agence = agences_map.get(photo.annonce.client_reference)
+        photo.agence_obj = agence
+        photo.agence_nom = agence.nom if agence else photo.annonce.contact_nom
+        photo.agence_link = f'/agence/{agence.id}/' if agence else f'/annonce/{photo.annonce.reference}/'
+    context['inspiration_photos'] = photos_list
+
     return render(request, 'listings/decoration_list.html', context)
 
 

@@ -64,15 +64,17 @@ def homepage(request):
     agence_data = {}
     for a in agences_with_options:
         opts = getattr(a, 'options', None)
+        # Utiliser le fichier logo uploade en priorite, sinon logo_url
+        logo = a.logo.url if a.logo else a.logo_url
         agence_data[a.reference] = {
-            'nom': a.nom, 'logo_url': a.logo_url, 'id': a.id,
+            'nom': a.nom, 'logo': logo, 'id': a.id,
             'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
             'badge_premium': opts.badge_premium if opts else False,
             'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
         }
     for ann in list(biens_prestige) + list(biens_accessibles):
         ad = agence_data.get(ann.client_reference, {})
-        ann.agence_logo = ad.get('logo_url', '') if ad.get('logo_sur_annonces') else ''
+        ann.agence_logo = ad.get('logo', '') if ad.get('logo_sur_annonces') else ''
         ann.agence_nom = ad.get('nom', '')
         ann.badge_premium = ad.get('badge_premium', False)
 
@@ -186,9 +188,10 @@ def search_results(request):
     agence_data = {}
     for a in agences_with_options:
         opts = getattr(a, 'options', None)
+        logo = a.logo.url if a.logo else a.logo_url
         agence_data[a.reference] = {
             'nom': a.nom,
-            'logo_url': a.logo_url,
+            'logo': logo,
             'id': a.id,
             'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
             'badge_premium': opts.badge_premium if opts else False,
@@ -198,7 +201,7 @@ def search_results(request):
     # Annoter les annonces de la page courante
     for ann in annonces_page:
         ad = agence_data.get(ann.client_reference, {})
-        ann.agence_logo = ad.get('logo_url', '') if ad.get('logo_sur_annonces') else ''
+        ann.agence_logo = ad.get('logo', '') if ad.get('logo_sur_annonces') else ''
         ann.agence_nom = ad.get('nom', '')
         ann.agence_id = ad.get('id')
         ann.badge_premium = ad.get('badge_premium', False)
@@ -284,7 +287,7 @@ def listing_detail(request, reference):
         opts = getattr(agence, 'options', None)
         agence_opts = {
             'nom': agence.nom,
-            'logo_url': agence.logo_url,
+            'logo_url': agence.logo.url if agence.logo else agence.logo_url,
             'id': agence.id,
             'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
             'badge_premium': opts.badge_premium if opts else False,

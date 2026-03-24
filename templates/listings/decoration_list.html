@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load listings_extras %}
 
 {% block title %}Inspirations{% if current_categorie %} - {{ current_categorie }}{% endif %} - Social Immo{% endblock %}
 
@@ -80,8 +81,9 @@
 
         <!-- Agence Inspirations -->
         {% for photo in inspiration_photos %}
+        {% with agence=agences_map|dict_get:photo.annonce.client_reference %}
         <div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer"
-             onclick="openPhotoModal('{{ photo.url }}', {{ photo.id }}, 'annonce', '{{ photo.get_inspiration_categorie_display|default:"" }}', '{{ photo.annonce.reference }}', '{% url 'listings:detail' photo.annonce.reference %}')">
+             onclick="openPhotoModal('{{ photo.url }}', {{ photo.id }}, 'annonce', '{{ photo.get_inspiration_categorie_display|default:"" }}', '{{ agence.nom|default:photo.annonce.contact_nom }}', '{% if agence %}{% url 'listings:agence_profil' agence.id %}{% else %}{% url 'listings:detail' photo.annonce.reference %}{% endif %}')">
             <img src="{{ photo.url }}" alt="" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
 
             <!-- Category badge -->
@@ -116,12 +118,13 @@
                             <span class="text-xs font-medium">Commenter</span>
                         </div>
                     </div>
-                    <span class="text-xs text-white/80 font-medium bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                        {{ photo.annonce.reference }}
+                    <span class="text-xs text-white/80 font-medium bg-apple-blue/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                        {{ agence.nom|default:photo.annonce.contact_nom }}
                     </span>
                 </div>
             </div>
         </div>
+        {% endwith %}
         {% endfor %}
 
         <!-- Pro Realisations -->

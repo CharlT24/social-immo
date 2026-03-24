@@ -460,6 +460,7 @@ def decoration_list(request):
         'user_photo_notes': user_photo_notes,
         'total_pros': total_pros,
         'sidebar_favs_json': json.dumps(sidebar_favs),
+        'agences_map': {a.reference: a for a in Agence.objects.filter(is_active=True)},
     }
     return render(request, 'listings/decoration_list.html', context)
 

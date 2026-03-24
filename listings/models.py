@@ -78,6 +78,9 @@ class Annonce(models.Model):
     is_active = models.BooleanField(default=True)
     is_inspiration = models.BooleanField(default=False)
     mise_en_avant = models.BooleanField(default=False, verbose_name='Mise à la une')
+    nb_vues = models.PositiveIntegerField(default=0, verbose_name='Nombre de vues')
+    video_url = models.URLField(max_length=500, blank=True, default='', verbose_name='URL Video (YouTube/Vimeo)')
+    visite_virtuelle_url = models.URLField(max_length=500, blank=True, default='', verbose_name='URL Visite virtuelle (Matterport/360)')
 
     INSPIRATION_CHOICES = [
         ('chaleureux', 'Foyer chaleureux'),
@@ -563,6 +566,7 @@ class DemandeContact(models.Model):
     )
     message = models.TextField()
     telephone = models.CharField(max_length=20, blank=True)
+    creneau_rappel = models.CharField(max_length=20, blank=True, default='', verbose_name='Creneau de rappel')
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
 
@@ -654,16 +658,6 @@ class AgenceOptions(models.Model):
     photos_illimitees = models.BooleanField(
         default=False, verbose_name='Photos illimitees',
         help_text='Pas de limite sur le nombre de photos par annonce'
-    )
-
-    # --- DIFFUSION ---
-    multidiffusion = models.BooleanField(
-        default=False, verbose_name='Multidiffusion',
-        help_text='Diffuser sur SeLoger, LeBonCoin, Bien\'ici, etc.'
-    )
-    export_portails = models.BooleanField(
-        default=False, verbose_name='Export portails',
-        help_text='Generer un flux XML compatible portails immobiliers'
     )
 
     # --- META ---

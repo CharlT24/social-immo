@@ -117,6 +117,36 @@
                 </p>
             </div>
 
+            <!-- Video (si option activee et URL renseignee) -->
+            {% if agence_opts.video and annonce.video_url %}
+            <div>
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><polygon fill="#fff" points="9.545 15.568 15.818 12 9.545 8.432"/></svg>
+                    Video
+                </h2>
+                <div class="rounded-2xl overflow-hidden shadow-apple bg-black aspect-video">
+                    {% if 'youtube.com' in annonce.video_url or 'youtu.be' in annonce.video_url %}
+                    <iframe src="{{ annonce.video_url|cut:'watch?v='|cut:'https://www.youtube.com/'|cut:'https://youtu.be/' }}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    {% else %}
+                    <iframe src="{{ annonce.video_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Visite virtuelle (si option activee et URL renseignee) -->
+            {% if agence_opts.visite_virtuelle and annonce.visite_virtuelle_url %}
+            <div>
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                    Visite virtuelle 360°
+                </h2>
+                <div class="rounded-2xl overflow-hidden shadow-apple aspect-video">
+                    <iframe src="{{ annonce.visite_virtuelle_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Caractéristiques détaillées -->
             {% if annonce.surface or annonce.surface_sejour or annonce.surface_terrain or annonce.nb_pieces or annonce.nb_chambres or annonce.annee_construction or annonce.libelle_type %}
             <div>
@@ -424,7 +454,20 @@
                                 placeholder="Bonjour, je suis interesse par ce bien..."
                                 class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2"></textarea>
                             <input type="tel" id="contact-tel" placeholder="Votre telephone (optionnel)"
-                                class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-3">
+                                class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-2">
+                            {% if agence_opts.contact_prioritaire %}
+                            <!-- Contact prioritaire : creneau de rappel -->
+                            <select id="contact-creneau"
+                                class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-3">
+                                <option value="">Creneau de rappel souhaite (optionnel)</option>
+                                <option value="matin">Matin (9h-12h)</option>
+                                <option value="midi">Midi (12h-14h)</option>
+                                <option value="apres-midi">Apres-midi (14h-18h)</option>
+                                <option value="soir">Soir (18h-20h)</option>
+                            </select>
+                            {% else %}
+                            <div class="mb-3"></div>
+                            {% endif %}
                             <button onclick="envoyerContact({{ annonce.id }}, 'annonce')"
                                 class="w-full bg-green-600 text-white font-medium py-3 px-6 rounded-xl hover:bg-green-700 transition-colors text-sm">
                                 Envoyer ma demande
@@ -669,9 +712,12 @@ function getCookie(name) {
 function envoyerContact(targetId, targetType) {
     const msg = document.getElementById('contact-message').value.trim();
     const tel = document.getElementById('contact-tel').value.trim();
+    const creneauEl = document.getElementById('contact-creneau');
+    const creneau = creneauEl ? creneauEl.value : '';
     if (!msg) { alert('Veuillez ecrire un message.'); return; }
 
     const body = { message: msg, telephone: tel };
+    if (creneau) body.creneau_rappel = creneau;
     if (targetType === 'annonce') body.annonce_id = targetId;
     else body.pro_id = targetId;
 

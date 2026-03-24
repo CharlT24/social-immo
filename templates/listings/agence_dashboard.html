@@ -394,6 +394,78 @@
                         </div>
                     </div>
 
+                    <!-- Stats avancees (si option activee) -->
+                    {% if has_stats_avancees %}
+                    <div class="bg-white rounded-2xl p-6 mb-6">
+                        <h2 class="text-lg font-bold text-lbc-text mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Stats avancees
+                        </h2>
+                        <div class="flex items-center gap-6 mb-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-blue-600">{{ total_vues }}</div>
+                                <div class="text-xs text-lbc-gray">Vues totales</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-orange-500">{{ total_favoris }}</div>
+                                <div class="text-xs text-lbc-gray">Favoris</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-600">{{ demandes_contact.count }}</div>
+                                <div class="text-xs text-lbc-gray">Contacts</div>
+                            </div>
+                        </div>
+                        {% if top_annonces_vues %}
+                        <h3 class="text-sm font-semibold text-lbc-text mb-2">Top annonces vues</h3>
+                        <div class="space-y-2">
+                            {% for ann in top_annonces_vues %}
+                            <div class="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-4 py-2">
+                                <a href="{% url 'listings:detail' ann.reference %}" class="text-lbc-blue hover:underline truncate mr-2">{{ ann.titre|truncatechars:40 }}</a>
+                                <div class="flex items-center gap-3 flex-shrink-0 text-xs text-lbc-gray">
+                                    <span>{{ ann.nb_vues }} vues</span>
+                                    <span>{{ ann.favoris.count }} fav</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Donnees marche (si option activee) -->
+                    {% if has_donnees_marche and donnees_marche %}
+                    <div class="bg-white rounded-2xl p-6 mb-6">
+                        <h2 class="text-lg font-bold text-lbc-text mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Donnees marche
+                        </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-xs text-lbc-gray border-b">
+                                        <th class="pb-2">Ville</th>
+                                        <th class="pb-2 text-right">Biens</th>
+                                        <th class="pb-2 text-right">Prix moy.</th>
+                                        <th class="pb-2 text-right">Surface moy.</th>
+                                        <th class="pb-2 text-right">Prix/m2</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    {% for d in donnees_marche %}
+                                    <tr>
+                                        <td class="py-2 font-medium">{{ d.ville }}</td>
+                                        <td class="py-2 text-right">{{ d.nb }}</td>
+                                        <td class="py-2 text-right">{{ d.prix_moy|floatformat:0 }} &euro;</td>
+                                        <td class="py-2 text-right">{{ d.surface_moy }} m2</td>
+                                        <td class="py-2 text-right font-semibold text-indigo-600">{{ d.prix_m2 }} &euro;/m2</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Liste des annonces -->
                     <div id="liste-annonces" class="bg-white rounded-2xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100">
@@ -444,6 +516,9 @@
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Ville</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Prix</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Type</th>
+                                        {% if has_stats_avancees %}
+                                        <th class="px-4 py-3 text-center text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Vues</th>
+                                        {% endif %}
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Statut</th>
                                         <th class="px-4 py-3 text-center text-[11px] font-bold text-lbc-gray uppercase tracking-wider">Photos</th>
                                         <th class="px-4 py-3 text-left text-[11px] font-bold text-lbc-gray uppercase tracking-wider"></th>
@@ -470,6 +545,9 @@
                                         <td class="px-4 py-3 text-sm text-lbc-gray">{{ annonce.ville }}</td>
                                         <td class="px-4 py-3 text-sm font-bold text-lbc-text">{{ annonce.prix_format }}</td>
                                         <td class="px-4 py-3 text-sm text-lbc-gray">{{ annonce.get_type_transaction_display }}</td>
+                                        {% if has_stats_avancees %}
+                                        <td class="px-4 py-3 text-sm text-lbc-gray text-center">{{ annonce.nb_vues }}</td>
+                                        {% endif %}
                                         <td class="px-4 py-3">
                                             {% if annonce.is_active %}
                                             <span class="inline-flex items-center gap-1 text-[11px] font-bold text-lbc-success bg-green-50 px-2 py-0.5 rounded-full">

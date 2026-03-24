@@ -273,7 +273,11 @@ def listing_detail(request, reference):
     else:
         form = CommentaireForm()
 
-    # Charger options agence pour logo, badge, exclusif
+    # Incrementer le compteur de vues (hors admin et bots)
+    if not request.user.is_staff:
+        Annonce.objects.filter(id=annonce.id).update(nb_vues=F('nb_vues') + 1)
+
+    # Charger options agence pour logo, badge, exclusif, video, visite, contact, stats
     agence_opts = {}
     try:
         agence = Agence.objects.select_related('options').get(reference=annonce.client_reference, is_active=True)
@@ -285,6 +289,9 @@ def listing_detail(request, reference):
             'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
             'badge_premium': opts.badge_premium if opts else False,
             'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
+            'visite_virtuelle': opts.visite_virtuelle if opts else False,
+            'video': opts.video if opts else False,
+            'contact_prioritaire': opts.contact_prioritaire if opts else False,
         }
     except Agence.DoesNotExist:
         pass
@@ -773,6 +780,36 @@ def agence_dashboard(request):
     ).select_related('expediteur', 'annonce').order_by('-created_at')
     demandes_non_lues = demandes_contact.filter(is_read=False).count()
 
+    # Options agence
+    opts = getattr(agence, 'options', None)
+    has_stats_avancees = opts.stats_avancees if opts else False
+    has_donnees_marche = opts.donnees_marche if opts else False
+
+    # Stats avancees : vues totales + top 5 annonces par vues
+    total_vues = 0
+    top_annonces_vues = []
+    if has_stats_avancees:
+        total_vues = annonces_actives.aggregate(total=Sum('nb_vues'))['total'] or 0
+        top_annonces_vues = annonces_actives.filter(nb_vues__gt=0).order_by('-nb_vues')[:5]
+
+    # Donnees marche : prix moyen/m2 par ville de l'agence
+    donnees_marche = []
+    if has_donnees_marche:
+        villes_agence = annonces_actives.exclude(ville='').values('ville').annotate(
+            nb=Count('id'),
+            prix_moy=Avg('prix'),
+            surface_moy=Avg('surface'),
+        ).order_by('-nb')[:5]
+        for v in villes_agence:
+            prix_m2 = round(v['prix_moy'] / v['surface_moy']) if v['surface_moy'] and v['surface_moy'] > 0 else 0
+            donnees_marche.append({
+                'ville': v['ville'],
+                'nb': v['nb'],
+                'prix_moy': round(v['prix_moy'] or 0),
+                'surface_moy': round(v['surface_moy'] or 0),
+                'prix_m2': prix_m2,
+            })
+
     context = {
         'agence': agence,
         'current_tab': current_tab,
@@ -799,6 +836,11 @@ def agence_dashboard(request):
         'inspiration_choices': Annonce.INSPIRATION_CHOICES,
         'demandes_contact': demandes_contact,
         'demandes_non_lues': demandes_non_lues,
+        'has_stats_avancees': has_stats_avancees,
+        'has_donnees_marche': has_donnees_marche,
+        'total_vues': total_vues,
+        'top_annonces_vues': top_annonces_vues,
+        'donnees_marche': donnees_marche,
     }
     return render(request, 'listings/agence_dashboard.html', context)
 
@@ -1573,6 +1615,7 @@ def envoyer_contact(request):
         data = json.loads(request.body)
         message_text = data.get('message', '').strip()
         telephone = data.get('telephone', '').strip()
+        creneau_rappel = data.get('creneau_rappel', '').strip()
         annonce_id = data.get('annonce_id')
         pro_id = data.get('pro_id')
     except (json.JSONDecodeError, KeyError):
@@ -1585,6 +1628,7 @@ def envoyer_contact(request):
         expediteur=request.user,
         message=message_text,
         telephone=telephone,
+        creneau_rappel=creneau_rappel,
     )
 
     recipient_email = None
@@ -1623,6 +1667,7 @@ Vous avez recu une nouvelle demande sur SocialImmo.
 De : {request.user.get_full_name() or request.user.username}
 Email : {request.user.email}
 {('Telephone : ' + telephone) if telephone else ''}
+{('Creneau de rappel souhaite : ' + creneau_rappel) if creneau_rappel else ''}
 
 Message :
 {message_text}
@@ -2176,7 +2221,6 @@ def gestion_options_agence(request, agence_id):
             'estimation_forward', 'contact_prioritaire', 'alertes_email',
             'stats_avancees', 'rapport_mensuel', 'donnees_marche',
             'visite_virtuelle', 'video', 'photos_illimitees',
-            'multidiffusion', 'export_portails',
         ]
         for field in bool_fields:
             setattr(options, field, field in request.POST)
@@ -2242,15 +2286,6 @@ def gestion_options_agence(request, agence_id):
                 ('visite_virtuelle', options.visite_virtuelle),
                 ('video', options.video),
                 ('photos_illimitees', options.photos_illimitees),
-            ]
-        },
-        {
-            'title': 'Diffusion',
-            'icon': 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-            'color': 'indigo',
-            'fields': [
-                ('multidiffusion', options.multidiffusion),
-                ('export_portails', options.export_portails),
             ]
         },
     ]

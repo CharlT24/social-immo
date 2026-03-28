@@ -23,7 +23,7 @@ from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
-    Estimation, AgenceOptions
+    Estimation, AgenceOptions, InspirationTag
 )
 from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
 
@@ -452,21 +452,29 @@ def toggle_favorite(request):
 
 def decoration_list(request):
     """Vue inspirations : photos individuelles agences + realisations pro"""
+    from .models import InspirationTag
+
     # Photos d'inspiration agences (individuelles)
     inspiration_photos = Photo.objects.filter(
         is_inspiration=True, annonce__is_active=True
-    ).select_related('annonce').order_by('-annonce__updated_at')
+    ).select_related('annonce').prefetch_related('tags').order_by('-annonce__updated_at')
 
     # Realisations pro
     realisations_pro = ProRealisation.objects.filter(
         is_active=True, pro__is_active=True
-    ).prefetch_related('photos').select_related('pro').order_by('-created_at')
+    ).prefetch_related('photos', 'tags').select_related('pro').order_by('-created_at')
 
     # Filtrer par categorie
     current_categorie = request.GET.get('categorie', '').strip()
     if current_categorie:
         inspiration_photos = inspiration_photos.filter(inspiration_categorie=current_categorie)
         realisations_pro = realisations_pro.filter(categorie=current_categorie)
+
+    # Filtrer par tag
+    current_tag = request.GET.get('tag', '').strip()
+    if current_tag:
+        inspiration_photos = inspiration_photos.filter(tags__slug=current_tag)
+        realisations_pro = realisations_pro.filter(tags__slug=current_tag)
 
     # Source filter (agence / pro / all)
     source = request.GET.get('source', '').strip()
@@ -486,6 +494,13 @@ def decoration_list(request):
     all_cats = cat_agent | cat_pro
     cat_choices = dict(Annonce.INSPIRATION_CHOICES)
     categories = [(c, cat_choices.get(c, c)) for c in sorted(all_cats)]
+
+    # Tags disponibles (groupes par groupe)
+    all_tags = InspirationTag.objects.all()
+    tags_by_group = {}
+    for tag in all_tags:
+        group_label = dict(InspirationTag.GROUPE_CHOICES).get(tag.groupe, tag.groupe)
+        tags_by_group.setdefault(group_label, []).append(tag)
 
     # Favoris et notes de l'utilisateur
     user_photo_favs = set()
@@ -533,6 +548,8 @@ def decoration_list(request):
         'realisations_pro': realisations_pro if source != 'agence' else [],
         'categories': categories,
         'current_categorie': current_categorie,
+        'current_tag': current_tag,
+        'tags_by_group': tags_by_group,
         'current_source': source,
         'search_ref': search_ref,
         'user_photo_favs': user_photo_favs,
@@ -1373,6 +1390,10 @@ def pro_ajouter_realisation(request):
                 description=form.cleaned_data.get('description', ''),
                 categorie=form.cleaned_data.get('categorie', ''),
             )
+            # Tags
+            tags = form.cleaned_data.get('tags')
+            if tags:
+                realisation.tags.set(tags)
             # Parser les URLs de photos (une par ligne)
             urls_raw = form.cleaned_data['photo_urls']
             for i, line in enumerate(urls_raw.strip().split('\n'), 1):

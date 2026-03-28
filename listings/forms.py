@@ -1,5 +1,5 @@
 from django import forms
-from .models import Commentaire, Agence, ProProfile, Annonce
+from .models import Commentaire, Agence, ProProfile, Annonce, InspirationTag
 
 
 class CommentaireForm(forms.ModelForm):
@@ -204,6 +204,13 @@ class ProRealisationForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': PRO_SELECT}),
         label='Categorie'
+    )
+    tags = forms.ModelMultipleChoiceField(
+        queryset=InspirationTag.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(),
+        label='Tags (3 a 5 max)',
+        help_text='Selectionnez les tags qui decrivent le mieux cette realisation.'
     )
     photo_urls = forms.CharField(
         widget=forms.Textarea(attrs={

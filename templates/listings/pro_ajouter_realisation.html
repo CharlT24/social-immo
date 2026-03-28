@@ -86,6 +86,39 @@
                 {% endif %}
             </div>
 
+            <!-- Tags -->
+            <div>
+                <label class="block text-sm font-semibold text-apple-text mb-2">
+                    Tags (3 a 5 max)
+                </label>
+                <p class="text-xs text-apple-gray mb-3">Selectionnez les tags qui decrivent le mieux cette realisation.</p>
+                <div class="bg-apple-bg rounded-xl p-4 max-h-64 overflow-y-auto space-y-4" id="tags-container">
+                    {% regroup form.tags.field.queryset by groupe as tag_groups %}
+                    {% for group in tag_groups %}
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-apple-gray mb-2">
+                            {% if group.grouper == 'style' %}Style{% elif group.grouper == 'piece' %}Piece{% elif group.grouper == 'couleur' %}Couleur{% elif group.grouper == 'materiau' %}Materiau{% elif group.grouper == 'ambiance' %}Ambiance{% else %}{{ group.grouper }}{% endif %}
+                        </p>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for tag in group.list %}
+                            <label class="tag-label cursor-pointer">
+                                <input type="checkbox" name="tags" value="{{ tag.id }}" class="hidden tag-checkbox"
+                                       onchange="checkTagLimit(this)">
+                                <span class="inline-block text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 bg-white text-apple-gray hover:border-purple-300 hover:text-purple-600 transition-all select-none tag-span">
+                                    {{ tag.nom }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p id="tag-count" class="mt-2 text-xs text-apple-gray">0 / 5 tags selectionnes</p>
+                {% if form.tags.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
+                {% endif %}
+            </div>
+
             <!-- Photo URLs -->
             <div>
                 <label for="{{ form.photo_urls.id_for_label }}" class="block text-sm font-semibold text-apple-text mb-2">
@@ -121,4 +154,29 @@ https://exemple.com/photo3.jpg"
     </div>
 
 </div>
+
+<script>
+function checkTagLimit(checkbox) {
+    const checked = document.querySelectorAll('.tag-checkbox:checked');
+    const countEl = document.getElementById('tag-count');
+    countEl.textContent = checked.length + ' / 5 tags selectionnes';
+    if (checked.length > 5) {
+        checkbox.checked = false;
+        countEl.textContent = '5 / 5 tags selectionnes (max atteint)';
+        countEl.classList.add('text-red-500');
+        setTimeout(() => countEl.classList.remove('text-red-500'), 1500);
+        return;
+    }
+    document.querySelectorAll('.tag-checkbox').forEach(cb => {
+        const span = cb.nextElementSibling;
+        if (cb.checked) {
+            span.classList.add('bg-purple-600', 'text-white', 'border-purple-600');
+            span.classList.remove('bg-white', 'text-apple-gray', 'border-gray-200');
+        } else {
+            span.classList.remove('bg-purple-600', 'text-white', 'border-purple-600');
+            span.classList.add('bg-white', 'text-apple-gray', 'border-gray-200');
+        }
+    });
+}
+</script>
 {% endblock %}

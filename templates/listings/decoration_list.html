@@ -63,9 +63,9 @@
 
     <!-- Category Filters -->
     {% if categories %}
-    <div class="flex flex-wrap items-center justify-center gap-2 mb-10">
+    <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
         <a href="{% url 'listings:decoration_list' %}{% if current_source %}?source={{ current_source }}{% endif %}"
-           class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-all {% if not current_categorie %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
+           class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-all {% if not current_categorie and not current_tag %}bg-apple-blue text-white{% else %}bg-white text-apple-gray hover:bg-gray-50 shadow-apple{% endif %}">
             Toutes
         </a>
         {% for code, label in categories %}
@@ -74,6 +74,40 @@
             {{ label }}
         </a>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Tag Filters -->
+    {% if tags_by_group %}
+    <div class="mb-10">
+        <button onclick="document.getElementById('tags-panel').classList.toggle('hidden')" class="mx-auto flex items-center gap-2 text-sm font-medium text-apple-gray hover:text-apple-text transition-colors mb-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            Filtrer par tags {% if current_tag %}<span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">{{ current_tag }}</span>{% endif %}
+        </button>
+        <div id="tags-panel" class="{% if not current_tag %}hidden{% endif %} bg-white rounded-2xl shadow-apple p-5 max-w-4xl mx-auto">
+            {% if current_tag %}
+            <div class="mb-3">
+                <a href="{% url 'listings:decoration_list' %}{% if current_categorie %}?categorie={{ current_categorie }}{% endif %}{% if current_source %}{% if current_categorie %}&{% else %}?{% endif %}source={{ current_source }}{% endif %}"
+                   class="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Effacer le filtre tag
+                </a>
+            </div>
+            {% endif %}
+            {% for group_label, group_tags in tags_by_group.items %}
+            <div class="mb-3 last:mb-0">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-apple-gray mb-1.5">{{ group_label }}</p>
+                <div class="flex flex-wrap gap-1.5">
+                    {% for tag in group_tags %}
+                    <a href="?tag={{ tag.slug }}{% if current_categorie %}&categorie={{ current_categorie }}{% endif %}{% if current_source %}&source={{ current_source }}{% endif %}"
+                       class="text-xs font-medium px-2.5 py-1 rounded-full transition-all {% if current_tag == tag.slug %}bg-indigo-600 text-white{% else %}bg-gray-100 text-apple-gray hover:bg-indigo-50 hover:text-indigo-600{% endif %}">
+                        {{ tag.nom }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     {% endif %}
 
@@ -87,14 +121,19 @@
              onclick="openPhotoModal('{{ photo.url|escapejs }}', {{ photo.id }}, 'annonce', '{{ photo.get_inspiration_categorie_display|default:""|escapejs }}', '{{ photo.agence_nom|escapejs }}', '{{ photo.agence_link }}')">
             <img src="{{ photo.url }}" alt="" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
 
-            <!-- Category badge -->
-            {% if photo.inspiration_categorie %}
-            <div class="absolute top-3 left-3">
+            <!-- Category badge + tags -->
+            <div class="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[70%]">
+                {% if photo.inspiration_categorie %}
                 <span class="text-xs font-semibold text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
                     {{ photo.get_inspiration_categorie_display }}
                 </span>
+                {% endif %}
+                {% for tag in photo.tags.all %}
+                <span class="text-[10px] font-medium text-white bg-indigo-500/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    {{ tag.nom }}
+                </span>
+                {% endfor %}
             </div>
-            {% endif %}
 
             <!-- Heart + Comment count overlay -->
             <div class="absolute top-3 right-3 flex flex-col gap-2" onclick="event.stopPropagation()">
@@ -144,6 +183,11 @@
                     {{ realisation.get_categorie_display }}
                 </span>
                 {% endif %}
+                {% for tag in realisation.tags.all %}
+                <span class="text-[10px] font-medium text-white bg-indigo-500/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    {{ tag.nom }}
+                </span>
+                {% endfor %}
             </div>
 
             <!-- Heart -->

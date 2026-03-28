@@ -166,6 +166,32 @@ class Annonce(models.Model):
         return None
 
 
+class InspirationTag(models.Model):
+    """Tags pour les photos inspiration (deco, style, piece, couleur...)"""
+
+    GROUPE_CHOICES = [
+        ('style', 'Style'),
+        ('piece', 'Piece'),
+        ('couleur', 'Couleur'),
+        ('materiau', 'Materiau'),
+        ('ambiance', 'Ambiance'),
+    ]
+
+    nom = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=50, unique=True)
+    groupe = models.CharField(max_length=20, choices=GROUPE_CHOICES, default='style')
+    icone = models.CharField(max_length=10, blank=True, default='')
+    ordre = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['groupe', 'ordre', 'nom']
+        verbose_name = 'Tag inspiration'
+        verbose_name_plural = 'Tags inspiration'
+
+    def __str__(self):
+        return self.nom
+
+
 class Photo(models.Model):
     """Photos associées à une annonce"""
 
@@ -181,6 +207,7 @@ class Photo(models.Model):
         max_length=20, blank=True, default='',
         choices=Annonce.INSPIRATION_CHOICES
     )
+    tags = models.ManyToManyField(InspirationTag, blank=True, related_name='photos')
 
     class Meta:
         ordering = ['ordre']
@@ -456,6 +483,7 @@ class ProRealisation(models.Model):
         max_length=20, blank=True, default='',
         choices=Annonce.INSPIRATION_CHOICES
     )
+    tags = models.ManyToManyField(InspirationTag, blank=True, related_name='realisations')
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

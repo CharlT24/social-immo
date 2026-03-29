@@ -423,19 +423,41 @@ class ProProfile(models.Model):
     """Profil professionnel auto-enregistre (decorateur, artisan, etc.)"""
 
     METIER_CHOICES = [
+        # Design & decoration
         ('decorateur', 'Decorateur d\'interieur'),
         ('architecte', 'Architecte d\'interieur'),
+        ('home_stager', 'Home stager'),
+        ('cuisiniste', 'Cuisiniste'),
+        # Gros oeuvre
+        ('macon', 'Macon'),
+        ('charpentier', 'Charpentier'),
+        ('couvreur', 'Couvreur'),
+        ('facadier', 'Facadier / Ravalement'),
+        # Second oeuvre
         ('peintre', 'Peintre'),
         ('plombier', 'Plombier'),
         ('electricien', 'Electricien'),
-        ('jardinier', 'Paysagiste'),
-        ('cuisiniste', 'Cuisiniste'),
-        ('menuisier', 'Menuisier'),
         ('carreleur', 'Carreleur'),
-        ('macon', 'Macon'),
-        ('couvreur', 'Couvreur'),
+        ('menuisier', 'Menuisier'),
+        ('plaquiste', 'Plaquiste / Platrier'),
         ('serrurier', 'Serrurier'),
+        ('vitrier', 'Vitrier'),
+        ('storiste', 'Storiste / Fermetures'),
+        # Energie & confort
+        ('chauffagiste', 'Chauffagiste / Climatisation'),
+        ('isolation', 'Isolation / RGE'),
         ('domotique', 'Domotique'),
+        # Exterieur
+        ('paysagiste', 'Paysagiste / Jardinier'),
+        ('pisciniste', 'Pisciniste'),
+        # Services immobiliers
+        ('photographe', 'Photographe immobilier'),
+        ('diagnostiqueur', 'Diagnostiqueur immobilier'),
+        ('geometre', 'Geometre-expert'),
+        ('courtier_travaux', 'Courtier en travaux'),
+        ('demenageur', 'Demenageur'),
+        ('nettoyage', 'Nettoyage / Conciergerie'),
+        # General
         ('renovation', 'Renovation generale'),
         ('autre', 'Autre'),
     ]

@@ -212,11 +212,3 @@ class ProRealisationForm(forms.Form):
         label='Tags (3 a 5 max)',
         help_text='Selectionnez les tags qui decrivent le mieux cette realisation.'
     )
-    photo_urls = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': PRO_INPUT, 'rows': 4,
-            'placeholder': 'Collez une URL d\'image par ligne\nhttps://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'
-        }),
-        label='Photos (URLs)',
-        help_text='Une URL par ligne. Formats acceptes : JPG, PNG, WebP.'
-    )

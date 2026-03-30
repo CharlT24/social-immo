@@ -104,7 +104,7 @@
                 <div class="grid grid-cols-2 gap-1">
                     {% for photo in realisation.photos.all %}
                     <div class="relative group {% if forloop.first and forloop.revcounter == 1 %}col-span-2{% endif %}">
-                        <img src="{{ photo.url }}" alt="{{ realisation.titre }}"
+                        <img src="{{ photo.src }}" alt="{{ realisation.titre }}"
                              class="w-full h-40 object-cover {% if forloop.first %}{% if realisation.photos.all|length == 1 %}h-56{% endif %}{% endif %}">
 
                         <!-- Overlay buttons -->

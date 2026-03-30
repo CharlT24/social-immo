@@ -1382,7 +1382,7 @@ def pro_ajouter_realisation(request):
         return redirect('listings:pro_inscription')
 
     if request.method == 'POST':
-        form = ProRealisationForm(request.POST)
+        form = ProRealisationForm(request.POST, request.FILES)
         if form.is_valid():
             realisation = ProRealisation.objects.create(
                 pro=pro,
@@ -1394,16 +1394,14 @@ def pro_ajouter_realisation(request):
             tags = form.cleaned_data.get('tags')
             if tags:
                 realisation.tags.set(tags)
-            # Parser les URLs de photos (une par ligne)
-            urls_raw = form.cleaned_data['photo_urls']
-            for i, line in enumerate(urls_raw.strip().split('\n'), 1):
-                url = line.strip()
-                if url and url.startswith('http'):
-                    ProRealisationPhoto.objects.create(
-                        realisation=realisation,
-                        url=url,
-                        ordre=i
-                    )
+            # Sauvegarder les photos uploadees
+            photos = request.FILES.getlist('photos')
+            for i, photo_file in enumerate(photos[:10], 1):
+                ProRealisationPhoto.objects.create(
+                    realisation=realisation,
+                    image=photo_file,
+                    ordre=i
+                )
             messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
             return redirect('listings:pro_dashboard')
     else:

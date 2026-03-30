@@ -170,8 +170,8 @@
         {% for realisation in realisations_pro %}
         {% for photo in realisation.photos.all %}
         <div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer"
-             onclick="openPhotoModal('{{ photo.url }}', {{ photo.id }}, 'pro', '{{ realisation.get_categorie_display|default:"" }}', '{{ realisation.pro.nom_entreprise }}', '{% url 'listings:pro_profil' realisation.pro.id %}')">
-            <img src="{{ photo.url }}" alt="{{ realisation.titre }}" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+             onclick="openPhotoModal('{{ photo.src }}', {{ photo.id }}, 'pro', '{{ realisation.get_categorie_display|default:"" }}', '{{ realisation.pro.nom_entreprise }}', '{% url 'listings:pro_profil' realisation.pro.id %}')">
+            <img src="{{ photo.src }}" alt="{{ realisation.titre }}" class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
 
             <!-- Pro badge + category -->
             <div class="absolute top-3 left-3 flex items-center gap-2">

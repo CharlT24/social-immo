@@ -521,7 +521,8 @@ class ProRealisationPhoto(models.Model):
     """Photos d'une realisation pro"""
 
     realisation = models.ForeignKey(ProRealisation, on_delete=models.CASCADE, related_name='photos')
-    url = models.URLField(max_length=500)
+    url = models.URLField(max_length=500, blank=True, default='')
+    image = models.ImageField(upload_to='realisations/', blank=True, default='')
     ordre = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -529,6 +530,13 @@ class ProRealisationPhoto(models.Model):
 
     def __str__(self):
         return f"Photo {self.ordre} - {self.realisation.titre}"
+
+    @property
+    def src(self):
+        """Retourne l'URL de la photo (upload ou externe)"""
+        if self.image:
+            return self.image.url
+        return self.url
 
 
 class ProAvis(models.Model):

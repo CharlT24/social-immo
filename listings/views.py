@@ -397,10 +397,6 @@ def dashboard(request):
     total_estimations_en_attente = estimations_en_attente.count()
     agences_actives = Agence.objects.filter(is_active=True).order_by('nom')
 
-    # Vedettes (pour section "A la une" du dashboard)
-    all_agences = Agence.objects.filter(is_active=True).order_by('nom')
-    all_pros = ProProfile.objects.filter(is_active=True).order_by('nom_entreprise')
-
     context = {
         'total_annonces': total_annonces,
         'prix_moyen': stats['prix_moyen'] or 0,
@@ -419,8 +415,6 @@ def dashboard(request):
         'total_estimations': total_estimations,
         'total_estimations_en_attente': total_estimations_en_attente,
         'agences_actives': agences_actives,
-        'all_agences': all_agences,
-        'all_pros': all_pros,
     }
     return render(request, 'listings/dashboard.html', context)
 
@@ -1022,6 +1016,22 @@ def gestion_agences(request):
         'total_conseillers': total_conseillers,
     }
     return render(request, 'listings/gestion_agences.html', context)
+
+
+@login_required
+def gestion_pros(request):
+    """Page de gestion admin : liste des pros + options"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    pros = ProProfile.objects.all().select_related('user').order_by('-created_at')
+
+    context = {
+        'pros': pros,
+        'total_pros': pros.count(),
+        'total_actifs': pros.filter(is_active=True).count(),
+    }
+    return render(request, 'listings/gestion_pros.html', context)
 
 
 @login_required
@@ -2303,7 +2313,7 @@ def gestion_options_pro(request, pro_id):
             'mise_en_avant', 'inspiration_a_la_une', 'is_active', 'nb_inspirations_une'
         ])
         messages.success(request, f'Options de {pro.nom_entreprise} mises a jour.')
-        return redirect('listings:gestion_options_pro', pro_id=pro.id)
+        return redirect('listings:gestion_pros')
 
     return render(request, 'listings/gestion_options_pro.html', {'pro': pro})
 

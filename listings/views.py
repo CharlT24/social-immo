@@ -93,6 +93,12 @@ def homepage(request):
             realisation__is_active=True
         ).order_by('?')[:3 - len(inspiration_photos)])
         inspiration_photos += pro_photos
+    # Fallback : prendre les premieres photos d'annonces actives
+    if len(inspiration_photos) < 3:
+        fallback_photos = list(Photo.objects.filter(
+            annonce__is_active=True, ordre=1
+        ).order_by('?')[:3 - len(inspiration_photos)])
+        inspiration_photos += fallback_photos
 
     # Favoris user
     user_favorites = []

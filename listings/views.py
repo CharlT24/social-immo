@@ -82,6 +82,18 @@ def homepage(request):
     agences_vedettes = Agence.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
     pros_vedettes = ProProfile.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
 
+    # 3 photos inspiration aleatoires pour la homepage
+    inspiration_photos = list(Photo.objects.filter(
+        is_inspiration=True, annonce__is_active=True
+    ).order_by('?')[:3])
+    # Completer avec des photos de realisations pro si pas assez
+    if len(inspiration_photos) < 3:
+        from listings.models import ProRealisationPhoto
+        pro_photos = list(ProRealisationPhoto.objects.filter(
+            realisation__is_active=True
+        ).order_by('?')[:3 - len(inspiration_photos)])
+        inspiration_photos += pro_photos
+
     # Favoris user
     user_favorites = []
     if request.user.is_authenticated:
@@ -99,6 +111,7 @@ def homepage(request):
         'user_favorites': user_favorites,
         'agences_vedettes': agences_vedettes,
         'pros_vedettes': pros_vedettes,
+        'inspiration_photos': inspiration_photos,
     }
     return render(request, 'listings/homepage.html', context)
 

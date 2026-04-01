@@ -124,32 +124,43 @@
 
 <!-- ==================== SERVICES SECTION ==================== -->
 <section class="max-w-7xl mx-auto px-6 -mt-8 relative z-10 mb-16">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="{% url 'listings:search_results' %}?type=V" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Vente -->
+        <a href="{% url 'listings:search_results' %}?type=V" class="md:col-span-1 flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
             <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             </div>
             <div>
                 <p class="text-sm font-bold text-apple-text">{{ count_vente }} biens en vente</p>
-                <p class="text-xs text-apple-gray">Appartements, maisons, terrains...</p>
+                <p class="text-xs text-apple-gray">Appartements, maisons...</p>
             </div>
         </a>
-        <a href="{% url 'listings:search_results' %}?type=L" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+
+        <!-- Inspirations (au milieu, plus grand) -->
+        <a href="{% url 'listings:decoration_list' %}" class="md:col-span-3 relative bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all overflow-hidden group">
+            <div class="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
+            <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+            <div class="absolute bottom-0 left-1/2 w-32 h-32 bg-white/5 rounded-full translate-y-1/2"></div>
+            <div class="relative flex items-center justify-center gap-5">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                    <p class="text-lg font-bold text-white">Inspirations deco</p>
+                    <p class="text-sm text-white/70">Explorez des interieurs qui font rever et trouvez votre style</p>
+                </div>
+                <svg class="w-6 h-6 text-white/60 group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </a>
+
+        <!-- Location -->
+        <a href="{% url 'listings:search_results' %}?type=L" class="md:col-span-1 flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
             <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             </div>
             <div>
-                <p class="text-sm font-bold text-apple-text">{{ count_location }} biens en location</p>
-                <p class="text-xs text-apple-gray">Studios, T2, T3, maisons...</p>
-            </div>
-        </a>
-        <a href="{% url 'listings:decoration_list' %}" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
-            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </div>
-            <div>
-                <p class="text-sm font-bold text-apple-text">Inspirations</p>
-                <p class="text-xs text-apple-gray">Decouvrez nos plus beaux interieurs</p>
+                <p class="text-sm font-bold text-apple-text">{{ count_location }} en location</p>
+                <p class="text-xs text-apple-gray">Studios, T2, maisons...</p>
             </div>
         </a>
     </div>
@@ -334,6 +345,40 @@
                         {% else %}bg-red-300 text-red-800{% endif %}">{{ annonce.dpe_etiquette_conso }}</span>
                     {% endif %}
                 </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== INSPIRATIONS ==================== -->
+{% if inspiration_photos %}
+<section class="max-w-7xl mx-auto px-6 mb-16">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Inspirations
+            </h2>
+            <p class="text-sm text-apple-gray mt-1">Laissez-vous inspirer par de superbes interieurs</p>
+        </div>
+        <a href="{% url 'listings:decoration_list' %}" class="text-sm font-semibold text-purple-600 hover:underline flex items-center gap-1">
+            Voir tout
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% for photo in inspiration_photos %}
+        <a href="{% url 'listings:decoration_list' %}" class="group relative rounded-2xl overflow-hidden aspect-[4/3] shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-1">
+            <img src="{% if photo.src %}{{ photo.src }}{% else %}{{ photo.url }}{% endif %}" alt="Inspiration deco"
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            <div class="absolute bottom-4 left-4 right-4">
+                <span class="inline-block text-xs font-semibold text-white bg-purple-600/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                    Inspiration
+                </span>
             </div>
         </a>
         {% endfor %}

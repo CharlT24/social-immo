@@ -203,6 +203,7 @@ class Photo(models.Model):
     url = models.URLField(max_length=500)
     ordre = models.PositiveIntegerField(default=1)
     is_inspiration = models.BooleanField(default=False)
+    mise_en_avant = models.BooleanField(default=False, verbose_name='A la une inspirations')
     inspiration_categorie = models.CharField(
         max_length=20, blank=True, default='',
         choices=Annonce.INSPIRATION_CHOICES
@@ -476,6 +477,10 @@ class ProProfile(models.Model):
     siret = models.CharField(max_length=20, blank=True, default='', verbose_name='SIRET/RCS')
     is_active = models.BooleanField(default=True)
     mise_en_avant = models.BooleanField(default=False, verbose_name='A la une sur la homepage')
+    inspiration_a_la_une = models.BooleanField(default=False, verbose_name='Inspirations a la une')
+    nb_inspirations_une = models.PositiveIntegerField(
+        default=0, verbose_name='Nb inspirations a la une autorisees'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -523,6 +528,7 @@ class ProRealisationPhoto(models.Model):
     realisation = models.ForeignKey(ProRealisation, on_delete=models.CASCADE, related_name='photos')
     url = models.URLField(max_length=500, blank=True, default='')
     image = models.ImageField(upload_to='realisations/', blank=True, default='')
+    mise_en_avant = models.BooleanField(default=False, verbose_name='A la une inspirations')
     ordre = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -671,6 +677,16 @@ class AgenceOptions(models.Model):
     badge_premium = models.BooleanField(
         default=False, verbose_name='Badge Premium',
         help_text='Badge dore "Premium" sur toutes les annonces de l\'agence'
+    )
+
+    # --- INSPIRATIONS ---
+    inspiration_a_la_une = models.BooleanField(
+        default=False, verbose_name='Inspirations a la une',
+        help_text='Permet de mettre des photos inspiration a la une sur la homepage'
+    )
+    nb_inspirations_une = models.PositiveIntegerField(
+        default=0, verbose_name='Nb inspirations a la une autorisees',
+        help_text='Quota de photos inspiration pouvant etre mises a la une'
     )
 
     # --- BRANDING ---

@@ -83,6 +83,14 @@
             <p class="text-xs text-apple-gray mt-1">0 = illimite si l'option "Mise a la une" est activee</p>
         </div>
 
+        <!-- Inspirations a la une -->
+        <div class="bg-white rounded-2xl shadow-apple p-6 mt-6">
+            <label class="block text-sm font-medium text-apple-text mb-2">Nombre d'inspirations "A la une" autorisees</label>
+            <input type="number" name="nb_inspirations_une" value="{{ options.nb_inspirations_une }}" min="0" max="50"
+                   class="w-32 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue/30 focus:border-apple-blue">
+            <p class="text-xs text-apple-gray mt-1">Nombre de photos inspiration pouvant etre mises a la une sur la homepage</p>
+        </div>
+
         <!-- Notes admin -->
         <div class="bg-white rounded-2xl shadow-apple p-6 mt-6">
             <label class="block text-sm font-medium text-apple-text mb-2">Notes internes (admin)</label>

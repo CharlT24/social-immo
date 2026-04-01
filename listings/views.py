@@ -82,18 +82,25 @@ def homepage(request):
     agences_vedettes = Agence.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
     pros_vedettes = ProProfile.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
 
-    # 3 photos inspiration aleatoires pour la homepage
+    # Photos inspiration pour la homepage : priorite aux "mise en avant"
+    from listings.models import ProRealisationPhoto
     inspiration_photos = list(Photo.objects.filter(
-        is_inspiration=True, annonce__is_active=True
-    ).order_by('?')[:3])
-    # Completer avec des photos de realisations pro si pas assez
-    if len(inspiration_photos) < 3:
-        from listings.models import ProRealisationPhoto
+        is_inspiration=True, mise_en_avant=True, annonce__is_active=True
+    ).order_by('?')[:6])
+    # Ajouter les realisations pro mises en avant
+    if len(inspiration_photos) < 6:
         pro_photos = list(ProRealisationPhoto.objects.filter(
-            realisation__is_active=True
-        ).order_by('?')[:3 - len(inspiration_photos)])
+            mise_en_avant=True, realisation__is_active=True
+        ).order_by('?')[:6 - len(inspiration_photos)])
         inspiration_photos += pro_photos
-    # Fallback : prendre les premieres photos d'annonces actives
+    # Completer avec des inspirations non mises en avant
+    if len(inspiration_photos) < 3:
+        existing_ids = [p.id for p in inspiration_photos if isinstance(p, Photo)]
+        more = list(Photo.objects.filter(
+            is_inspiration=True, annonce__is_active=True
+        ).exclude(id__in=existing_ids).order_by('?')[:3 - len(inspiration_photos)])
+        inspiration_photos += more
+    # Fallback : premieres photos d'annonces
     if len(inspiration_photos) < 3:
         fallback_photos = list(Photo.objects.filter(
             annonce__is_active=True, ordre=1
@@ -473,12 +480,12 @@ def decoration_list(request):
     """Vue inspirations : photos individuelles agences + realisations pro"""
     from .models import InspirationTag
 
-    # Photos d'inspiration agences (individuelles)
+    # Photos d'inspiration agences — mise en avant en premier
     inspiration_photos = Photo.objects.filter(
         is_inspiration=True, annonce__is_active=True
-    ).select_related('annonce').prefetch_related('tags').order_by('-annonce__updated_at')
+    ).select_related('annonce').prefetch_related('tags').order_by('-mise_en_avant', '-annonce__updated_at')
 
-    # Realisations pro
+    # Realisations pro — mise en avant en premier
     realisations_pro = ProRealisation.objects.filter(
         is_active=True, pro__is_active=True
     ).prefetch_related('photos', 'tags').select_related('pro').order_by('-created_at')
@@ -823,6 +830,14 @@ def agence_dashboard(request):
     opts = getattr(agence, 'options', None)
     has_stats_avancees = opts.stats_avancees if opts else False
     has_donnees_marche = opts.donnees_marche if opts else False
+    inspi_a_la_une = opts.inspiration_a_la_une if opts else False
+    inspi_quota = opts.nb_inspirations_une if opts else 0
+    inspi_used = Photo.objects.filter(
+        annonce__client_reference=agence.reference,
+        annonce__is_active=True,
+        is_inspiration=True,
+        mise_en_avant=True
+    ).count() if inspi_a_la_une else 0
 
     # Stats avancees : vues totales + top 5 annonces par vues
     total_vues = 0
@@ -880,6 +895,9 @@ def agence_dashboard(request):
         'total_vues': total_vues,
         'top_annonces_vues': top_annonces_vues,
         'donnees_marche': donnees_marche,
+        'inspi_a_la_une': inspi_a_la_une,
+        'inspi_quota': inspi_quota,
+        'inspi_used': inspi_used,
     }
     return render(request, 'listings/agence_dashboard.html', context)
 
@@ -1304,6 +1322,75 @@ def toggle_inspiration(request):
     })
 
 
+@login_required
+@require_POST
+def toggle_inspi_une(request):
+    """Toggle mise en avant d'une photo inspiration (AJAX, agence ou pro)"""
+    try:
+        data = json.loads(request.body)
+        photo_id = data.get('photo_id')
+        photo_type = data.get('type', 'agence')  # 'agence' ou 'pro'
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if photo_type == 'pro':
+        from listings.models import ProRealisationPhoto
+        photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
+        try:
+            pro = request.user.pro_profile
+            if photo.realisation.pro_id != pro.id:
+                return JsonResponse({'error': 'Non autorise'}, status=403)
+        except ProProfile.DoesNotExist:
+            return JsonResponse({'error': 'Non autorise'}, status=403)
+
+        # Verifier quota
+        if not photo.mise_en_avant:
+            quota = pro.nb_inspirations_une
+            used = ProRealisationPhoto.objects.filter(
+                realisation__pro=pro, mise_en_avant=True
+            ).count()
+            if used >= quota:
+                return JsonResponse({'error': f'Quota atteint ({quota} max)', 'quota_reached': True}, status=400)
+
+        photo.mise_en_avant = not photo.mise_en_avant
+        photo.save(update_fields=['mise_en_avant'])
+        used = ProRealisationPhoto.objects.filter(realisation__pro=pro, mise_en_avant=True).count()
+        return JsonResponse({'mise_en_avant': photo.mise_en_avant, 'used': used})
+
+    else:
+        photo = get_object_or_404(Photo, id=photo_id)
+        try:
+            agence = Agence.objects.get(responsable=request.user)
+            if photo.annonce.client_reference != agence.reference:
+                return JsonResponse({'error': 'Non autorise'}, status=403)
+        except Agence.DoesNotExist:
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'Non autorise'}, status=403)
+            agence = None
+
+        # Verifier quota
+        if not photo.mise_en_avant and agence:
+            opts = getattr(agence, 'options', None)
+            quota = opts.nb_inspirations_une if opts else 0
+            used = Photo.objects.filter(
+                annonce__client_reference=agence.reference,
+                is_inspiration=True, mise_en_avant=True
+            ).count()
+            if used >= quota:
+                return JsonResponse({'error': f'Quota atteint ({quota} max)', 'quota_reached': True}, status=400)
+
+        photo.mise_en_avant = not photo.mise_en_avant
+        photo.save(update_fields=['mise_en_avant'])
+        if agence:
+            used = Photo.objects.filter(
+                annonce__client_reference=agence.reference,
+                is_inspiration=True, mise_en_avant=True
+            ).count()
+        else:
+            used = 0
+        return JsonResponse({'mise_en_avant': photo.mise_en_avant, 'used': used})
+
+
 # ============================================================
 # ESPACE PRO (decorateurs, artisans, etc.)
 # ============================================================
@@ -1376,6 +1463,13 @@ def pro_dashboard(request):
         photo_pro__realisation__pro=pro
     ).count()
 
+    # Quota inspirations a la une
+    inspi_a_la_une = pro.inspiration_a_la_une
+    inspi_quota = pro.nb_inspirations_une
+    inspi_used = ProRealisationPhoto.objects.filter(
+        realisation__pro=pro, mise_en_avant=True
+    ).count() if inspi_a_la_une else 0
+
     context = {
         'pro': pro,
         'realisations': realisations,
@@ -1388,6 +1482,9 @@ def pro_dashboard(request):
         'total_avis': total_avis,
         'total_favoris': total_favoris,
         'inspiration_choices': Annonce.INSPIRATION_CHOICES,
+        'inspi_a_la_une': inspi_a_la_une,
+        'inspi_quota': inspi_quota,
+        'inspi_used': inspi_used,
     }
     return render(request, 'listings/pro_dashboard.html', context)
 
@@ -2268,6 +2365,7 @@ def gestion_options_agence(request, agence_id):
             'estimation_forward', 'contact_prioritaire', 'alertes_email',
             'stats_avancees', 'rapport_mensuel', 'donnees_marche',
             'visite_virtuelle', 'video', 'photos_illimitees',
+            'inspiration_a_la_une',
         ]
         for field in bool_fields:
             setattr(options, field, field in request.POST)
@@ -2277,6 +2375,12 @@ def gestion_options_agence(request, agence_id):
             options.nb_mises_en_avant = int(nb)
         except ValueError:
             options.nb_mises_en_avant = 0
+
+        nb_inspi = request.POST.get('nb_inspirations_une', '0')
+        try:
+            options.nb_inspirations_une = int(nb_inspi)
+        except ValueError:
+            options.nb_inspirations_une = 0
 
         options.notes_admin = request.POST.get('notes_admin', '')
         options.save()
@@ -2291,6 +2395,7 @@ def gestion_options_agence(request, agence_id):
             'color': 'amber',
             'fields': [
                 ('mise_en_avant', options.mise_en_avant),
+                ('inspiration_a_la_une', options.inspiration_a_la_une),
                 ('remontee_auto', options.remontee_auto),
                 ('badge_premium', options.badge_premium),
             ]

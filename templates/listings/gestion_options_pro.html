@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Options - {{ pro.nom_entreprise }} | Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <a href="{% url 'listings:dashboard' %}" class="text-apple-gray hover:text-apple-text transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                </a>
+                <h1 class="text-2xl font-semibold tracking-tight">Options Pro</h1>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+                {% if pro.photo_url %}
+                <img src="{{ pro.photo_url }}" class="w-6 h-6 rounded object-cover">
+                {% endif %}
+                <span class="text-apple-gray">{{ pro.nom_entreprise }}</span>
+                <span class="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{{ pro.get_metier_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl flex items-center gap-3 {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
+            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span class="text-sm font-medium">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Visibilite -->
+        <div class="bg-white rounded-2xl shadow-apple overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div class="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </div>
+                <h2 class="text-lg font-semibold">Visibilite</h2>
+            </div>
+            <div class="divide-y divide-gray-50">
+                <!-- Partenaire a la une -->
+                <label class="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors cursor-pointer">
+                    <div class="flex-1 mr-4">
+                        <div class="text-sm font-medium text-apple-text">Partenaire a la une</div>
+                        <div class="text-xs text-apple-gray mt-0.5">Afficher ce pro dans la section "Professionnels a la une" sur la homepage</div>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" name="mise_en_avant" value="1" {% if pro.mise_en_avant %}checked{% endif %} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </div>
+                </label>
+                <!-- Inspirations a la une -->
+                <label class="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors cursor-pointer">
+                    <div class="flex-1 mr-4">
+                        <div class="text-sm font-medium text-apple-text">Inspirations a la une</div>
+                        <div class="text-xs text-apple-gray mt-0.5">Permettre de mettre des photos en avant sur la homepage et la page inspirations</div>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" name="inspiration_a_la_une" value="1" {% if pro.inspiration_a_la_une %}checked{% endif %} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </div>
+                </label>
+                <!-- Profil actif -->
+                <label class="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors cursor-pointer">
+                    <div class="flex-1 mr-4">
+                        <div class="text-sm font-medium text-apple-text">Profil actif</div>
+                        <div class="text-xs text-apple-gray mt-0.5">Desactiver pour masquer le profil du site</div>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" name="is_active" value="1" {% if pro.is_active %}checked{% endif %} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Quotas -->
+        <div class="bg-white rounded-2xl shadow-apple p-6 mt-6">
+            <label class="block text-sm font-medium text-apple-text mb-2">Nombre d'inspirations "A la une" autorisees</label>
+            <input type="number" name="nb_inspirations_une" value="{{ pro.nb_inspirations_une }}" min="0" max="50"
+                   class="w-32 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500">
+            <p class="text-xs text-apple-gray mt-1">Nombre de photos pouvant etre mises a la une</p>
+        </div>
+
+        <!-- Infos -->
+        <div class="bg-white rounded-2xl shadow-apple p-6 mt-6">
+            <h3 class="text-sm font-medium text-apple-text mb-3">Informations</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-apple-gray">Email :</span>
+                    <span class="text-apple-text">{{ pro.user.email|default:"-" }}</span>
+                </div>
+                <div>
+                    <span class="text-apple-gray">Telephone :</span>
+                    <span class="text-apple-text">{{ pro.telephone|default:"-" }}</span>
+                </div>
+                <div>
+                    <span class="text-apple-gray">Ville :</span>
+                    <span class="text-apple-text">{{ pro.ville|default:"-" }}</span>
+                </div>
+                <div>
+                    <span class="text-apple-gray">Realisations :</span>
+                    <span class="text-apple-text">{{ pro.realisations.count }}</span>
+                </div>
+                <div>
+                    <span class="text-apple-gray">Inscrit le :</span>
+                    <span class="text-apple-text">{{ pro.created_at|date:"d/m/Y" }}</span>
+                </div>
+                <div>
+                    <span class="text-apple-gray">Note :</span>
+                    <span class="text-apple-text">{{ pro.note_moyenne }}/5 ({{ pro.nb_avis }} avis)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="mt-8 flex items-center justify-end gap-3">
+            <a href="{% url 'listings:dashboard' %}" class="px-5 py-2.5 text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                Annuler
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-purple-600 text-white font-medium px-6 py-2.5 rounded-full hover:bg-purple-700 transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Enregistrer
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -2281,6 +2281,34 @@ def toggle_vedette_pro(request, pro_id):
 
 
 @login_required
+def gestion_options_pro(request, pro_id):
+    """Gestion des options d'un professionnel - admin uniquement"""
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Acces reserve aux administrateurs.")
+
+    pro = get_object_or_404(ProProfile, id=pro_id)
+
+    if request.method == 'POST':
+        pro.mise_en_avant = 'mise_en_avant' in request.POST
+        pro.inspiration_a_la_une = 'inspiration_a_la_une' in request.POST
+        pro.is_active = 'is_active' in request.POST
+
+        nb_inspi = request.POST.get('nb_inspirations_une', '0')
+        try:
+            pro.nb_inspirations_une = int(nb_inspi)
+        except ValueError:
+            pro.nb_inspirations_une = 0
+
+        pro.save(update_fields=[
+            'mise_en_avant', 'inspiration_a_la_une', 'is_active', 'nb_inspirations_une'
+        ])
+        messages.success(request, f'Options de {pro.nom_entreprise} mises a jour.')
+        return redirect('listings:gestion_options_pro', pro_id=pro.id)
+
+    return render(request, 'listings/gestion_options_pro.html', {'pro': pro})
+
+
+@login_required
 @require_POST
 def supprimer_commentaire(request, commentaire_id):
     """Suppression d'un commentaire - admin uniquement"""

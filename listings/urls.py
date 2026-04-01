@@ -59,6 +59,7 @@ urlpatterns = [
     path('gestion/annonce/<int:annonce_id>/une/', views.toggle_mise_en_avant, name='toggle_mise_en_avant'),
     path('gestion/vedette/agence/<int:agence_id>/', views.toggle_vedette_agence, name='toggle_vedette_agence'),
     path('gestion/vedette/pro/<int:pro_id>/', views.toggle_vedette_pro, name='toggle_vedette_pro'),
+    path('gestion/options/pro/<int:pro_id>/', views.gestion_options_pro, name='gestion_options_pro'),
     # Moderation
     path('gestion/commentaire/<int:commentaire_id>/supprimer/', views.supprimer_commentaire, name='supprimer_commentaire'),
     # Estimation

@@ -535,16 +535,36 @@ class Command(BaseCommand):
             is_new = True
             annonce_changed = True
 
-        # Photos
+        # Photos — preserve is_inspiration, mise_en_avant, categorie, tags
         photos_changed = False
         if photos:
             existing = set(annonce.photos.values_list('url', 'ordre'))
             if existing != set(photos):
+                # Sauvegarder les metadonnees inspiration avant suppression
+                inspi_data = {}
+                for p in annonce.photos.filter(is_inspiration=True):
+                    inspi_data[p.url] = {
+                        'is_inspiration': True,
+                        'mise_en_avant': p.mise_en_avant,
+                        'inspiration_categorie': p.inspiration_categorie,
+                        'tag_ids': list(p.tags.values_list('id', flat=True)),
+                    }
                 annonce.photos.all().delete()
-                Photo.objects.bulk_create([
-                    Photo(annonce=annonce, url=url, ordre=ordre)
-                    for url, ordre in photos
-                ])
+                new_photos_objs = []
+                for url, ordre in photos:
+                    photo = Photo(annonce=annonce, url=url, ordre=ordre)
+                    # Restaurer les metadonnees si la photo existait
+                    if url in inspi_data:
+                        meta = inspi_data[url]
+                        photo.is_inspiration = meta['is_inspiration']
+                        photo.mise_en_avant = meta['mise_en_avant']
+                        photo.inspiration_categorie = meta['inspiration_categorie']
+                    new_photos_objs.append(photo)
+                created_photos = Photo.objects.bulk_create(new_photos_objs)
+                # Restaurer les tags M2M
+                for photo in created_photos:
+                    if photo.url in inspi_data and inspi_data[photo.url]['tag_ids']:
+                        photo.tags.set(inspi_data[photo.url]['tag_ids'])
                 photos_changed = True
 
         # Conseiller
@@ -689,11 +709,29 @@ class Command(BaseCommand):
 
             existing = set(annonce.photos.values_list('url', 'ordre'))
             if existing != set(new_photos):
+                # Sauvegarder les metadonnees inspiration
+                inspi_data = {}
+                for p in annonce.photos.filter(is_inspiration=True):
+                    inspi_data[p.url] = {
+                        'is_inspiration': True,
+                        'mise_en_avant': p.mise_en_avant,
+                        'inspiration_categorie': p.inspiration_categorie,
+                        'tag_ids': list(p.tags.values_list('id', flat=True)),
+                    }
                 annonce.photos.all().delete()
-                Photo.objects.bulk_create([
-                    Photo(annonce=annonce, url=url, ordre=ordre)
-                    for url, ordre in new_photos
-                ])
+                new_photos_objs = []
+                for url, ordre in new_photos:
+                    photo = Photo(annonce=annonce, url=url, ordre=ordre)
+                    if url in inspi_data:
+                        meta = inspi_data[url]
+                        photo.is_inspiration = meta['is_inspiration']
+                        photo.mise_en_avant = meta['mise_en_avant']
+                        photo.inspiration_categorie = meta['inspiration_categorie']
+                    new_photos_objs.append(photo)
+                created_photos = Photo.objects.bulk_create(new_photos_objs)
+                for photo in created_photos:
+                    if photo.url in inspi_data and inspi_data[photo.url]['tag_ids']:
+                        photo.tags.set(inspi_data[photo.url]['tag_ids'])
                 photos_changed = True
 
         if is_new:

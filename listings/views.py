@@ -82,30 +82,25 @@ def homepage(request):
     agences_vedettes = Agence.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
     pros_vedettes = ProProfile.objects.filter(is_active=True, mise_en_avant=True).order_by('?')
 
-    # Photos inspiration pour la homepage : priorite aux "mise en avant"
+    # Photos inspiration pour la homepage (on collecte des URLs)
+    # Priorite : mises en avant > inspirations > fallback photos annonces
     from listings.models import ProRealisationPhoto
-    inspiration_photos = list(Photo.objects.filter(
-        is_inspiration=True, mise_en_avant=True, annonce__is_active=True
-    ).order_by('?')[:6])
-    # Ajouter les realisations pro mises en avant
-    if len(inspiration_photos) < 6:
-        pro_photos = list(ProRealisationPhoto.objects.filter(
-            mise_en_avant=True, realisation__is_active=True
-        ).order_by('?')[:6 - len(inspiration_photos)])
-        inspiration_photos += pro_photos
-    # Completer avec des inspirations non mises en avant
-    if len(inspiration_photos) < 3:
-        existing_ids = [p.id for p in inspiration_photos if isinstance(p, Photo)]
-        more = list(Photo.objects.filter(
-            is_inspiration=True, annonce__is_active=True
-        ).exclude(id__in=existing_ids).order_by('?')[:3 - len(inspiration_photos)])
-        inspiration_photos += more
-    # Fallback : premieres photos d'annonces
-    if len(inspiration_photos) < 3:
-        fallback_photos = list(Photo.objects.filter(
-            annonce__is_active=True, ordre=1
-        ).order_by('?')[:3 - len(inspiration_photos)])
-        inspiration_photos += fallback_photos
+    inspi_urls = []
+    # 1) Photos agence mises en avant
+    for p in Photo.objects.filter(is_inspiration=True, mise_en_avant=True, annonce__is_active=True).order_by('?')[:6]:
+        inspi_urls.append(p.url)
+    # 2) Photos pro mises en avant
+    if len(inspi_urls) < 6:
+        for p in ProRealisationPhoto.objects.filter(mise_en_avant=True, realisation__is_active=True).order_by('?')[:6 - len(inspi_urls)]:
+            inspi_urls.append(p.src)
+    # 3) Inspirations non mises en avant
+    if len(inspi_urls) < 3:
+        for p in Photo.objects.filter(is_inspiration=True, annonce__is_active=True, mise_en_avant=False).order_by('?')[:3 - len(inspi_urls)]:
+            inspi_urls.append(p.url)
+    # 4) Fallback : premieres photos d'annonces
+    if len(inspi_urls) < 3:
+        for p in Photo.objects.filter(annonce__is_active=True, ordre=1).order_by('?')[:3 - len(inspi_urls)]:
+            inspi_urls.append(p.url)
 
     # Favoris user
     user_favorites = []
@@ -124,7 +119,7 @@ def homepage(request):
         'user_favorites': user_favorites,
         'agences_vedettes': agences_vedettes,
         'pros_vedettes': pros_vedettes,
-        'inspiration_photos': inspiration_photos,
+        'inspi_urls': inspi_urls,
     }
     return render(request, 'listings/homepage.html', context)
 

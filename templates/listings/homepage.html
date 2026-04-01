@@ -353,7 +353,7 @@
 {% endif %}
 
 <!-- ==================== INSPIRATIONS ==================== -->
-{% if inspiration_photos %}
+{% if inspi_urls %}
 <section class="max-w-7xl mx-auto px-6 mb-16">
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -370,9 +370,9 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {% for photo in inspiration_photos %}
+        {% for url in inspi_urls %}
         <a href="{% url 'listings:decoration_list' %}" class="group relative rounded-2xl overflow-hidden aspect-[4/3] shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-1">
-            <img src="{% if photo.src %}{{ photo.src }}{% else %}{{ photo.url }}{% endif %}" alt="Inspiration deco"
+            <img src="{{ url }}" alt="Inspiration deco"
                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
             <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
             <div class="absolute bottom-4 left-4 right-4">

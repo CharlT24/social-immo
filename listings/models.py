@@ -24,6 +24,20 @@ class Annonce(models.Model):
         (TYPE_NEUF, 'Neuf (VEFA)'),
     ]
 
+    # Source et proprietaire
+    SOURCE_CHOICES = [
+        ('agence', 'Agence'),
+        ('particulier', 'Particulier'),
+    ]
+    user = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='annonces'
+    )
+    source = models.CharField(
+        max_length=20, choices=SOURCE_CHOICES,
+        default='agence', db_index=True
+    )
+
     # Références
     reference = models.CharField(max_length=50, unique=True, db_index=True)
     client_reference = models.CharField(max_length=50, blank=True)
@@ -200,7 +214,8 @@ class Photo(models.Model):
         on_delete=models.CASCADE,
         related_name='photos'
     )
-    url = models.URLField(max_length=500)
+    url = models.URLField(max_length=500, blank=True, default='')
+    image = models.ImageField(upload_to='annonces/', blank=True, default='')
     ordre = models.PositiveIntegerField(default=1)
     is_inspiration = models.BooleanField(default=False)
     mise_en_avant = models.BooleanField(default=False, verbose_name='A la une inspirations')
@@ -217,6 +232,13 @@ class Photo(models.Model):
 
     def __str__(self):
         return f"Photo {self.ordre} - {self.annonce.reference}"
+
+    @property
+    def src(self):
+        """Retourne l'URL de la photo (upload ou externe)"""
+        if self.image:
+            return self.image.url
+        return self.url
 
 
 class Commentaire(models.Model):
@@ -808,3 +830,20 @@ class Estimation(models.Model):
 
     def __str__(self):
         return f"{self.nom} - {self.ville} ({self.get_type_bien_display()})"
+
+
+class UserProfile(models.Model):
+    """Profil utilisateur particulier (complement au User Django)"""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    telephone = models.CharField(max_length=20, blank=True, default='')
+    ville = models.CharField(max_length=100, blank=True, default='')
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Profil utilisateur'
+        verbose_name_plural = 'Profils utilisateurs'
+
+    def __str__(self):
+        return f"Profil de {self.user.username}"

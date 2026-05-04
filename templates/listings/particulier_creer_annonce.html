@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Deposer une annonce | Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'listings:particulier_dashboard' %}" class="text-sm text-teal-600 hover:text-teal-700 font-medium">&larr; Retour au dashboard</a>
+        <h1 class="text-3xl font-bold text-gray-900 mt-4">Deposer une annonce</h1>
+        <p class="text-gray-500 mt-1">Remplissez les informations de votre bien. Votre annonce sera publiee immediatement.</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+
+        <!-- Erreurs globales -->
+        {% if form.errors %}
+        <div class="bg-red-50 text-red-700 px-5 py-4 rounded-xl text-sm">
+            <p class="font-semibold mb-2">Veuillez corriger les erreurs :</p>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <p>&bull; {{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Section 1 : Infos de base -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                Informations generales
+            </h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.titre.label }} *</label>
+                    {{ form.titre }}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.texte.label }}</label>
+                    {{ form.texte }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.libelle_type.label }} *</label>
+                        {{ form.libelle_type }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.type_transaction.label }} *</label>
+                        {{ form.type_transaction }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2 : Prix -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                Prix
+            </h2>
+
+            <div class="space-y-4">
+                <div id="prix-vente">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.prix.label }}</label>
+                    {{ form.prix }}
+                </div>
+                <div id="prix-location" class="hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.loyer_mensuel.label }}</label>
+                            {{ form.loyer_mensuel }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.charges_locatives.label }}</label>
+                            {{ form.charges_locatives }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3 : Localisation -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                Localisation
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.ville.label }} *</label>
+                    {{ form.ville }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.code_postal.label }} *</label>
+                    {{ form.code_postal }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4 : Caracteristiques -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                Caracteristiques
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_pieces.label }}</label>
+                    {{ form.nb_pieces }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_chambres.label }}</label>
+                    {{ form.nb_chambres }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface.label }}</label>
+                    {{ form.surface }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface_terrain.label }}</label>
+                    {{ form.surface_terrain }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5 : DPE -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">5</span>
+                Diagnostic energetique (DPE)
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_etiquette_conso.label }}</label>
+                    {{ form.dpe_etiquette_conso }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_valeur_conso.label }}</label>
+                    {{ form.dpe_valeur_conso }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_etiquette_ges.label }}</label>
+                    {{ form.dpe_etiquette_ges }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_valeur_ges.label }}</label>
+                    {{ form.dpe_valeur_ges }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6 : Photos -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">6</span>
+                Photos (5 max)
+            </h2>
+
+            <div id="photo-upload-zone"
+                 class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-all"
+                 onclick="document.getElementById('photo-input').click()">
+                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-sm text-gray-500 font-medium">Cliquez pour ajouter des photos</p>
+                <p class="text-xs text-gray-400 mt-1">JPG, PNG - 5 photos maximum</p>
+                <input type="file" id="photo-input" name="photos" multiple accept="image/*" class="hidden" onchange="previewPhotos(this)">
+            </div>
+
+            <!-- Preview -->
+            <div id="photo-preview" class="grid grid-cols-5 gap-3 mt-4 hidden"></div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit"
+                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl text-lg transition-colors shadow-sm">
+            Publier mon annonce
+        </button>
+    </form>
+</div>
+
+<script>
+// Toggle prix/loyer selon type de transaction
+const typeSelect = document.getElementById('id_type_transaction');
+const prixVente = document.getElementById('prix-vente');
+const prixLocation = document.getElementById('prix-location');
+
+function updatePrixFields() {
+    if (typeSelect.value === 'L') {
+        prixVente.classList.add('hidden');
+        prixLocation.classList.remove('hidden');
+    } else {
+        prixVente.classList.remove('hidden');
+        prixLocation.classList.add('hidden');
+    }
+}
+
+typeSelect.addEventListener('change', updatePrixFields);
+updatePrixFields();
+
+// Photo preview
+function previewPhotos(input) {
+    const preview = document.getElementById('photo-preview');
+    preview.innerHTML = '';
+
+    if (input.files.length > 5) {
+        alert('Maximum 5 photos autorisees.');
+        input.value = '';
+        preview.classList.add('hidden');
+        return;
+    }
+
+    if (input.files.length > 0) {
+        preview.classList.remove('hidden');
+        Array.from(input.files).slice(0, 5).forEach((file, i) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative aspect-square rounded-xl overflow-hidden bg-gray-100';
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"><span class="absolute top-1 right-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded-full">${i + 1}</span>`;
+                preview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    } else {
+        preview.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

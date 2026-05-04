@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon compte | Social Immo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    </style>
+</head>
+<body class="bg-[#F0FDFA] text-gray-900 font-inter min-h-screen">
+
+    <!-- Top Bar -->
+    <header class="bg-white sticky top-0 z-50 border-b border-gray-200/60 shadow-sm">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2">
+                    <span class="text-xl font-bold tracking-tight">Social<span class="text-teal-600">Immo</span></span>
+                </a>
+                <span class="bg-teal-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Mon compte</span>
+            </div>
+            <div class="flex items-center gap-5">
+                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                    Voir le site
+                </a>
+                <a href="{% url 'listings:decoration_list' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
+                    Inspirations
+                </a>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
+                        <span class="text-xs font-bold text-white">{{ user.username|slice:":2"|upper }}</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">{{ user.username }}</span>
+                </div>
+                <a href="{% url 'account_logout' %}" class="text-sm text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Mon espace</h1>
+            <p class="text-gray-500 mt-1">Gerez vos annonces, favoris et inspirations</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="text-2xl font-bold text-teal-600">{{ nb_annonces }}</div>
+                <div class="text-sm text-gray-500 mt-1">Mes annonces</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="text-2xl font-bold text-rose-500">{{ nb_favoris }}</div>
+                <div class="text-sm text-gray-500 mt-1">Favoris</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="text-2xl font-bold text-purple-500">{{ nb_inspi_likes }}</div>
+                <div class="text-sm text-gray-500 mt-1">Inspirations likees</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="text-2xl font-bold text-orange-500">{{ nb_messages_non_lus }}</div>
+                <div class="text-sm text-gray-500 mt-1">Messages non lus</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-8 overflow-x-auto">
+            {% with tabs="vendeur:Vendeur,acquereur:Acquereur,inspirations:Inspirations,messages:Messages,profil:Profil" %}
+            {% for tab_pair in tabs.split %}
+                {% with tab_id=tab_pair|cut:","|slice:":20" %}
+                {% endwith %}
+            {% endfor %}
+            {% endwith %}
+            <a href="?tab=vendeur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'vendeur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Vendeur
+            </a>
+            <a href="?tab=acquereur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'acquereur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Acquereur
+            </a>
+            <a href="?tab=inspirations" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'inspirations' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Inspirations
+            </a>
+            <a href="?tab=messages" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'messages' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Messages {% if nb_messages_non_lus %}<span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ nb_messages_non_lus }}</span>{% endif %}
+            </a>
+            <a href="?tab=profil" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'profil' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Profil
+            </a>
+        </div>
+
+        <!-- Django Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="bg-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-50 text-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-700 px-4 py-3 rounded-xl text-sm">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- ============ ONGLET VENDEUR ============ -->
+        {% if current_tab == 'vendeur' %}
+        <div>
+            <!-- CTA Deposer -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">Mes annonces</h2>
+                <a href="{% url 'listings:particulier_creer_annonce' %}"
+                   class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                    + Deposer une annonce
+                </a>
+            </div>
+
+            {% if annonces %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for annonce in annonces %}
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <!-- Photo -->
+                    <div class="relative aspect-[4/3] bg-gray-100">
+                        {% if annonce.photo_principale %}
+                            {% if annonce.photo_principale.image %}
+                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover">
+                            {% elif annonce.photo_principale.url %}
+                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover">
+                            {% endif %}
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-300">
+                            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        {% endif %}
+                        <!-- Status badge -->
+                        {% if annonce.is_active %}
+                        <span class="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">En ligne</span>
+                        {% else %}
+                        <span class="absolute top-3 left-3 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded-full">Inactive</span>
+                        {% endif %}
+                        <span class="absolute top-3 right-3 bg-teal-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Particulier</span>
+                    </div>
+                    <!-- Info -->
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 truncate">{{ annonce.titre }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ annonce.ville }} {{ annonce.code_postal }}</p>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-lg font-bold text-teal-600">
+                                {% if annonce.type_transaction == 'L' and annonce.loyer_mensuel %}
+                                    {{ annonce.loyer_mensuel|floatformat:0 }} &euro;/mois
+                                {% else %}
+                                    {{ annonce.prix_format }}
+                                {% endif %}
+                            </span>
+                            <div class="flex items-center gap-2 text-xs text-gray-400">
+                                {% if annonce.surface %}<span>{{ annonce.surface|floatformat:0 }} m&sup2;</span>{% endif %}
+                                {% if annonce.nb_pieces %}<span>&bull; {{ annonce.nb_pieces }}p</span>{% endif %}
+                            </div>
+                        </div>
+                        <!-- Actions -->
+                        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                            <a href="{% url 'listings:detail' annonce.reference %}" class="flex-1 text-center text-sm font-medium text-gray-600 hover:text-gray-900 py-2 rounded-lg hover:bg-gray-50 transition-colors">Voir</a>
+                            <a href="{% url 'listings:particulier_modifier_annonce' annonce.id %}" class="flex-1 text-center text-sm font-medium text-teal-600 hover:text-teal-700 py-2 rounded-lg hover:bg-teal-50 transition-colors">Modifier</a>
+                            <form method="post" action="{% url 'listings:particulier_supprimer_annonce' annonce.id %}" onsubmit="return confirm('Supprimer cette annonce ?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-sm font-medium text-red-400 hover:text-red-600 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors">Suppr.</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+                <div class="text-6xl mb-4">&#127968;</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Aucune annonce</h3>
+                <p class="text-gray-500 mb-6">Deposez votre premiere annonce gratuitement, comme sur Le Bon Coin !</p>
+                <a href="{% url 'listings:particulier_creer_annonce' %}"
+                   class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+                    Deposer une annonce
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ ONGLET ACQUEREUR ============ -->
+        {% elif current_tab == 'acquereur' %}
+        <div>
+            <h2 class="text-xl font-bold mb-6">Mes biens favoris</h2>
+
+            {% if favoris %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for fav in favoris %}
+                {% with annonce=fav.annonce %}
+                <a href="{% url 'listings:detail' annonce.reference %}" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                    <div class="relative aspect-[4/3] bg-gray-100">
+                        {% if annonce.photo_principale %}
+                            {% if annonce.photo_principale.image %}
+                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% elif annonce.photo_principale.url %}
+                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% endif %}
+                        {% endif %}
+                        <span class="absolute top-3 right-3 bg-rose-500 text-white p-2 rounded-full">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </span>
+                        {% if annonce.source == 'particulier' %}
+                        <span class="absolute top-3 left-3 bg-teal-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Particulier</span>
+                        {% endif %}
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 truncate">{{ annonce.titre }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ annonce.ville }} {{ annonce.code_postal }}</p>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-lg font-bold text-teal-600">
+                                {% if annonce.type_transaction == 'L' and annonce.loyer_mensuel %}
+                                    {{ annonce.loyer_mensuel|floatformat:0 }} &euro;/mois
+                                {% else %}
+                                    {{ annonce.prix_format }}
+                                {% endif %}
+                            </span>
+                            <div class="flex items-center gap-2 text-xs text-gray-400">
+                                {% if annonce.surface %}<span>{{ annonce.surface|floatformat:0 }} m&sup2;</span>{% endif %}
+                                {% if annonce.nb_pieces %}<span>&bull; {{ annonce.nb_pieces }}p</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+                <div class="text-6xl mb-4">&#10084;&#65039;</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Pas encore de favoris</h3>
+                <p class="text-gray-500 mb-6">Parcourez les annonces et cliquez sur le coeur pour sauvegarder vos biens preferes.</p>
+                <a href="{% url 'listings:search_results' %}"
+                   class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+                    Voir les annonces
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ ONGLET INSPIRATIONS ============ -->
+        {% elif current_tab == 'inspirations' %}
+        <div>
+            <h2 class="text-xl font-bold mb-6">Mes inspirations likees</h2>
+
+            {% if photo_favoris %}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for fav in photo_favoris %}
+                <div class="relative group rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white">
+                    {% if fav.photo %}
+                    <div class="aspect-square bg-gray-100">
+                        {% if fav.photo.image %}
+                        <img src="{{ fav.photo.image.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% elif fav.photo.url %}
+                        <img src="{{ fav.photo.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% endif %}
+                    </div>
+                    {% if fav.photo.inspiration_categorie %}
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                        <span class="text-white text-xs font-medium">{{ fav.photo.get_inspiration_categorie_display }}</span>
+                    </div>
+                    {% endif %}
+                    {% elif fav.photo_pro %}
+                    <div class="aspect-square bg-gray-100">
+                        {% if fav.photo_pro.image %}
+                        <img src="{{ fav.photo_pro.image.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% elif fav.photo_pro.url %}
+                        <img src="{{ fav.photo_pro.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% endif %}
+                    </div>
+                    <div class="absolute top-3 right-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Pro</div>
+                    {% endif %}
+                    <!-- Heart -->
+                    <div class="absolute top-3 left-3 bg-rose-500 text-white p-1.5 rounded-full">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+                <div class="text-6xl mb-4">&#10024;</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Pas encore d'inspirations</h3>
+                <p class="text-gray-500 mb-6">Explorez les inspirations deco et likez celles qui vous plaisent !</p>
+                <a href="{% url 'listings:decoration_list' %}"
+                   class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+                    Voir les inspirations
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ ONGLET MESSAGES ============ -->
+        {% elif current_tab == 'messages' %}
+        <div>
+            <h2 class="text-xl font-bold mb-6">Messages recus</h2>
+
+            {% if messages_recus %}
+            <div class="space-y-3">
+                {% for msg in messages_recus %}
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 {% if not msg.is_read %}border-l-4 border-l-teal-500{% endif %}">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-900">{{ msg.expediteur.get_full_name|default:msg.expediteur.username }}</span>
+                                {% if not msg.is_read %}
+                                <span class="bg-teal-100 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Nouveau</span>
+                                {% endif %}
+                            </div>
+                            {% if msg.annonce %}
+                            <p class="text-xs text-gray-400 mb-2">Concernant : <span class="text-gray-600">{{ msg.annonce.titre }}</span></p>
+                            {% endif %}
+                            <p class="text-sm text-gray-600 line-clamp-2">{{ msg.message }}</p>
+                            {% if msg.telephone %}
+                            <p class="text-sm text-teal-600 mt-2 font-medium">Tel : {{ msg.telephone }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-400 whitespace-nowrap">
+                            {{ msg.created_at|timesince }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+                <div class="text-6xl mb-4">&#128172;</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Pas de messages</h3>
+                <p class="text-gray-500">Les messages de contact sur vos annonces apparaitront ici.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ ONGLET PROFIL ============ -->
+        {% elif current_tab == 'profil' %}
+        <div>
+            <h2 class="text-xl font-bold mb-6">Mon profil</h2>
+
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-xl">
+                <form method="post" action="?tab=profil">
+                    {% csrf_token %}
+
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ profile_form.first_name.label }}</label>
+                                {{ profile_form.first_name }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ profile_form.last_name.label }}</label>
+                                {{ profile_form.last_name }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" value="{{ user.email }}" disabled
+                                   class="w-full px-4 py-3.5 bg-gray-100 border border-transparent rounded-xl text-gray-400 cursor-not-allowed">
+                            <p class="text-xs text-gray-400 mt-1">L'email est lie a votre compte et ne peut pas etre modifie ici.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ profile_form.telephone.label }}</label>
+                            {{ profile_form.telephone }}
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ profile_form.ville.label }}</label>
+                                {{ profile_form.ville }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ profile_form.code_postal.label }}</label>
+                                {{ profile_form.code_postal }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="mt-8 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3.5 rounded-xl transition-colors">
+                        Enregistrer les modifications
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </main>
+
+</body>
+</html>

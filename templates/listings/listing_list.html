@@ -166,7 +166,7 @@
             <div class="aspect-[4/3] overflow-hidden relative">
                 <a href="{% url 'listings:detail' annonce.reference %}">
                     {% if annonce.photo_principale %}
-                    <img src="{{ annonce.photo_principale.url }}"
+                    <img src="{{ annonce.photo_principale.src }}"
                          alt="{{ annonce.titre }}"
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     {% else %}

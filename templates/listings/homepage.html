@@ -200,7 +200,7 @@
         <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1 ring-1 ring-amber-200/50">
             <div class="aspect-[4/3] overflow-hidden relative">
                 {% if annonce.photo_principale %}
-                <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}"
+                <img src="{{ annonce.photo_principale.src }}" alt="{{ annonce.titre }}"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                 {% else %}
                 <div class="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -287,7 +287,7 @@
         <a href="{% url 'listings:detail' annonce.reference %}" class="group bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 hover:-translate-y-1">
             <div class="aspect-[4/3] overflow-hidden relative">
                 {% if annonce.photo_principale %}
-                <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}"
+                <img src="{{ annonce.photo_principale.src }}" alt="{{ annonce.titre }}"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                 {% else %}
                 <div class="w-full h-full bg-gray-100 flex items-center justify-center">

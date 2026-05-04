@@ -118,7 +118,7 @@
             <a href="{% url 'listings:detail' bien.reference %}" class="bg-white rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all hover:-translate-y-0.5 block">
                 {% if bien.photo_principale %}
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="{{ bien.photo_principale.url }}" alt="{{ bien.titre }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                    <img src="{{ bien.photo_principale.src }}" alt="{{ bien.titre }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
                 </div>
                 {% else %}
                 <div class="aspect-[4/3] bg-apple-bg flex items-center justify-center">

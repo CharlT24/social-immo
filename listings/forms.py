@@ -1,5 +1,5 @@
 from django import forms
-from .models import Commentaire, Agence, ProProfile, Annonce, InspirationTag
+from .models import Commentaire, Agence, ProProfile, Annonce, InspirationTag, UserProfile
 
 
 class CommentaireForm(forms.ModelForm):
@@ -211,4 +211,174 @@ class ProRealisationForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
         label='Tags (3 a 5 max)',
         help_text='Selectionnez les tags qui decrivent le mieux cette realisation.'
+    )
+
+
+# --- Espace Particulier ---
+
+PART_INPUT = 'w-full px-4 py-3.5 bg-apple-bg border border-transparent rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all'
+PART_SELECT = PART_INPUT
+PART_TEXTAREA = PART_INPUT + ' resize-none'
+
+TYPE_BIEN_CHOICES = [
+    ('', 'Type de bien...'),
+    ('Appartement', 'Appartement'),
+    ('Maison', 'Maison'),
+    ('Terrain', 'Terrain'),
+    ('Studio', 'Studio'),
+    ('Loft', 'Loft'),
+    ('Villa', 'Villa'),
+    ('Duplex', 'Duplex'),
+    ('Parking', 'Parking / Box'),
+    ('Commerce', 'Local commercial'),
+    ('Bureau', 'Bureau'),
+    ('Immeuble', 'Immeuble'),
+    ('Autre', 'Autre'),
+]
+
+DPE_CHOICES = [('', 'Non renseigne')] + [(l, l) for l in 'ABCDEFG']
+
+
+class ParticulierAnnonceForm(forms.ModelForm):
+    """Formulaire de depot d'annonce pour les particuliers (type LeBonCoin)"""
+
+    libelle_type = forms.ChoiceField(
+        choices=TYPE_BIEN_CHOICES,
+        widget=forms.Select(attrs={'class': PART_SELECT}),
+        label='Type de bien'
+    )
+    type_transaction = forms.ChoiceField(
+        choices=[('V', 'Vente'), ('L', 'Location')],
+        widget=forms.Select(attrs={'class': PART_SELECT}),
+        label='Type d\'annonce'
+    )
+    dpe_etiquette_conso = forms.ChoiceField(
+        choices=DPE_CHOICES, required=False,
+        widget=forms.Select(attrs={'class': PART_SELECT}),
+        label='DPE Energie'
+    )
+    dpe_etiquette_ges = forms.ChoiceField(
+        choices=DPE_CHOICES, required=False,
+        widget=forms.Select(attrs={'class': PART_SELECT}),
+        label='DPE GES'
+    )
+
+    class Meta:
+        model = Annonce
+        fields = [
+            'titre', 'texte', 'libelle_type', 'type_transaction',
+            'prix', 'loyer_mensuel', 'charges_locatives',
+            'ville', 'code_postal',
+            'nb_pieces', 'nb_chambres', 'surface', 'surface_terrain',
+            'dpe_etiquette_conso', 'dpe_valeur_conso',
+            'dpe_etiquette_ges', 'dpe_valeur_ges',
+        ]
+        widgets = {
+            'titre': forms.TextInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Ex: Appartement 3 pieces lumineux centre-ville'
+            }),
+            'texte': forms.Textarea(attrs={
+                'class': PART_TEXTAREA,
+                'rows': 5,
+                'placeholder': 'Decrivez votre bien : etat, equipements, environnement, transports...'
+            }),
+            'prix': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Prix en euros'
+            }),
+            'loyer_mensuel': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Loyer mensuel en euros'
+            }),
+            'charges_locatives': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Charges mensuelles en euros'
+            }),
+            'ville': forms.TextInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Ville'
+            }),
+            'code_postal': forms.TextInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Code postal'
+            }),
+            'nb_pieces': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Nombre de pieces'
+            }),
+            'nb_chambres': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Nombre de chambres'
+            }),
+            'surface': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Surface habitable en m2'
+            }),
+            'surface_terrain': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Surface terrain en m2 (optionnel)'
+            }),
+            'dpe_valeur_conso': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Valeur kWh/m2/an'
+            }),
+            'dpe_valeur_ges': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Valeur kgCO2/m2/an'
+            }),
+        }
+        labels = {
+            'titre': 'Titre de l\'annonce',
+            'texte': 'Description',
+            'prix': 'Prix (euros)',
+            'loyer_mensuel': 'Loyer mensuel (euros)',
+            'charges_locatives': 'Charges (euros/mois)',
+            'ville': 'Ville',
+            'code_postal': 'Code postal',
+            'nb_pieces': 'Pieces',
+            'nb_chambres': 'Chambres',
+            'surface': 'Surface habitable (m2)',
+            'surface_terrain': 'Surface terrain (m2)',
+            'dpe_valeur_conso': 'Valeur energie (kWh/m2/an)',
+            'dpe_valeur_ges': 'Valeur GES (kgCO2/m2/an)',
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        transaction = cleaned.get('type_transaction')
+        if transaction == 'V' and not cleaned.get('prix'):
+            self.add_error('prix', 'Le prix est requis pour une vente.')
+        if transaction == 'L' and not cleaned.get('loyer_mensuel'):
+            self.add_error('loyer_mensuel', 'Le loyer est requis pour une location.')
+        return cleaned
+
+
+class UserProfileForm(forms.Form):
+    """Formulaire de profil utilisateur particulier"""
+
+    first_name = forms.CharField(
+        max_length=30, required=False,
+        widget=forms.TextInput(attrs={'class': PART_INPUT, 'placeholder': 'Prenom'}),
+        label='Prenom'
+    )
+    last_name = forms.CharField(
+        max_length=30, required=False,
+        widget=forms.TextInput(attrs={'class': PART_INPUT, 'placeholder': 'Nom'}),
+        label='Nom'
+    )
+    telephone = forms.CharField(
+        max_length=20, required=False,
+        widget=forms.TextInput(attrs={'class': PART_INPUT, 'placeholder': '06 12 34 56 78'}),
+        label='Telephone'
+    )
+    ville = forms.CharField(
+        max_length=100, required=False,
+        widget=forms.TextInput(attrs={'class': PART_INPUT, 'placeholder': 'Votre ville'}),
+        label='Ville'
+    )
+    code_postal = forms.CharField(
+        max_length=10, required=False,
+        widget=forms.TextInput(attrs={'class': PART_INPUT, 'placeholder': 'Code postal'}),
+        label='Code postal'
     )

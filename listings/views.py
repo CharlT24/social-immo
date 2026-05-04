@@ -23,9 +23,12 @@ from .models import (
     Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
     Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
-    Estimation, AgenceOptions, InspirationTag
+    Estimation, AgenceOptions, InspirationTag, UserProfile
 )
-from .forms import CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm
+from .forms import (
+    CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm,
+    ParticulierAnnonceForm, UserProfileForm
+)
 
 
 def homepage(request):
@@ -2670,3 +2673,172 @@ def agence_immo(request):
         'nb_agences': nb_agences,
         'nb_annonces': nb_annonces,
     })
+
+
+# ============================================================
+# ESPACE PARTICULIER
+# ============================================================
+
+@login_required
+def particulier_dashboard(request):
+    """Dashboard unifie du particulier : vendeur, acquereur, inspirations, messages, profil"""
+    import uuid
+
+    current_tab = request.GET.get('tab', 'vendeur')
+
+    # --- Stats ---
+    mes_annonces = Annonce.objects.filter(user=request.user, source='particulier')
+    nb_annonces = mes_annonces.filter(is_active=True).count()
+    nb_favoris = Favori.objects.filter(user=request.user).count()
+    nb_inspi_likes = PhotoFavori.objects.filter(user=request.user).count()
+    messages_recus = DemandeContact.objects.filter(annonce__user=request.user)
+    nb_messages_non_lus = messages_recus.filter(is_read=False).count()
+
+    context = {
+        'current_tab': current_tab,
+        'nb_annonces': nb_annonces,
+        'nb_favoris': nb_favoris,
+        'nb_inspi_likes': nb_inspi_likes,
+        'nb_messages_non_lus': nb_messages_non_lus,
+    }
+
+    # --- Onglet Vendeur ---
+    if current_tab == 'vendeur':
+        context['annonces'] = mes_annonces.prefetch_related(
+            Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+        ).order_by('-created_at')
+
+    # --- Onglet Acquereur ---
+    elif current_tab == 'acquereur':
+        context['favoris'] = Favori.objects.filter(
+            user=request.user
+        ).select_related('annonce').prefetch_related(
+            Prefetch('annonce__photos', queryset=Photo.objects.order_by('ordre'))
+        ).order_by('-created_at')
+
+    # --- Onglet Inspirations ---
+    elif current_tab == 'inspirations':
+        photo_favs = PhotoFavori.objects.filter(
+            user=request.user
+        ).select_related('photo', 'photo_pro').order_by('-created_at')
+        context['photo_favoris'] = photo_favs
+
+    # --- Onglet Messages ---
+    elif current_tab == 'messages':
+        context['messages_recus'] = messages_recus.select_related(
+            'expediteur', 'annonce'
+        ).order_by('-created_at')[:50]
+
+    # --- Onglet Profil ---
+    elif current_tab == 'profil':
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        if request.method == 'POST':
+            form = UserProfileForm(request.POST)
+            if form.is_valid():
+                request.user.first_name = form.cleaned_data['first_name']
+                request.user.last_name = form.cleaned_data['last_name']
+                request.user.save()
+                profile.telephone = form.cleaned_data['telephone']
+                profile.ville = form.cleaned_data['ville']
+                profile.code_postal = form.cleaned_data['code_postal']
+                profile.save()
+                messages.success(request, 'Profil mis a jour !')
+                return redirect('listings:particulier_dashboard')
+        else:
+            form = UserProfileForm(initial={
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+                'telephone': profile.telephone,
+                'ville': profile.ville,
+                'code_postal': profile.code_postal,
+            })
+        context['profile_form'] = form
+
+    return render(request, 'listings/particulier_dashboard.html', context)
+
+
+@login_required
+def particulier_creer_annonce(request):
+    """Deposer une annonce en tant que particulier"""
+    import uuid
+
+    if request.method == 'POST':
+        form = ParticulierAnnonceForm(request.POST)
+        if form.is_valid():
+            annonce = form.save(commit=False)
+            annonce.user = request.user
+            annonce.source = 'particulier'
+            annonce.reference = f"PART-{request.user.id}-{uuid.uuid4().hex[:8].upper()}"
+            annonce.contact_nom = request.user.get_full_name() or request.user.username
+            annonce.contact_email = request.user.email
+            annonce.save()
+
+            # Upload photos (max 5)
+            photos = request.FILES.getlist('photos')
+            for i, photo_file in enumerate(photos[:5]):
+                Photo.objects.create(
+                    annonce=annonce,
+                    image=photo_file,
+                    ordre=i + 1,
+                )
+
+            messages.success(request, 'Votre annonce a ete publiee !')
+            return redirect('listings:particulier_dashboard')
+    else:
+        form = ParticulierAnnonceForm()
+
+    return render(request, 'listings/particulier_creer_annonce.html', {'form': form})
+
+
+@login_required
+def particulier_modifier_annonce(request, annonce_id):
+    """Modifier une annonce particulier"""
+    annonce = get_object_or_404(
+        Annonce, id=annonce_id, user=request.user, source='particulier'
+    )
+    photos_existantes = annonce.photos.order_by('ordre')
+
+    if request.method == 'POST':
+        form = ParticulierAnnonceForm(request.POST, instance=annonce)
+        if form.is_valid():
+            form.save()
+
+            # Suppression de photos cochees
+            photos_a_supprimer = request.POST.getlist('supprimer_photo')
+            if photos_a_supprimer:
+                annonce.photos.filter(id__in=photos_a_supprimer).delete()
+
+            # Ajout de nouvelles photos
+            nb_photos_actuelles = annonce.photos.count()
+            nouvelles_photos = request.FILES.getlist('photos')
+            places_dispo = 5 - nb_photos_actuelles
+            for i, photo_file in enumerate(nouvelles_photos[:max(0, places_dispo)]):
+                Photo.objects.create(
+                    annonce=annonce,
+                    image=photo_file,
+                    ordre=nb_photos_actuelles + i + 1,
+                )
+
+            messages.success(request, 'Annonce mise a jour !')
+            return redirect('listings:particulier_dashboard')
+    else:
+        form = ParticulierAnnonceForm(instance=annonce)
+
+    return render(request, 'listings/particulier_modifier_annonce.html', {
+        'form': form,
+        'annonce': annonce,
+        'photos_existantes': photos_existantes,
+    })
+
+
+@login_required
+@require_POST
+def particulier_supprimer_annonce(request, annonce_id):
+    """Supprimer (desactiver) une annonce particulier"""
+    annonce = get_object_or_404(
+        Annonce, id=annonce_id, user=request.user, source='particulier'
+    )
+    annonce.is_active = False
+    annonce.save()
+    messages.success(request, 'Annonce supprimee.')
+    return redirect('listings:particulier_dashboard')

@@ -68,6 +68,11 @@ urlpatterns = [
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),
     # Page agence immo (landing)
     path('agence-immobiliere/', views.agence_immo, name='agence_immo'),
+    # Espace Particulier
+    path('mon-compte/', views.particulier_dashboard, name='particulier_dashboard'),
+    path('mon-compte/deposer/', views.particulier_creer_annonce, name='particulier_creer_annonce'),
+    path('mon-compte/annonce/<int:annonce_id>/modifier/', views.particulier_modifier_annonce, name='particulier_modifier_annonce'),
+    path('mon-compte/annonce/<int:annonce_id>/supprimer/', views.particulier_supprimer_annonce, name='particulier_supprimer_annonce'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

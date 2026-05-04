@@ -5,7 +5,7 @@
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
 {% block og_description %}{{ annonce.titre }} a {{ annonce.ville }}. {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}{% endblock %}
-{% block og_image %}{% if annonce.photo_principale %}<meta property="og:image" content="{{ annonce.photo_principale.url }}">{% endif %}{% endblock %}
+{% block og_image %}{% if annonce.photo_principale %}<meta property="og:image" content="{{ annonce.photo_principale.src }}">{% endif %}{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
 {% block twitter_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
 {% block twitter_description %}{{ annonce.titre }} a {{ annonce.ville }} - {{ annonce.prix_format }}{% endblock %}
@@ -18,7 +18,7 @@
   "name": "{{ annonce.titre }}",
   "description": "{{ annonce.texte|truncatewords:50|escapejs }}",
   "url": "https://social-immo.com{% url 'listings:detail' annonce.reference %}",
-  {% if annonce.photo_principale %}"image": "{{ annonce.photo_principale.url }}",{% endif %}
+  {% if annonce.photo_principale %}"image": "{{ annonce.photo_principale.src }}",{% endif %}
   "datePosted": "{{ annonce.created_at|date:'Y-m-d' }}",
   "offers": {
     "@type": "Offer",
@@ -64,11 +64,11 @@
         {% for photo in annonce.photos.all %}
             {% if forloop.first %}
             <div class="{% if annonce.photos.count > 1 %}md:row-span-2{% endif %} aspect-[4/3] md:aspect-auto cursor-pointer" onclick="openCarousel(0)">
-                <img src="{{ photo.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
+                <img src="{{ photo.src }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
             </div>
             {% elif forloop.counter <= 3 %}
             <div class="hidden md:block aspect-[4/3] cursor-pointer" onclick="openCarousel({{ forloop.counter0 }})">
-                <img src="{{ photo.url }}" alt="{{ annonce.titre }} - Photo {{ forloop.counter }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
+                <img src="{{ photo.src }}" alt="{{ annonce.titre }} - Photo {{ forloop.counter }}" class="w-full h-full object-cover hover:brightness-90 transition-all">
             </div>
             {% endif %}
         {% empty %}
@@ -94,8 +94,11 @@
 
             <!-- Title & Location -->
             <div>
-                <!-- Badges agence -->
+                <!-- Badges -->
                 <div class="flex flex-wrap items-center gap-2 mb-3">
+                    {% if annonce.source == 'particulier' %}
+                    <span class="bg-teal-600 text-white text-xs font-bold px-3 py-1 rounded-full">Particulier</span>
+                    {% endif %}
                     {% if agence_opts.badge_premium %}
                     <span class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
@@ -796,7 +799,7 @@ function envoyerContact(targetId, targetType) {
 
 <script>
 // ========== Carousel (script isole) ==========
-var carouselPhotos = [{% for photo in annonce.photos.all %}"{{ photo.url|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+var carouselPhotos = [{% for photo in annonce.photos.all %}"{{ photo.src|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
 var carouselIdx = 0;
 
 function openCarousel(idx) {

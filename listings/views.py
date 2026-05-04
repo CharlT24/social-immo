@@ -2669,9 +2669,42 @@ def agence_immo(request):
     """Page vitrine pour inviter les agences immo a rejoindre Social Immo"""
     nb_agences = Agence.objects.filter(is_active=True).count()
     nb_annonces = Annonce.objects.filter(is_active=True).count()
+    contact_sent = False
+
+    if request.method == 'POST':
+        nom_agence = request.POST.get('nom_agence', '').strip()
+        ville = request.POST.get('ville', '').strip()
+        email = request.POST.get('email', '').strip()
+        telephone = request.POST.get('telephone', '').strip()
+        nb_biens = request.POST.get('nb_biens', '').strip()
+        message_text = request.POST.get('message', '').strip()
+
+        if nom_agence and email:
+            body = (
+                f"Nouvelle demande de diffusion sur Social Immo\n\n"
+                f"Agence : {nom_agence}\n"
+                f"Ville : {ville}\n"
+                f"Email : {email}\n"
+                f"Telephone : {telephone}\n"
+                f"Nombre de biens : {nb_biens}\n\n"
+                f"Message :\n{message_text}\n"
+            )
+            try:
+                send_mail(
+                    subject=f'[Social Immo] Demande agence : {nom_agence}',
+                    message=body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=['ctudela@groupe-ass.com'],
+                    fail_silently=False,
+                )
+            except Exception:
+                pass
+            contact_sent = True
+
     return render(request, 'listings/agence_immo.html', {
         'nb_agences': nb_agences,
         'nb_annonces': nb_annonces,
+        'contact_sent': contact_sent,
     })
 
 

@@ -27,12 +27,12 @@
             Rejoignez la plateforme immobiliere sociale qui connecte vos annonces a des milliers d'acheteurs et locataires qualifies.
         </p>
 
-        <a href="mailto:ctudela@groupe-ass.com?subject=Demande de diffusion sur Social Immo&body=Bonjour,%0A%0AJe souhaite diffuser les biens de mon agence sur Social Immo.%0A%0ANom de l'agence :%0AVille :%0ANombre de biens :%0A%0ACordialement"
+        <a href="#contact-form"
            class="inline-flex items-center gap-3 bg-white text-apple-text font-bold py-4 px-8 rounded-2xl hover:bg-gray-100 active:scale-[0.98] transition-all text-lg shadow-2xl shadow-black/20">
             <svg class="w-6 h-6 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             Nous contacter
         </a>
-        <p class="text-white/40 text-sm mt-4">ctudela@groupe-ass.com</p>
+        <p class="text-white/40 text-sm mt-4">Reponse sous 24h</p>
     </div>
 </section>
 
@@ -203,21 +203,74 @@
     </div>
 </section>
 
-<!-- CTA Final -->
-<section class="bg-gradient-to-br from-apple-blue to-indigo-600">
-    <div class="max-w-3xl mx-auto px-6 py-20 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
-            Pret a diffuser vos biens ?
-        </h2>
-        <p class="text-lg text-white/70 mb-8 max-w-xl mx-auto">
-            Contactez-nous pour mettre en place la diffusion de vos annonces sur Social Immo. C'est simple, rapide et efficace.
-        </p>
-        <a href="mailto:ctudela@groupe-ass.com?subject=Demande de diffusion sur Social Immo&body=Bonjour,%0A%0AJe souhaite diffuser les biens de mon agence sur Social Immo.%0A%0ANom de l'agence :%0AVille :%0ANombre de biens :%0A%0ACordialement"
-           class="inline-flex items-center gap-3 bg-white text-apple-text font-bold py-4 px-8 rounded-2xl hover:bg-gray-100 active:scale-[0.98] transition-all text-lg shadow-2xl shadow-black/20">
-            <svg class="w-6 h-6 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            ctudela@groupe-ass.com
-        </a>
-        <p class="text-white/40 text-sm mt-6">Reponse sous 24h</p>
+<!-- Formulaire de contact -->
+<section id="contact-form" class="bg-gradient-to-br from-apple-blue to-indigo-600">
+    <div class="max-w-2xl mx-auto px-6 py-20">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
+                Pret a diffuser vos biens ?
+            </h2>
+            <p class="text-lg text-white/70 max-w-xl mx-auto">
+                Remplissez le formulaire, nous revenons vers vous sous 24h.
+            </p>
+        </div>
+
+        {% if contact_sent %}
+        <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-8 text-center">
+            <div class="text-5xl mb-4">&#9989;</div>
+            <h3 class="text-2xl font-bold text-white mb-2">Message envoye !</h3>
+            <p class="text-white/70">Merci pour votre interet. Nous vous recontactons sous 24h.</p>
+        </div>
+        {% else %}
+        <form method="post" class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 space-y-5">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-white/80 mb-2">Nom de l'agence *</label>
+                    <input type="text" name="nom_agence" required placeholder="Ex: Immobilier Dupont"
+                           class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-white/80 mb-2">Ville</label>
+                    <input type="text" name="ville" placeholder="Votre ville"
+                           class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-white/80 mb-2">Email *</label>
+                    <input type="email" name="email" required placeholder="contact@agence.fr"
+                           class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-white/80 mb-2">Telephone</label>
+                    <input type="tel" name="telephone" placeholder="06 12 34 56 78"
+                           class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-2">Nombre de biens a diffuser</label>
+                <input type="text" name="nb_biens" placeholder="Ex: 50"
+                       class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-2">Message (optionnel)</label>
+                <textarea name="message" rows="3" placeholder="Precisions, questions..."
+                          class="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/15 transition-all resize-none"></textarea>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-white text-apple-blue font-bold py-4 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all text-lg shadow-xl">
+                Envoyer ma demande
+            </button>
+
+            <p class="text-center text-white/40 text-xs">Vos informations ne sont jamais partagees avec des tiers.</p>
+        </form>
+        {% endif %}
     </div>
 </section>
 

@@ -25,10 +25,10 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 | Phase | Contenu | Statut |
 |-------|---------|--------|
 | 0 | Sauvegarde rollback (tag `v2-stable` + branche backup) | ✅ Terminé |
-| 1 | **Design system global** : animations fluides, scroll-reveal, composants réutilisables (carte annonce unique), skeletons, footer enrichi | 🔄 En cours |
-| 2 | **Feed Inspirations** façon Pinterest : masonry, scroll infini, lightbox immersive, tags, liens vers les pros | ⏳ À venir |
+| 1 | **Design system global** : animations fluides, scroll-reveal, toasts, carte annonce unifiée, footer enrichi, **5 dashboards unifiés sur base.html** | ✅ Terminé |
+| 2 | **Feed Inspirations** façon Pinterest : masonry, scroll infini, lightbox immersive, tags, liens vers les pros | 🔄 En cours |
 | 3 | **Espace Pros du bâtiment** : portfolios de réalisations, annuaire par métier/ville, fiches attractives | ⏳ À venir |
-| 4 | **IA maison** (compatible o2switch) : estimation par comparables, amélioration auto des photos, assistant de rédaction d'annonce | ⏳ À venir |
+| 4 | **IA maison** (compatible o2switch) : ✨ estimation instantanée par comparables sur `/estimer/`, amélioration auto des photos (Pillow), assistant de rédaction au dépôt d'annonce | ✅ Terminé |
 | 5 | **Pré-visite immersive** : diaporama plein écran pièce par pièce, support photos 360°, bases pour la 3D | ⏳ À venir |
 | 6 | **QA + docs** : vérification de toutes les pages, mise à jour CLAUDE.md, push final | ⏳ À venir |
 
@@ -41,3 +41,5 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 ## 📓 Journal
 
 - **2026-07-02** : Démarrage v3. Rollback sécurisé, scan complet du code lancé, roadmap créée.
+- **2026-07-02** : Phase 1 terminée — design system global (scroll-reveal, transitions de page, toasts, shimmer images), carte annonce unifiée (3 duplications supprimées), les 5 dashboards héritent enfin de base.html (nav commune partout).
+- **2026-07-02** : Phase 4 terminée — l'estimation est maintenant **réelle et instantanée** (comparables de la base → médiane €/m², repli barème national × coefficient départemental), fourchette + fiabilité affichées, puis mise en relation pro. Assistant de rédaction (titres + description) et optimisation automatique des photos (Pillow) au dépôt d'annonce particulier. 19 pages smoke-testées en 200.

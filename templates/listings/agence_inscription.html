@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription agence : diffusez vos annonces automatiquement | Social Immo{% endblock %}
+{% block meta_description %}Agences immobilieres : creez votre espace en 2 minutes, branchez votre flux XML (AC3/Poliris) et diffusez toutes vos annonces automatiquement. Gratuit.{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+
+    <div class="text-center mb-10">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <svg class="w-8 h-8 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Votre agence en ligne en 2 minutes</h1>
+        <p class="text-lg text-apple-gray">Compte immediat, flux XML importe automatiquement chaque jour. Gratuit pendant le lancement.</p>
+    </div>
+
+    <form method="post" class="bg-white rounded-3xl shadow-apple p-8 space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm font-medium text-apple-text mb-2">Nom de l'agence *</label>
+            <input type="text" name="nom" required value="{{ request.POST.nom }}" placeholder="Ex: Agence du Port"
+                   class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-sm font-medium text-apple-text mb-2">Email professionnel *</label>
+                <input type="email" name="email" required value="{{ request.POST.email }}" placeholder="contact@agence.fr"
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-apple-text mb-2">Telephone</label>
+                <input type="tel" name="telephone" value="{{ request.POST.telephone }}" placeholder="02 31 00 00 00"
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-apple-text mb-2">Mot de passe * <span class="text-apple-gray font-normal">(8 caracteres min)</span></label>
+                <input type="password" name="password1" required
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-apple-text mb-2">Confirmez le mot de passe *</label>
+                <input type="password" name="password2" required
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-apple-text mb-2">Ville</label>
+            <input type="text" name="ville" value="{{ request.POST.ville }}" placeholder="Ex: Caen"
+                   class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+        </div>
+
+        <!-- Flux XML -->
+        <div class="bg-blue-50/60 rounded-2xl p-5">
+            <p class="text-sm font-semibold text-apple-text mb-1">Votre flux d'annonces <span class="text-apple-gray font-normal">(optionnel, ajoutable plus tard)</span></p>
+            <p class="text-xs text-apple-gray mb-4">Collez l'URL de votre flux XML : vos annonces seront importees automatiquement chaque jour, avec mise a jour et retrait automatiques.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <input type="url" name="feed_url" value="{{ request.POST.feed_url }}" placeholder="https://mon-logiciel.fr/export/flux.xml"
+                           class="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all">
+                </div>
+                <select name="feed_format" class="px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                    <option value="ac3">Format AC3</option>
+                    <option value="poliris">Format Poliris</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-apple-blue text-white font-bold py-4 rounded-2xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20">
+            Creer mon espace agence
+        </button>
+        <p class="text-xs text-apple-gray text-center">
+            Deja inscrit ? <a href="{% url 'account_login' %}" class="text-apple-blue hover:underline">Se connecter</a>
+            · En creant votre compte vous acceptez les <a href="{% url 'listings:cgu' %}" class="text-apple-blue hover:underline">CGU</a>.
+        </p>
+    </form>
+</div>
+{% endblock %}

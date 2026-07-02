@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Aide et support | Social Immo{% endblock %}
+{% block meta_description %}Centre d'aide Social Immo : deposer une annonce, estimation, alertes, compte, devis artisans, flux agences, facturation. Reponses immediates.{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+
+    <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Comment pouvons-nous aider ?</h1>
+        <p class="text-lg text-apple-gray">La plupart des reponses sont ici — sinon, ecrivez-nous en bas de page.</p>
+    </div>
+
+    <!-- FAQ (auto-reponse) -->
+    <div class="space-y-3 mb-14">
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Comment deposer une annonce ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Creez un compte gratuit puis suivez l'assistant en 4 etapes depuis <a href="/mon-compte/deposer/" class="text-apple-blue hover:underline">Deposer une annonce</a> : le prix vous est suggere a partir des ventes reelles, vos photos sont optimisees automatiquement et le texte peut etre redige pour vous. Publication immediate.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">L'estimation est-elle fiable ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Elle est calculee sur les <strong>ventes reellement enregistrees chez les notaires</strong> (donnees publiques DVF) de votre commune, pas sur les prix affiches. La fourchette et le nombre de ventes comparees sont indiques. <a href="/estimer/" class="text-apple-blue hover:underline">Estimer un bien</a> — et pour une expertise sur place, demandez a etre rappele par un pro.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Comment recevoir les nouveaux biens par email ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Lancez une <a href="/recherche/" class="text-apple-blue hover:underline">recherche</a> avec vos criteres puis cliquez sur "Creer une alerte". Gerez vos alertes depuis <a href="/mon-compte/?tab=acquereur" class="text-apple-blue hover:underline">votre compte</a>.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Mot de passe oublie ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Utilisez <a href="/accounts/password/reset/" class="text-apple-blue hover:underline">la reinitialisation par email</a> : vous recevez un lien securise en quelques secondes.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Comment obtenir des devis d'artisans ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Decrivez votre projet sur <a href="/devis/" class="text-apple-blue hover:underline">la page devis</a> : jusqu'a 3 artisans de votre departement vous rappellent. Gratuit et sans engagement.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Je suis une agence : comment diffuser mes annonces ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3"><a href="/agence/inscription/" class="text-apple-blue hover:underline">Creez votre espace en 2 minutes</a> et collez l'URL de votre flux XML (AC3 ou Poliris) : vos annonces sont importees et mises a jour automatiquement chaque jour.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Je suis artisan : comment etre trouve ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3"><a href="/pro/inscription/" class="text-apple-blue hover:underline">Creez votre fiche gratuite</a>, ajoutez vos realisations en photos : vous apparaissez dans l'annuaire, le feed Inspirations et sous les annonces de votre secteur, et vous recevez les demandes de devis.</p>
+        </details>
+        <details class="bg-white rounded-2xl shadow-apple p-5 group">
+            <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">Facturation, resiliation, factures ?<span class="text-apple-gray group-open:rotate-45 transition-transform">+</span></summary>
+            <p class="text-sm text-apple-gray mt-3">Tout est self-service : <a href="/abonnement/portail/" class="text-apple-blue hover:underline">gerez votre abonnement</a> (factures PDF, moyen de paiement, resiliation en 2 clics). Les factures sont envoyees automatiquement par email a chaque paiement.</p>
+        </details>
+    </div>
+
+    <!-- Formulaire support -->
+    <div class="bg-white rounded-3xl shadow-apple p-8">
+        <h2 class="text-lg font-bold mb-1">Vous n'avez pas trouve ?</h2>
+        <p class="text-sm text-apple-gray mb-6">Ecrivez-nous : vous recevez un accuse de reception immediat et une reponse rapide.</p>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="nom" required placeholder="Votre nom" value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}"
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                <input type="email" name="email" required placeholder="Votre email" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}"
+                       class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+            </div>
+            <select name="sujet" class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                <option value="compte">Mon compte</option>
+                <option value="annonce">Mon annonce</option>
+                <option value="paiement">Paiement / facturation</option>
+                <option value="technique">Probleme technique</option>
+                <option value="autre" selected>Autre</option>
+            </select>
+            <textarea name="message" rows="4" required placeholder="Decrivez votre demande..."
+                      class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none"></textarea>
+            <button type="submit" class="w-full bg-apple-blue text-white font-bold py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">
+                Envoyer ma demande
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

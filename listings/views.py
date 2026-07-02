@@ -2223,6 +2223,143 @@ def supprimer_recherche(request, recherche_id):
     return redirect('/mon-compte/?tab=acquereur')
 
 
+def agence_inscription(request):
+    """Inscription agence 100% self-service : compte + agence + flux XML,
+    sans intervention admin."""
+    import re as _re
+
+    if request.method == 'POST':
+        nom = (request.POST.get('nom') or '').strip()
+        email = (request.POST.get('email') or '').strip().lower()
+        password1 = request.POST.get('password1') or ''
+        password2 = request.POST.get('password2') or ''
+        telephone = (request.POST.get('telephone') or '').strip()
+        ville = (request.POST.get('ville') or '').strip()
+        feed_url = (request.POST.get('feed_url') or '').strip()
+        feed_format = request.POST.get('feed_format') or 'ac3'
+
+        erreurs = []
+        if not nom:
+            erreurs.append("Le nom de l'agence est requis.")
+        if not email or '@' not in email:
+            erreurs.append('Email invalide.')
+        elif User.objects.filter(email=email).exists():
+            erreurs.append('Un compte existe deja avec cet email — connectez-vous.')
+        if len(password1) < 8:
+            erreurs.append('Le mot de passe doit faire au moins 8 caracteres.')
+        elif password1 != password2:
+            erreurs.append('Les deux mots de passe ne correspondent pas.')
+
+        if erreurs:
+            for e in erreurs:
+                messages.error(request, e)
+        else:
+            # Reference unique generee depuis le nom
+            base = _re.sub(r'[^A-Z0-9]', '', nom.upper())[:6] or 'AGENCE'
+            reference = base
+            i = 1
+            while Agence.objects.filter(reference=reference).exists():
+                i += 1
+                reference = f'{base}{i}'
+
+            username = email
+            if User.objects.filter(username=username).exists():
+                username = f'{email}-{reference.lower()}'
+            user = User.objects.create_user(username=username, email=email, password=password1)
+            agence = Agence.objects.create(
+                nom=nom, reference=reference, responsable=user,
+                contact_email=email, contact_telephone=telephone, ville=ville,
+                feed_url=feed_url, feed_format=feed_format if feed_url else 'ac3',
+                is_active=True,
+            )
+            AgenceOptions.objects.get_or_create(agence=agence)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+            # Email de bienvenue automatique
+            try:
+                send_mail(
+                    subject='[Social Immo] Bienvenue ! Votre agence est en ligne',
+                    message=(
+                        f'Bonjour {nom},\n\n'
+                        f'Votre espace agence est pret : https://social-immo.com/mon-agence/\n\n'
+                        + (f'Votre flux XML ({feed_url}) sera importe automatiquement '
+                           f'dans les prochaines 24h, puis mis a jour chaque jour.\n\n'
+                           if feed_url else
+                           'Ajoutez votre flux XML (AC3 ou Poliris) depuis vos parametres '
+                           'pour diffuser vos annonces automatiquement.\n\n')
+                        + 'Completez votre fiche (logo, description) pour apparaitre '
+                        'dans l\'annuaire : https://social-immo.com/mon-agence/parametres/\n\n'
+                        'Une question ? Repondez a cet email ou passez par '
+                        'https://social-immo.com/aide/\n\n'
+                        'L\'equipe Social Immo'
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+            messages.success(request, f'Bienvenue {nom} ! Votre espace agence est pret.')
+            return redirect('listings:agence_dashboard')
+
+    return render(request, 'listings/agence_inscription.html')
+
+
+def aide(request):
+    """Centre d'aide : FAQ auto-reponse + formulaire support (SAV)."""
+    from .models import TicketSupport
+
+    if request.method == 'POST':
+        nom = (request.POST.get('nom') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        sujet = request.POST.get('sujet') or 'autre'
+        message_txt = (request.POST.get('message') or '').strip()
+
+        if not (nom and email and message_txt):
+            messages.error(request, 'Merci de remplir tous les champs.')
+        else:
+            ticket = TicketSupport.objects.create(
+                nom=nom, email=email, sujet=sujet, message=message_txt,
+                user=request.user if request.user.is_authenticated else None,
+            )
+            # Accuse de reception automatique au demandeur
+            try:
+                send_mail(
+                    subject=f'[Social Immo] Nous avons bien recu votre demande (#{ticket.id})',
+                    message=(
+                        f'Bonjour {nom},\n\n'
+                        f'Votre demande a bien ete enregistree (ticket #{ticket.id}) :\n\n'
+                        f'"{message_txt[:300]}"\n\n'
+                        'Nous revenons vers vous au plus vite. En attendant, la reponse '
+                        'est peut-etre deja dans notre aide en ligne : '
+                        'https://social-immo.com/aide/\n\n'
+                        'L\'equipe Social Immo'
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+            # Notification admin
+            admin_email = getattr(settings, 'ADMINS', [])
+            if admin_email:
+                try:
+                    send_mail(
+                        subject=f'[Support #{ticket.id}] {ticket.get_sujet_display()} - {nom}',
+                        message=f'De : {nom} <{email}>\nSujet : {ticket.get_sujet_display()}\n\n{message_txt}',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[admin_email[0][1]],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
+            messages.success(request, f'Demande envoyee (ticket #{ticket.id}) — vous recevez un accuse de reception par email.')
+            return redirect('listings:aide')
+
+    return render(request, 'listings/aide.html')
+
+
 def tarifs(request):
     """Page des offres : agences, artisans, pack vendeur."""
     from .services import paiements

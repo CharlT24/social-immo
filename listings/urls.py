@@ -77,6 +77,9 @@ urlpatterns = [
     path('devis/', views.demande_devis, name='demande_devis'),
     # Barometre des prix
     path('barometre/', views.barometre, name='barometre'),
+    # Inscription agence self-service + aide
+    path('agence/inscription/', views.agence_inscription, name='agence_inscription'),
+    path('aide/', views.aide, name='aide'),
     # Paiements Stripe
     path('tarifs/', views.tarifs, name='tarifs'),
     path('abonnement/souscrire/<str:type_abonnement>/', views.souscrire, name='souscrire'),

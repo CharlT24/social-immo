@@ -26,11 +26,11 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 |-------|---------|--------|
 | 0 | Sauvegarde rollback (tag `v2-stable` + branche backup) | ✅ Terminé |
 | 1 | **Design system global** : animations fluides, scroll-reveal, toasts, carte annonce unifiée, footer enrichi, **5 dashboards unifiés sur base.html** | ✅ Terminé |
-| 2 | **Feed Inspirations** façon Pinterest : masonry, scroll infini, lightbox immersive, tags, liens vers les pros | 🔄 En cours |
-| 3 | **Espace Pros du bâtiment** : portfolios de réalisations, annuaire par métier/ville, fiches attractives | ⏳ À venir |
+| 2 | **Feed Inspirations** façon Pinterest : feed unifié agences+pros, scroll infini, pagination serveur | ✅ Terminé |
+| 3 | **Espace Pros du bâtiment** : recherche par métier, pros à la une sur la carte, annuaire enrichi | ✅ Terminé |
 | 4 | **IA maison** (compatible o2switch) : ✨ estimation instantanée par comparables sur `/estimer/`, amélioration auto des photos (Pillow), assistant de rédaction au dépôt d'annonce | ✅ Terminé |
-| 5 | **Pré-visite immersive** : diaporama plein écran pièce par pièce, support photos 360°, bases pour la 3D | ⏳ À venir |
-| 6 | **QA + docs** : vérification de toutes les pages, mise à jour CLAUDE.md, push final | ⏳ À venir |
+| 5 | **Pré-visite immersive** : diaporama plein écran façon story (Ken Burns, barres de progression, swipe) sur chaque annonce | ✅ Terminé |
+| 6 | **QA + docs** : 34 pages testées (tous rôles), documentation à jour | ✅ Terminé |
 
 ## 🔮 Plus tard (nécessite plus que o2switch)
 
@@ -43,3 +43,18 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 - **2026-07-02** : Démarrage v3. Rollback sécurisé, scan complet du code lancé, roadmap créée.
 - **2026-07-02** : Phase 1 terminée — design system global (scroll-reveal, transitions de page, toasts, shimmer images), carte annonce unifiée (3 duplications supprimées), les 5 dashboards héritent enfin de base.html (nav commune partout).
 - **2026-07-02** : Phase 4 terminée — l'estimation est maintenant **réelle et instantanée** (comparables de la base → médiane €/m², repli barème national × coefficient départemental), fourchette + fiabilité affichées, puis mise en relation pro. Assistant de rédaction (titres + description) et optimisation automatique des photos (Pillow) au dépôt d'annonce particulier. 19 pages smoke-testées en 200.
+- **2026-07-02** : Phase 2 terminée — feed Inspirations unifié (agences + pros mélangés, "à la une" en tête) avec pagination serveur et scroll infini.
+- **2026-07-02** : Phase 3 terminée — annuaire pros : recherche par corps de métier (chips + select), pros à la une sous la carte de France.
+- **2026-07-02** : Phase 5 terminée — bouton "Pré-visiter" sur chaque annonce : visite immersive plein écran façon story Instagram (effet Ken Burns, lecture auto, swipe mobile, clavier).
+- **2026-07-02** : Phase 6 terminée — **v3 livrée**. 34 pages testées sur les 6 rôles (public, particulier, pro, agence, conseiller, admin), toutes en 200. Pipeline photo validé (4000px → 1920px, luminosité corrigée).
+
+## ✅ Reprendre le travail sur un autre PC
+
+```bash
+git clone https://github.com/CharlT24/social-immo.git
+cd social-immo
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```

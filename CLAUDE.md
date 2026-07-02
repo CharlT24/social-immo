@@ -13,20 +13,39 @@ Site immobilier social (type LeBonCoin) avec import automatique depuis un CRM vi
 ```
 social_immo/          # Config Django (settings, urls, wsgi)
 listings/             # App principale
-  models.py           # Annonce, Photo, Commentaire, Favori
-  views.py            # listing_list, listing_detail, dashboard, signup, toggle_favorite
-  urls.py             # Routes
-  admin.py            # Interface admin
-  forms.py            # CommentaireForm
+  models.py           # 20 modeles : Annonce, Photo, Agence, ProProfile,
+                      # ProRealisation, Estimation, DemandeContact, etc.
+  views.py            # ~3000 lignes : public, particulier, pro, agence,
+                      # conseiller, admin + APIs AJAX
+  services/           # "IA maison" (100% Python, compatible o2switch)
+    estimation.py     # Estimation par comparables (mediane prix/m2 ville
+                      # -> departement -> bareme national x coef dept)
+    photos.py         # Amelioration auto photos (Pillow : contraste,
+                      # luminosite, nettete, resize 1920px)
+    redaction.py      # Suggestions titre + description d'annonce
+  urls.py             # Routes (dont /api/estimer/, /api/suggerer-annonce/)
   management/commands/
-    import_xml.py     # Commande d'import XML (HTTP + fichier)
-templates/            # Templates Django
-  base.html           # Layout principal (Tailwind + Apple design)
-  listings/           # listing_list, listing_detail, dashboard
-  registration/       # login, signup
+    import_xml.py     # Commande d'import XML (HTTP + fichier + FTP)
+templates/            # Templates Django — TOUS heritent de base.html
+  base.html           # Design system : Tailwind CDN + config apple-*,
+                      # scroll-reveal, toasts, helpers JS globaux
+                      # (getCookie, showToast, toggleFav, hideCard)
+  listings/includes/  # Composants : carte_annonce.html, inspi_items.html
+  listings/           # Pages (homepage, search, inspirations, dashboards...)
+  account/            # Templates allauth (actifs)
+  registration/       # Legacy Django auth (a nettoyer)
 static/               # CSS/JS/images (vide, utilise CDN)
 export.xml            # Donnees de test (3 annonces)
+ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
 ```
+
+## Fonctionnalites v3 (2026-07)
+- **Estimation instantanee** `/estimer/` : moteur par comparables + fourchette + fiabilite, puis lead pro
+- **Feed Inspirations** : agences + pros melanges, scroll infini (`?partial=1&page=N`)
+- **Pre-visite immersive** : bouton "Pre-visiter" sur les annonces (Ken Burns plein ecran, style story)
+- **Assistant depot particulier** : suggestions titre/description + optimisation photos (checkbox)
+- **Annuaire pros** : filtre par metier (`?metier=peintre`), pros a la une sur la carte
+- **Rollback** : tag `v2-stable` / branche `backup-avant-v3` sur GitHub
 
 ## Modeles
 ### Annonce

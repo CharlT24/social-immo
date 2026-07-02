@@ -967,3 +967,69 @@ class VenteDVF(models.Model):
     @property
     def prix_m2(self):
         return round(self.prix / self.surface) if self.surface else None
+
+
+class Abonnement(models.Model):
+    """Abonnement ou achat Stripe (agence, pro, pack vendeur).
+    Cree/mis a jour automatiquement par le webhook Stripe."""
+
+    TYPE_CHOICES = [
+        ('agence', 'Abonnement Agence Premium'),
+        ('pro', 'Abonnement Artisan Pro'),
+        ('pack_vendeur', 'Pack Vendeur Pro (30 jours)'),
+    ]
+    STATUT_CHOICES = [
+        ('actif', 'Actif'),
+        ('impaye', 'Impaye'),
+        ('resilie', 'Resilie'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='abonnements')
+    type_abonnement = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    statut = models.CharField(max_length=10, choices=STATUT_CHOICES, default='actif')
+    stripe_customer_id = models.CharField(max_length=100, blank=True, default='')
+    stripe_subscription_id = models.CharField(max_length=100, blank=True, default='')
+    annonce = models.ForeignKey(
+        Annonce, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='boosts', help_text='Annonce boostee (pack vendeur)'
+    )
+    date_fin = models.DateTimeField(null=True, blank=True, help_text='Fin du boost (pack vendeur)')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Abonnement'
+        verbose_name_plural = 'Abonnements'
+
+    def __str__(self):
+        return f"{self.get_type_abonnement_display()} - {self.user.username} ({self.statut})"
+
+
+class TicketSupport(models.Model):
+    """Message du support (SAV) : accuse de reception automatique,
+    notification admin, suivi du traitement."""
+
+    SUJET_CHOICES = [
+        ('compte', 'Mon compte'),
+        ('annonce', 'Mon annonce'),
+        ('paiement', 'Paiement / facturation'),
+        ('technique', 'Probleme technique'),
+        ('autre', 'Autre'),
+    ]
+
+    nom = models.CharField(max_length=100)
+    email = models.EmailField()
+    sujet = models.CharField(max_length=20, choices=SUJET_CHOICES, default='autre')
+    message = models.TextField()
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    is_traite = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Ticket support'
+        verbose_name_plural = 'Tickets support'
+
+    def __str__(self):
+        return f"[{self.get_sujet_display()}] {self.nom} ({self.created_at:%d/%m/%Y})"

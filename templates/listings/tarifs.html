@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Nos offres : agences, artisans, vendeurs | Social Immo{% endblock %}
+{% block meta_description %}Offres Social Immo : Premium agences (visibilite + leads), Artisan Pro (devis + mise en avant), Pack Vendeur (boost 30 jours). Diffusion de base gratuite.{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+
+    <div class="text-center mb-12">
+        <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-4">Des offres simples</h1>
+        <p class="text-lg text-apple-gray max-w-2xl mx-auto">La diffusion de base est <strong class="text-apple-text">gratuite pour tout le monde</strong>. Les offres ci-dessous accelerent votre visibilite.</p>
+        {% if not stripe_actif %}
+        <p class="inline-block mt-4 text-sm font-semibold text-amber-700 bg-amber-50 px-4 py-2 rounded-full">🚀 Ouverture des paiements tres bientot — les tarifs de lancement s'appliqueront aux premiers inscrits.</p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 reveal-stagger">
+
+        <!-- Agence -->
+        <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-transparent hover:border-apple-blue transition-colors">
+            <p class="text-sm font-bold text-apple-blue uppercase tracking-wide mb-2">Agences</p>
+            <p class="text-3xl font-bold mb-1">Premium</p>
+            <p class="text-sm text-apple-gray mb-6">Visibilite maximale + leads vendeurs</p>
+            <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Flux XML illimite (inclus aussi en gratuit)</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Badge Premium + logo sur vos annonces</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Remontee automatique + agence a la une</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Demandes d'estimation de votre secteur en priorite</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Statistiques avancees + donnees marche DVF</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Video + visite virtuelle sur les annonces</li>
+            </ul>
+            <a href="{% url 'listings:souscrire' 'agence' %}"
+               class="block text-center bg-apple-blue text-white font-bold py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">
+                {% if stripe_actif %}S'abonner{% else %}Etre prevenu de l'ouverture{% endif %}
+            </a>
+        </div>
+
+        <!-- Artisan -->
+        <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-purple-500 relative">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">Le plus populaire</span>
+            <p class="text-sm font-bold text-purple-600 uppercase tracking-wide mb-2">Artisans & pros</p>
+            <p class="text-3xl font-bold mb-1">Artisan Pro</p>
+            <p class="text-sm text-apple-gray mb-6">Des chantiers pres de chez vous</p>
+            <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Fiche + realisations illimitees (inclus en gratuit)</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Demandes de devis des particuliers du departement</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Mise en avant : accueil, annuaire, pages villes</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> 10 photos "a la une" dans le feed Inspirations</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Vos realisations sous les annonces de votre secteur</li>
+            </ul>
+            <a href="{% url 'listings:souscrire' 'pro' %}"
+               class="block text-center bg-purple-600 text-white font-bold py-3.5 rounded-2xl hover:bg-purple-700 transition-colors">
+                {% if stripe_actif %}S'abonner{% else %}Etre prevenu de l'ouverture{% endif %}
+            </a>
+        </div>
+
+        <!-- Pack vendeur -->
+        <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-transparent hover:border-teal-500 transition-colors">
+            <p class="text-sm font-bold text-teal-600 uppercase tracking-wide mb-2">Particuliers</p>
+            <p class="text-3xl font-bold mb-1">Pack Vendeur</p>
+            <p class="text-sm text-apple-gray mb-6">Paiement unique, boost 30 jours</p>
+            <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Depot, estimation, panneau QR (inclus en gratuit)</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Annonce "A la une" pendant 30 jours</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> En tete des resultats de recherche</li>
+                <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Badge qui attire l'oeil sur votre bien</li>
+            </ul>
+            <a href="{% url 'listings:souscrire' 'pack_vendeur' %}"
+               class="block text-center bg-teal-600 text-white font-bold py-3.5 rounded-2xl hover:bg-teal-700 transition-colors">
+                {% if stripe_actif %}Booster mon annonce{% else %}Etre prevenu de l'ouverture{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Facturation self-service -->
+    <div class="text-center mt-10 text-sm text-apple-gray">
+        Deja abonne ? <a href="{% url 'listings:portail_facturation' %}" class="text-apple-blue font-semibold hover:underline">Gerer mon abonnement et mes factures</a>
+        <span class="text-gray-300 mx-2">·</span> Resiliable a tout moment, factures automatiques par email.
+    </div>
+</div>
+{% endblock %}

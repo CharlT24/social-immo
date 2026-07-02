@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 from . import views
 
 app_name = 'listings'
@@ -76,6 +77,12 @@ urlpatterns = [
     path('devis/', views.demande_devis, name='demande_devis'),
     # Barometre des prix
     path('barometre/', views.barometre, name='barometre'),
+    # Paiements Stripe
+    path('tarifs/', views.tarifs, name='tarifs'),
+    path('abonnement/souscrire/<str:type_abonnement>/', views.souscrire, name='souscrire'),
+    path('abonnement/succes/', views.abonnement_succes, name='abonnement_succes'),
+    path('abonnement/portail/', views.portail_facturation, name='portail_facturation'),
+    path('stripe/webhook/', csrf_exempt(views.stripe_webhook), name='stripe_webhook'),
     # Partage inspiration
     path('inspirations/photo/<str:photo_type>/<int:photo_id>/', views.inspiration_partage, name='inspiration_partage'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),

@@ -260,3 +260,16 @@ SOCIALIMMO_FEED_URL = os.environ.get(
     'SOCIALIMMO_FEED_URL',
     'https://logiciel-immo-clean.vercel.app/api/export/socialimmo/'
 )
+
+
+# ===== Stripe (dormant tant que les cles ne sont pas definies) =====
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PRICE_AGENCE = os.environ.get('STRIPE_PRICE_AGENCE', '')
+STRIPE_PRICE_PRO = os.environ.get('STRIPE_PRICE_PRO', '')
+STRIPE_PRICE_PACK = os.environ.get('STRIPE_PRICE_PACK', '')
+
+# ===== Alertes erreurs : les exceptions 500 partent par email =====
+_admin_email = os.environ.get('ADMIN_EMAIL', '')
+ADMINS = [('Admin', _admin_email)] if _admin_email else []
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)

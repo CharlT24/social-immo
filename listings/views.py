@@ -2223,6 +2223,132 @@ def supprimer_recherche(request, recherche_id):
     return redirect('/mon-compte/?tab=acquereur')
 
 
+def tarifs(request):
+    """Page des offres : agences, artisans, pack vendeur."""
+    from .services import paiements
+    return render(request, 'listings/tarifs.html', {
+        'stripe_actif': paiements.actif(),
+    })
+
+
+@login_required
+def souscrire(request, type_abonnement):
+    """Redirige vers Stripe Checkout pour un abonnement/achat."""
+    from .services import paiements
+    if type_abonnement not in ('agence', 'pro', 'pack_vendeur'):
+        return redirect('listings:tarifs')
+    if not paiements.actif():
+        messages.info(request, 'Les paiements ouvrent tres bientot — revenez vite !')
+        return redirect('listings:tarifs')
+
+    annonce_id = request.GET.get('annonce') or None
+    if annonce_id:
+        # Le pack ne peut booster qu'une annonce du user
+        get_object_or_404(Annonce, id=annonce_id, user=request.user)
+
+    try:
+        url = paiements.creer_session_checkout(
+            type_abonnement, request.user,
+            success_url=request.build_absolute_uri('/abonnement/succes/'),
+            cancel_url=request.build_absolute_uri('/tarifs/'),
+            annonce_id=annonce_id,
+        )
+    except Exception:
+        url = None
+    if not url:
+        messages.error(request, 'Le paiement est momentanement indisponible, reessayez dans quelques minutes.')
+        return redirect('listings:tarifs')
+    return redirect(url)
+
+
+@login_required
+def abonnement_succes(request):
+    """Retour de Stripe Checkout (l'activation reelle passe par le webhook)."""
+    messages.success(request, 'Merci ! Votre paiement est confirme, vos avantages s\'activent automatiquement.')
+    return render(request, 'listings/abonnement_succes.html')
+
+
+@login_required
+def portail_facturation(request):
+    """Portail Stripe : factures, moyen de paiement, resiliation."""
+    from .models import Abonnement
+    from .services import paiements
+    abo = Abonnement.objects.filter(user=request.user).exclude(stripe_customer_id='').first()
+    url = None
+    if abo:
+        try:
+            url = paiements.portail_facturation(
+                abo.stripe_customer_id,
+                return_url=request.build_absolute_uri('/tarifs/'),
+            )
+        except Exception:
+            url = None
+    if not url:
+        messages.error(request, "Aucun abonnement trouve pour ce compte.")
+        return redirect('listings:tarifs')
+    return redirect(url)
+
+
+def stripe_webhook(request):
+    """Webhook Stripe : active/desactive les avantages automatiquement."""
+    from django.views.decorators.csrf import csrf_exempt  # applique via urls
+    from .models import Abonnement
+    from .services import paiements
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    payload = request.body
+    sig = request.headers.get('Stripe-Signature', '')
+    if not paiements.verifier_webhook(payload, sig):
+        return HttpResponse(status=400)
+
+    try:
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        return HttpResponse(status=400)
+
+    type_event = event.get('type', '')
+    objet = event.get('data', {}).get('object', {})
+
+    if type_event == 'checkout.session.completed':
+        meta = objet.get('metadata', {}) or {}
+        user_id = meta.get('user_id') or objet.get('client_reference_id')
+        type_abo = meta.get('type_abonnement', '')
+        if user_id and type_abo:
+            try:
+                user = User.objects.get(id=int(user_id))
+            except (User.DoesNotExist, ValueError):
+                return HttpResponse(status=200)
+            abo, _ = Abonnement.objects.get_or_create(
+                user=user, type_abonnement=type_abo,
+                stripe_subscription_id=objet.get('subscription') or '',
+                defaults={
+                    'stripe_customer_id': objet.get('customer') or '',
+                    'annonce_id': int(meta['annonce_id']) if meta.get('annonce_id') else None,
+                },
+            )
+            abo.statut = 'actif'
+            abo.stripe_customer_id = objet.get('customer') or abo.stripe_customer_id
+            abo.save()
+            paiements.activer_avantages(abo)
+
+    elif type_event in ('customer.subscription.deleted', 'customer.subscription.paused'):
+        sub_id = objet.get('id', '')
+        for abo in Abonnement.objects.filter(stripe_subscription_id=sub_id):
+            abo.statut = 'resilie'
+            abo.save(update_fields=['statut'])
+            paiements.desactiver_avantages(abo)
+
+    elif type_event == 'invoice.payment_failed':
+        sub_id = objet.get('subscription', '')
+        for abo in Abonnement.objects.filter(stripe_subscription_id=sub_id):
+            abo.statut = 'impaye'
+            abo.save(update_fields=['statut'])
+            # Stripe relance automatiquement (dunning) ; on desactive au 'deleted'
+
+    return HttpResponse(status=200)
+
+
 def barometre(request):
     """Barometre public des prix : medianes par commune depuis les ventes
     reelles DVF deja en cache (alimente au fil des estimations)."""

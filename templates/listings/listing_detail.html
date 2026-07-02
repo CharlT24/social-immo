@@ -549,6 +549,43 @@
 
     </div>
 
+    <!-- Pros du secteur -->
+    {% if pros_secteur %}
+    <div class="mt-16 reveal">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-semibold flex items-center gap-3">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Les pros pres de chez vous
+                </h2>
+                <p class="text-sm text-apple-gray mt-1">Travaux, deco, diagnostics : des artisans du secteur pour votre projet</p>
+            </div>
+            <a href="{% url 'listings:partenaire_list' %}{% if annonce.code_postal %}?dept={{ annonce.code_postal|slice:':2' }}&type=pro{% endif %}" class="text-sm font-semibold text-purple-600 hover:underline flex-shrink-0">
+                Voir tous
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for pro in pros_secteur %}
+            <a href="{% url 'listings:pro_profil' pro.id %}" class="group flex items-center gap-3 bg-white rounded-2xl p-4 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+                {% if pro.photo_url %}
+                <img src="{{ pro.photo_url }}" alt="{{ pro.nom_entreprise }}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy">
+                {% else %}
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-bold text-purple-600">{{ pro.nom_entreprise|truncatechars:2|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold truncate group-hover:text-purple-700 transition-colors">{{ pro.nom_entreprise }}</p>
+                    <p class="text-xs text-apple-gray truncate">{{ pro.get_metier_display }}{% if pro.note_moyenne %} · ★ {{ pro.note_moyenne }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Discussion Section - iMessage Style -->
     <div class="mt-16">
         <!-- Header -->

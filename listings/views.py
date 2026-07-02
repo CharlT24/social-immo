@@ -323,11 +323,21 @@ def listing_detail(request, reference):
     except Agence.DoesNotExist:
         pass
 
+    # Pros du secteur (meme departement) : la passerelle vers les artisans
+    pros_secteur = []
+    dept = (annonce.code_postal or '')[:2]
+    if dept:
+        pros_secteur = list(
+            ProProfile.objects.filter(is_active=True, departement=dept)
+            .order_by('-mise_en_avant', '?')[:4]
+        )
+
     context = {
         'annonce': annonce,
         'commentaires': annonce.commentaires.all(),
         'form': form,
         'agence_opts': agence_opts,
+        'pros_secteur': pros_secteur,
     }
     return render(request, 'listings/listing_detail.html', context)
 
@@ -2968,9 +2978,30 @@ def particulier_dashboard(request):
 
     # --- Onglet Vendeur ---
     if current_tab == 'vendeur':
-        context['annonces'] = mes_annonces.prefetch_related(
-            Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-        ).order_by('-created_at')
+        from .services.estimation import estimer_bien
+        annonces_vendeur = list(
+            mes_annonces.prefetch_related(
+                Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+            ).annotate(nb_favoris_recus=Count('favoris', distinct=True))
+            .order_by('-created_at')
+        )
+        # Conseil prix : compare le prix demande a l'estimation du moteur
+        for a in annonces_vendeur:
+            a.conseil_prix = None
+            if a.type_transaction == 'V' and a.prix and a.surface:
+                type_bien = 'maison' if 'maison' in (a.libelle_type or '').lower() else (
+                    'appartement' if 'appart' in (a.libelle_type or '').lower() else 'autre')
+                est = estimer_bien(type_bien, a.ville, a.code_postal, float(a.surface), a.nb_pieces)
+                if est:
+                    ecart = (float(a.prix) - est['prix_estime']) / est['prix_estime'] * 100
+                    a.estimation_secteur = est
+                    if ecart > 12:
+                        a.conseil_prix = ('haut', round(ecart))
+                    elif ecart < -12:
+                        a.conseil_prix = ('bas', round(-ecart))
+                    else:
+                        a.conseil_prix = ('ok', round(abs(ecart)))
+        context['annonces'] = annonces_vendeur
 
     # --- Onglet Acquereur ---
     elif current_tab == 'acquereur':

@@ -98,11 +98,13 @@ def _prix_m2_liste(qs, limit=200):
     return valeurs
 
 
-def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None):
+def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None, avec_dvf=True):
     """Retourne un dict d'estimation, ou None si surface manquante.
 
     Cles : prix_estime, prix_min, prix_max, prix_m2, nb_comparables,
-           zone ('ville' | 'departement' | 'bareme'), confiance ('haute'|'moyenne'|'indicative')
+           zone ('dvf' | 'ville' | 'departement' | 'bareme'),
+           confiance ('haute'|'moyenne'|'indicative'),
+           exemples (liste de ventes/annonces comparables pour illustrer)
     """
     try:
         surface = float(surface)
@@ -113,6 +115,49 @@ def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None):
 
     type_bien = type_bien if type_bien in BAREME_NATIONAL else 'autre'
     dep = _departement(code_postal)
+    exemples = []
+
+    # 0. Ventes reelles DVF (notariees) : la source la plus fiable
+    if avec_dvf and type_bien in ('maison', 'appartement') and ville:
+        try:
+            from .dvf import ventes_comparables
+            ventes, _total = ventes_comparables(ville, code_postal, type_bien, surface)
+        except Exception:
+            ventes = []
+        if len(ventes) >= 5:
+            valeurs_dvf = [v.prix / v.surface for v in ventes]
+            prix_m2 = median(valeurs_dvf)
+            prix_estime = prix_m2 * surface
+            n = len(valeurs_dvf)
+            if n >= 15:
+                marge, confiance = 0.08, 'haute'
+            elif n >= 8:
+                marge, confiance = 0.12, 'moyenne'
+            else:
+                marge, confiance = 0.18, 'indicative'
+            # 3 ventes reelles les plus proches en surface, en exemple
+            for v in sorted(ventes, key=lambda v: abs(v.surface - surface))[:3]:
+                exemples.append({
+                    'source': 'vente',
+                    'label': f"{v.get_type_local_display()} de {v.surface} m2",
+                    'prix': v.prix,
+                    'prix_m2': v.prix_m2,
+                    'annee': v.date_mutation.year,
+                })
+
+            def _arrondi(x):
+                return int(round(x / 1000.0) * 1000)
+
+            return {
+                'prix_estime': _arrondi(prix_estime),
+                'prix_min': _arrondi(prix_estime * (1 - marge)),
+                'prix_max': _arrondi(prix_estime * (1 + marge)),
+                'prix_m2': int(round(prix_m2)),
+                'nb_comparables': n,
+                'zone': 'dvf',
+                'confiance': confiance,
+                'exemples': exemples,
+            }
 
     # 1. Comparables dans la ville
     valeurs = _prix_m2_liste(_comparables_qs(type_bien, ville=ville))
@@ -161,6 +206,23 @@ def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None):
 
     prix_estime = prix_m2 * surface
 
+    # Exemples : annonces du site comparables (meme zone, surface proche)
+    if zone != 'bareme':
+        qs = _comparables_qs(type_bien, ville=ville if zone == 'ville' else None,
+                             departement=dep if zone == 'departement' else None)
+        qs = qs.filter(surface__gte=surface * 0.7, surface__lte=surface * 1.3)
+        for a in qs.order_by('-created_at')[:3]:
+            try:
+                exemples.append({
+                    'source': 'annonce',
+                    'label': f"{(a.libelle_type or 'Bien').capitalize()} de {int(a.surface)} m2 a {a.ville}",
+                    'prix': int(a.prix),
+                    'prix_m2': int(round(float(a.prix) / float(a.surface))),
+                    'annee': a.created_at.year,
+                })
+            except (TypeError, ZeroDivisionError):
+                continue
+
     def _arrondi(v):
         # Arrondi commercial au millier
         return int(round(v / 1000.0) * 1000)
@@ -173,4 +235,5 @@ def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None):
         'nb_comparables': nb_comparables,
         'zone': zone,
         'confiance': confiance,
+        'exemples': exemples,
     }

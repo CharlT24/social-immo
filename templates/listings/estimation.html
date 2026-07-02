@@ -87,7 +87,13 @@
                 <span id="res-confiance" class="text-xs font-medium px-3 py-1.5 rounded-full"></span>
                 <span id="res-zone" class="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full"></span>
             </div>
-            <p class="text-[11px] text-white/40 mt-5">Estimation indicative calculee a partir des annonces du secteur. Elle ne remplace pas l'avis d'un professionnel.</p>
+            <p id="res-disclaimer" class="text-[11px] text-white/40 mt-5">Estimation indicative. Elle ne remplace pas l'avis d'un professionnel.</p>
+        </div>
+
+        <!-- Exemples de ventes/annonces comparables -->
+        <div id="res-exemples" class="hidden bg-white rounded-3xl shadow-apple p-6 mt-4">
+            <p id="res-exemples-titre" class="text-sm font-bold text-apple-text mb-4"></p>
+            <div id="res-exemples-liste" class="space-y-2"></div>
         </div>
     </div>
 
@@ -212,8 +218,41 @@ function afficherResultat(data, bien) {
         conf.textContent = 'Estimation indicative';
         conf.className = 'text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 text-white/80';
     }
-    const zones = { ville: 'Base : votre ville', departement: 'Base : votre departement', bareme: 'Base : moyennes nationales' };
+    const zones = {
+        dvf: 'Base : ventes reelles notariees (DVF)',
+        ville: 'Base : annonces de votre ville',
+        departement: 'Base : annonces du departement',
+        bareme: 'Base : moyennes nationales'
+    };
     document.getElementById('res-zone').textContent = zones[data.zone] || '';
+    if (data.zone === 'dvf') {
+        document.getElementById('res-disclaimer').textContent =
+            'Estimation calculee a partir des ventes reelles enregistrees par les notaires (donnees publiques DVF). Elle ne remplace pas l\'avis d\'un professionnel.';
+    }
+
+    // Exemples comparables
+    const bloc = document.getElementById('res-exemples');
+    const liste = document.getElementById('res-exemples-liste');
+    if (data.exemples && data.exemples.length) {
+        document.getElementById('res-exemples-titre').textContent =
+            data.zone === 'dvf' ? 'Vendus recemment pres de chez vous (ventes reelles)' : 'Actuellement en vente dans le secteur';
+        liste.innerHTML = data.exemples.map(e =>
+            `<div class="flex items-center justify-between gap-3 bg-apple-bg rounded-xl px-4 py-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2 h-2 rounded-full ${e.source === 'vente' ? 'bg-emerald-500' : 'bg-apple-blue'} flex-shrink-0"></span>
+                    <span class="text-sm text-apple-text truncate">${e.label}</span>
+                    <span class="text-xs text-gray-400 flex-shrink-0">${e.source === 'vente' ? 'vendu en ' + e.annee : 'en vente'}</span>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="text-sm font-bold">${formatEuros(e.prix)}</span>
+                    <span class="text-xs text-apple-gray block">${e.prix_m2.toLocaleString('fr-FR')} €/m²</span>
+                </div>
+            </div>`
+        ).join('');
+        bloc.classList.remove('hidden');
+    } else {
+        bloc.classList.add('hidden');
+    }
 
     // Prepare l'etape 2
     document.getElementById('h-type').value = bien.type;

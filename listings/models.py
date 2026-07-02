@@ -897,3 +897,46 @@ class VilleGeo(models.Model):
 
     def __str__(self):
         return f"{self.ville} ({self.code_postal})"
+
+
+class CommuneDVF(models.Model):
+    """Cache du geocodage INSEE + fraicheur des donnees DVF d'une commune."""
+
+    code_insee = models.CharField(max_length=5, unique=True)
+    ville = models.CharField(max_length=100)
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    derniere_maj = models.DateTimeField(null=True, blank=True)
+    nb_ventes = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Commune DVF'
+        verbose_name_plural = 'Communes DVF'
+
+    def __str__(self):
+        return f"{self.ville} ({self.code_insee})"
+
+
+class VenteDVF(models.Model):
+    """Vente reelle issue des Demandes de Valeurs Foncieres (Etalab).
+    Alimente l'estimation et les exemples de ventes comparables."""
+
+    TYPE_CHOICES = [('maison', 'Maison'), ('appartement', 'Appartement')]
+
+    commune = models.ForeignKey(CommuneDVF, on_delete=models.CASCADE, related_name='ventes')
+    type_local = models.CharField(max_length=15, choices=TYPE_CHOICES)
+    surface = models.PositiveIntegerField()
+    prix = models.PositiveIntegerField()
+    date_mutation = models.DateField()
+
+    class Meta:
+        ordering = ['-date_mutation']
+        indexes = [models.Index(fields=['commune', 'type_local'])]
+        verbose_name = 'Vente DVF'
+        verbose_name_plural = 'Ventes DVF'
+
+    def __str__(self):
+        return f"{self.get_type_local_display()} {self.surface} m2 - {self.prix} EUR ({self.date_mutation})"
+
+    @property
+    def prix_m2(self):
+        return round(self.prix / self.surface) if self.surface else None

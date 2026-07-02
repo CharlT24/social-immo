@@ -59,6 +59,16 @@ python manage.py generer_miniatures   # miniatures des images uploadées
 npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/css/app.css --minify
 ```
 
+## 📋 Avancement v4 — "Le vendeur particulier devient un pro" (2026-07-02)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 12 | **Ventes réelles DVF** : estimation ancrée sur les ventes notariées (Etalab), exemples de biens comparables vendus (même ville, même type, taille proche) affichés sur /estimer/ | ✅ Terminé |
+| 13 | **Assistant de dépôt 4 étapes** : Bien → Photos → Prix → Annonce ; prix suggéré en direct avec ventes réelles, photos réordonnables, score de qualité, aperçu exact côté acheteur | ✅ Terminé |
+| 14 | **Célébration + diffusion** : page "Votre bien est en ligne 🎉", partage WhatsApp/Facebook/lien, QR code à imprimer, compteur d'acheteurs en alerte ; rapport hebdo vendeur (CRON `rapport_vendeurs`) | ✅ Terminé |
+
+> CRON à ajouter : `python manage.py rapport_vendeurs` (1×/semaine, lundi matin).
+
 ## 📌 Prochaine étape : v4
 
 - Backlog UX complet : [AMELIORATIONS-UX.md](AMELIORATIONS-UX.md) — priorité 1 = le dépôt d'annonce "comme un pro" (assistant 4 étapes, prix suggéré en direct, aperçu, kit de diffusion, rapport hebdo vendeur)

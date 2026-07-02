@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Votre annonce est en ligne ! | Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+
+    <!-- Celebration -->
+    <div class="text-center mb-10">
+        <div class="text-6xl mb-4 animate-bounce">🎉</div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-3">Votre annonce est en ligne !</h1>
+        <p class="text-lg text-apple-gray">Elle est visible immediatement par tous les visiteurs.</p>
+    </div>
+
+    <!-- Effet wow : acheteurs en alerte -->
+    {% if nb_acheteurs_alerte > 0 %}
+    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-6 text-white text-center mb-8 shadow-lg shadow-emerald-500/25 reveal revealed">
+        <p class="text-3xl font-bold mb-1">{{ nb_acheteurs_alerte }} acheteur{{ nb_acheteurs_alerte|pluralize }}</p>
+        <p class="text-sm text-white/85">
+            {{ nb_acheteurs_alerte|pluralize:"a,ont" }} une alerte qui correspond a votre bien —
+            {{ nb_acheteurs_alerte|pluralize:"il la,ils le" }} recevr{{ nb_acheteurs_alerte|pluralize:"a,ont" }} par email au prochain envoi.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Recap annonce -->
+    <div class="bg-white rounded-3xl shadow-apple p-6 mb-8 flex items-center gap-4">
+        {% if annonce.photo_principale %}
+        <img src="{{ annonce.photo_principale.src_thumb }}" alt="{{ annonce.titre }}" class="w-20 h-20 rounded-2xl object-cover flex-shrink-0">
+        {% else %}
+        <div class="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        </div>
+        {% endif %}
+        <div class="min-w-0">
+            <p class="font-bold text-apple-text truncate">{{ annonce.titre }}</p>
+            <p class="text-sm text-apple-gray">{{ annonce.ville }} ({{ annonce.code_postal }})
+                — {% if annonce.type_transaction == 'L' and annonce.loyer_mensuel %}{{ annonce.loyer_mensuel|floatformat:0 }} €/mois{% else %}{{ annonce.prix_format }}{% endif %}</p>
+            <a href="{% url 'listings:detail' annonce.reference %}" class="text-sm font-semibold text-teal-600 hover:underline">Voir mon annonce &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Kit de diffusion -->
+    <div class="bg-white rounded-3xl shadow-apple p-6 mb-8">
+        <h2 class="text-lg font-bold mb-1">Boostez la visibilite de votre bien</h2>
+        <p class="text-sm text-apple-gray mb-5">Les biens partages par leur proprietaire trouvent preneur plus vite.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <a href="https://wa.me/?text={{ annonce.titre|urlencode }}%20{{ url_annonce|urlencode }}" target="_blank" rel="noopener"
+               class="flex items-center justify-center gap-2 bg-[#25D366] text-white text-sm font-semibold px-4 py-3.5 rounded-2xl hover:opacity-90 transition-opacity">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                WhatsApp
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_annonce|urlencode }}" target="_blank" rel="noopener"
+               class="flex items-center justify-center gap-2 bg-[#1877F2] text-white text-sm font-semibold px-4 py-3.5 rounded-2xl hover:opacity-90 transition-opacity">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+            </a>
+            <button type="button" onclick="copierLien()"
+                    class="flex items-center justify-center gap-2 bg-apple-text text-white text-sm font-semibold px-4 py-3.5 rounded-2xl hover:bg-gray-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                Copier le lien
+            </button>
+        </div>
+
+        <!-- QR Code -->
+        <div class="flex items-center gap-5 bg-apple-bg rounded-2xl p-5">
+            <div id="qrcode" class="bg-white p-2 rounded-xl flex-shrink-0"></div>
+            <div>
+                <p class="text-sm font-semibold text-apple-text">QR code de votre annonce</p>
+                <p class="text-xs text-apple-gray mt-1">A imprimer sur une affichette "A vendre" en vitrine, sur le portail ou chez les commercants du quartier — les passants scannent et arrivent sur votre annonce.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prochaines etapes -->
+    <div class="bg-white rounded-3xl shadow-apple p-6">
+        <h2 class="text-lg font-bold mb-4">Et maintenant ?</h2>
+        <ul class="space-y-3 text-sm text-apple-gray">
+            <li class="flex items-start gap-2.5">
+                <span class="text-teal-600 font-bold mt-0.5">✓</span>
+                Suivez vos <strong class="text-apple-text">vues et favoris</strong> depuis votre <a href="{% url 'listings:particulier_dashboard' %}" class="text-teal-600 font-semibold hover:underline">tableau de bord</a> — vous recevrez aussi un rapport hebdomadaire par email.
+            </li>
+            <li class="flex items-start gap-2.5">
+                <span class="text-teal-600 font-bold mt-0.5">✓</span>
+                Un conseil prix s'affiche sur votre annonce si le marche de votre secteur evolue.
+            </li>
+            <li class="flex items-start gap-2.5">
+                <span class="text-teal-600 font-bold mt-0.5">✓</span>
+                Besoin de travaux ou d'un diagnostic avant les visites ? <a href="{% url 'listings:partenaire_list' %}{% if annonce.code_postal %}?dept={{ annonce.code_postal|slice:':2' }}&type=pro{% endif %}" class="text-purple-600 font-semibold hover:underline">Les pros de votre secteur</a> peuvent vous aider.
+            </li>
+        </ul>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+const urlAnnonce = "{{ url_annonce|escapejs }}";
+
+function copierLien() {
+    navigator.clipboard.writeText(urlAnnonce)
+        .then(() => showToast('Lien copie !', 'success'))
+        .catch(() => showToast('Impossible de copier le lien', 'error'));
+}
+
+// QR code (genere localement dans le navigateur)
+try {
+    new QRCode(document.getElementById('qrcode'), {
+        text: urlAnnonce, width: 96, height: 96,
+        colorDark: '#1D1D1F', colorLight: '#FFFFFF'
+    });
+} catch (e) {
+    document.getElementById('qrcode').innerHTML = '<p class="text-xs text-gray-400 p-2">QR indisponible</p>';
+}
+</script>
+{% endblock %}

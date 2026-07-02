@@ -3067,15 +3067,26 @@ def particulier_creer_annonce(request):
             for i, photo_file in enumerate(photos[:5]):
                 _creer_photo_annonce(annonce, photo_file, i + 1, ameliorer)
 
-            if ameliorer and photos:
-                messages.success(request, 'Votre annonce a ete publiee, photos optimisees automatiquement !')
-            else:
-                messages.success(request, 'Votre annonce a ete publiee !')
-            return redirect('listings:particulier_dashboard')
+            return redirect('listings:annonce_publiee', annonce_id=annonce.id)
     else:
         form = ParticulierAnnonceForm()
 
     return render(request, 'listings/particulier_creer_annonce.html', {'form': form})
+
+
+@login_required
+def annonce_publiee(request, annonce_id):
+    """Ecran de celebration + kit de diffusion apres publication."""
+    from .models import RechercheSauvegardee
+    annonce = get_object_or_404(
+        Annonce, id=annonce_id, user=request.user, source='particulier'
+    )
+    url_annonce = request.build_absolute_uri(f'/annonce/{annonce.reference}/')
+    return render(request, 'listings/annonce_publiee.html', {
+        'annonce': annonce,
+        'url_annonce': url_annonce,
+        'nb_acheteurs_alerte': RechercheSauvegardee.acheteurs_pour(annonce),
+    })
 
 
 @login_required

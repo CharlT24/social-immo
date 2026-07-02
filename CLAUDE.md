@@ -64,6 +64,19 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
   reste uniquement la cle texte du flux XML
 - **SECRET_KEY obligatoire** en prod (DEBUG=False) — definir dans .env
 
+## Fonctionnalites v4 (2026-07) — vendeur particulier "pro"
+- **DVF** : listings/services/dvf.py — ventes reelles notariees (Etalab, gratuit,
+  sans cle), cache 90j en base (CommuneDVF/VenteDVF, migration 0031).
+  L'estimation privilegie les ventes reelles (zone='dvf') et retourne des
+  'exemples' (ventes comparables meme ville/type/surface ±30%)
+- **Depot particulier = wizard 4 etapes** (particulier_creer_annonce.html) :
+  Bien -> Photos (reordonnables) -> Prix (estimation live + ecart marche) ->
+  Annonce (assistant, score qualite, apercu carte)
+- **Post-publication** : /mon-compte/annonce/<id>/publiee/ — partage
+  WhatsApp/Facebook/lien, QR code (qrcodejs CDN), compteur
+  RechercheSauvegardee.acheteurs_pour(annonce)
+- **CRON rapport_vendeurs** (hebdo) : vues, favoris, conseil prix par email
+
 ## Modeles
 ### Annonce
 - `reference` (unique, cle d'import) - ex: "CT-00123"

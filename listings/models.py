@@ -879,6 +879,33 @@ class RechercheSauvegardee(models.Model):
             params['pieces_min'] = self.pieces_min
         return '/recherche/' + ('?' + urlencode(params) if params else '')
 
+    def correspond_a(self, annonce):
+        """L'annonce entre-t-elle dans les criteres de cette alerte ?"""
+        if self.ville and self.ville.lower() not in (annonce.ville or '').lower():
+            return False
+        if self.type_transaction and annonce.type_transaction != self.type_transaction:
+            return False
+        prix = float(annonce.prix or 0)
+        if self.prix_min and prix < self.prix_min:
+            return False
+        if self.prix_max and prix > self.prix_max:
+            return False
+        if self.surface_min and float(annonce.surface or 0) < self.surface_min:
+            return False
+        if self.pieces_min and (annonce.nb_pieces or 0) < self.pieces_min:
+            return False
+        return True
+
+    @classmethod
+    def acheteurs_pour(cls, annonce):
+        """Nombre d'acheteurs (users distincts) dont une alerte active
+        correspond a cette annonce — l'effet wow du vendeur."""
+        users = set()
+        for alerte in cls.objects.filter(is_active=True).exclude(user=annonce.user_id):
+            if alerte.correspond_a(annonce):
+                users.add(alerte.user_id)
+        return len(users)
+
 
 class VilleGeo(models.Model):
     """Coordonnees geographiques d'une ville (geocodees via

@@ -80,6 +80,7 @@ urlpatterns = [
     # Espace Particulier
     path('mon-compte/', views.particulier_dashboard, name='particulier_dashboard'),
     path('mon-compte/deposer/', views.particulier_creer_annonce, name='particulier_creer_annonce'),
+    path('mon-compte/annonce/<int:annonce_id>/publiee/', views.annonce_publiee, name='annonce_publiee'),
     path('mon-compte/annonce/<int:annonce_id>/modifier/', views.particulier_modifier_annonce, name='particulier_modifier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/supprimer/', views.particulier_supprimer_annonce, name='particulier_supprimer_annonce'),
     # Pages legales

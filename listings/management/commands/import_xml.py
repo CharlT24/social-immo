@@ -106,6 +106,14 @@ class Command(BaseCommand):
         else:
             self._import_ac3(content, client_ref, dry_run)
 
+    def _agence_pour(self, client_ref):
+        """Resout l'objet Agence depuis la reference du flux (avec cache)."""
+        if not hasattr(self, '_agence_cache'):
+            self._agence_cache = {}
+        if client_ref not in self._agence_cache:
+            self._agence_cache[client_ref] = Agence.objects.filter(reference=client_ref).first()
+        return self._agence_cache[client_ref]
+
     def _import_agence(self, agence, dry_run):
         """Import pour une agence specifique (utilise ses parametres)"""
         content = None
@@ -418,6 +426,7 @@ class Command(BaseCommand):
 
         data = {
             'client_reference': client_ref,
+            'agence': self._agence_pour(client_ref),
             'titre': titre,
             'texte': self._csv_get(row, [
                 'DESCRIPTIF', 'DESCRIPTION', 'TEXTE', 'COMMENTAIRE',
@@ -619,6 +628,7 @@ class Command(BaseCommand):
 
         data = {
             'client_reference': client_ref,
+            'agence': self._agence_pour(client_ref),
             'titre': self._get_text(annonce_xml, 'titre'),
             'texte': self._get_text(annonce_xml, 'texte'),
             'code_type': self._get_text(annonce_xml, 'code_type'),

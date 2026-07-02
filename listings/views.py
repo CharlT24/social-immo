@@ -69,14 +69,14 @@ def homepage(request):
         opts = getattr(a, 'options', None)
         # Utiliser le fichier logo uploade en priorite, sinon logo_url
         logo = a.logo.url if a.logo else a.logo_url
-        agence_data[a.reference] = {
+        agence_data[a.id] = {
             'nom': a.nom, 'logo': logo, 'id': a.id,
             'logo_sur_annonces': opts.logo_sur_annonces if opts else False,
             'badge_premium': opts.badge_premium if opts else False,
             'bandeau_exclusif': opts.bandeau_exclusif if opts else False,
         }
     for ann in list(biens_prestige) + list(biens_accessibles):
-        ad = agence_data.get(ann.client_reference, {})
+        ad = agence_data.get(ann.agence_id, {})
         ann.agence_logo = ad.get('logo', '') if ad.get('logo_sur_annonces') else ''
         ann.agence_nom = ad.get('nom', '')
         ann.badge_premium = ad.get('badge_premium', False)
@@ -213,7 +213,7 @@ def search_results(request):
     for a in agences_with_options:
         opts = getattr(a, 'options', None)
         logo = a.logo.url if a.logo else a.logo_url
-        agence_data[a.reference] = {
+        agence_data[a.id] = {
             'nom': a.nom,
             'logo': logo,
             'id': a.id,
@@ -224,10 +224,9 @@ def search_results(request):
 
     # Annoter les annonces de la page courante
     for ann in annonces_page:
-        ad = agence_data.get(ann.client_reference, {})
+        ad = agence_data.get(ann.agence_id, {})
         ann.agence_logo = ad.get('logo', '') if ad.get('logo_sur_annonces') else ''
         ann.agence_nom = ad.get('nom', '')
-        ann.agence_id = ad.get('id')
         ann.badge_premium = ad.get('badge_premium', False)
         ann.bandeau_exclusif = ad.get('bandeau_exclusif', False)
 
@@ -297,7 +296,8 @@ def autocomplete(request):
 def listing_detail(request, reference):
     """Vue détail : affiche une annonce spécifique avec commentaires"""
     annonce = get_object_or_404(
-        Annonce.objects.prefetch_related('photos', 'commentaires__auteur'),
+        Annonce.objects.select_related('agence__options')
+        .prefetch_related('photos', 'commentaires__auteur'),
         reference=reference,
         is_active=True
     )
@@ -320,8 +320,8 @@ def listing_detail(request, reference):
 
     # Charger options agence pour logo, badge, exclusif, video, visite, contact, stats
     agence_opts = {}
-    try:
-        agence = Agence.objects.select_related('options').get(reference=annonce.client_reference, is_active=True)
+    agence = annonce.agence if (annonce.agence and annonce.agence.is_active) else None
+    if agence:
         opts = getattr(agence, 'options', None)
         agence_opts = {
             'nom': agence.nom,
@@ -334,8 +334,6 @@ def listing_detail(request, reference):
             'video': opts.video if opts else False,
             'contact_prioritaire': opts.contact_prioritaire if opts else False,
         }
-    except Agence.DoesNotExist:
-        pass
 
     # Pros du secteur (meme departement) : la passerelle vers les artisans
     pros_secteur = []
@@ -499,7 +497,7 @@ def decoration_list(request):
     # Photos d'inspiration agences — mise en avant en premier
     inspiration_photos = Photo.objects.filter(
         is_inspiration=True, annonce__is_active=True
-    ).select_related('annonce').prefetch_related('tags').order_by('-mise_en_avant', '-annonce__updated_at')
+    ).select_related('annonce__agence').prefetch_related('tags').order_by('-mise_en_avant', '-annonce__updated_at')
 
     # Realisations pro — mise en avant en premier
     realisations_pro = ProRealisation.objects.filter(
@@ -598,9 +596,8 @@ def decoration_list(request):
 
     items = []
     if source != 'pro':
-        agences_map = {a.reference: a for a in Agence.objects.filter(is_active=True)}
         for photo in inspiration_photos:
-            agence = agences_map.get(photo.annonce.client_reference)
+            agence = photo.annonce.agence if (photo.annonce.agence and photo.annonce.agence.is_active) else None
             items.append({
                 'type': 'annonce',
                 'id': photo.id,
@@ -718,13 +715,13 @@ def partenaire_list(request):
             agences = list(agences_qs)
             # Attach nb_biens to each agence
             biens_counts = dict(
-                Annonce.objects.filter(is_active=True)
-                .values('client_reference')
+                Annonce.objects.filter(is_active=True, agence__isnull=False)
+                .values('agence_id')
                 .annotate(count=Count('id'))
-                .values_list('client_reference', 'count')
+                .values_list('agence_id', 'count')
             )
             for agence in agences:
-                agence.nb_biens_count = biens_counts.get(agence.reference, 0)
+                agence.nb_biens_count = biens_counts.get(agence.id, 0)
 
         # Professionnels
         if type_filter != 'immo':
@@ -783,7 +780,7 @@ def agence_dashboard(request):
     current_tab = request.GET.get('tab', 'biens')
 
     all_annonces = Annonce.objects.filter(
-        client_reference=agence.reference
+        agence=agence
     ).prefetch_related('photos', 'commentaires', 'favoris').order_by('-updated_at')
 
     # Stats principales
@@ -835,26 +832,26 @@ def agence_dashboard(request):
     hier = timezone.now() - timedelta(days=1)
 
     messages_semaine = Commentaire.objects.filter(
-        annonce__client_reference=agence.reference,
+        annonce__agence=agence,
         created_at__gte=semaine
     ).count()
 
     messages_24h = Commentaire.objects.filter(
-        annonce__client_reference=agence.reference,
+        annonce__agence=agence,
         created_at__gte=hier
     ).count()
 
     favoris_semaine = Favori.objects.filter(
-        annonce__client_reference=agence.reference,
+        annonce__agence=agence,
         created_at__gte=semaine
     ).count()
 
     total_commentaires = Commentaire.objects.filter(
-        annonce__client_reference=agence.reference
+        annonce__agence=agence
     ).count()
 
     total_favoris = Favori.objects.filter(
-        annonce__client_reference=agence.reference
+        annonce__agence=agence
     ).count()
 
     # Annonces sans photo ou sans description (a modifier)
@@ -867,7 +864,7 @@ def agence_dashboard(request):
 
     # Inspirations (photos individuelles) - seulement sur l'onglet inspirations
     total_inspirations = Photo.objects.filter(
-        annonce__client_reference=agence.reference,
+        annonce__agence=agence,
         annonce__is_active=True,
         is_inspiration=True
     ).count()
@@ -879,14 +876,14 @@ def agence_dashboard(request):
 
     if current_tab == 'inspirations':
         photos_inspiration = Photo.objects.filter(
-            annonce__client_reference=agence.reference,
+            annonce__agence=agence,
             annonce__is_active=True,
             is_inspiration=True
         ).select_related('annonce')
 
         # Toutes les photos pour le selecteur, avec recherche
         all_photos_qs = Photo.objects.filter(
-            annonce__client_reference=agence.reference,
+            annonce__agence=agence,
             annonce__is_active=True
         ).select_related('annonce').order_by('annonce__reference', 'ordre')
 
@@ -902,7 +899,7 @@ def agence_dashboard(request):
 
     # Derniers commentaires
     derniers_commentaires = Commentaire.objects.filter(
-        annonce__client_reference=agence.reference
+        annonce__agence=agence
     ).select_related('auteur', 'annonce').order_by('-created_at')[:10]
 
     # Dernieres annonces ajoutees/modifiees
@@ -910,7 +907,7 @@ def agence_dashboard(request):
 
     # Demandes de contact recues
     demandes_contact = DemandeContact.objects.filter(
-        annonce__client_reference=agence.reference
+        annonce__agence=agence
     ).select_related('expediteur', 'annonce').order_by('-created_at')
     demandes_non_lues = demandes_contact.filter(is_read=False).count()
 
@@ -921,7 +918,7 @@ def agence_dashboard(request):
     inspi_a_la_une = opts.inspiration_a_la_une if opts else False
     inspi_quota = opts.nb_inspirations_une if opts else 0
     inspi_used = Photo.objects.filter(
-        annonce__client_reference=agence.reference,
+        annonce__agence=agence,
         annonce__is_active=True,
         is_inspiration=True,
         mise_en_avant=True
@@ -1086,7 +1083,7 @@ def admin_agence_settings(request, agence_id):
         messages.success(request, f"Agence \"{agence.nom}\" mise a jour avec succes !")
         return redirect('listings:admin_agence_settings', agence_id=agence.id)
 
-    nb_biens = Annonce.objects.filter(client_reference=agence.reference, is_active=True).count()
+    nb_biens = Annonce.objects.filter(agence=agence, is_active=True).count()
     conseillers = agence.conseillers.filter(is_active=True)
 
     context = {
@@ -1402,7 +1399,7 @@ def toggle_inspiration(request):
     # Verifier que l'utilisateur est responsable de l'agence qui possede ce bien
     try:
         agence = Agence.objects.get(responsable=request.user)
-        if photo.annonce.client_reference != agence.reference:
+        if photo.annonce.agence_id != agence.id:
             return JsonResponse({'error': 'Non autorise'}, status=403)
     except Agence.DoesNotExist:
         if not request.user.is_staff:
@@ -1465,7 +1462,7 @@ def toggle_inspi_une(request):
         photo = get_object_or_404(Photo, id=photo_id)
         try:
             agence = Agence.objects.get(responsable=request.user)
-            if photo.annonce.client_reference != agence.reference:
+            if photo.annonce.agence_id != agence.id:
                 return JsonResponse({'error': 'Non autorise'}, status=403)
         except Agence.DoesNotExist:
             if not request.user.is_staff:
@@ -1477,7 +1474,7 @@ def toggle_inspi_une(request):
             opts = getattr(agence, 'options', None)
             quota = opts.nb_inspirations_une if opts else 0
             used = Photo.objects.filter(
-                annonce__client_reference=agence.reference,
+                annonce__agence=agence,
                 is_inspiration=True, mise_en_avant=True
             ).count()
             if used >= quota:
@@ -1487,7 +1484,7 @@ def toggle_inspi_une(request):
         photo.save(update_fields=['mise_en_avant'])
         if agence:
             used = Photo.objects.filter(
-                annonce__client_reference=agence.reference,
+                annonce__agence=agence,
                 is_inspiration=True, mise_en_avant=True
             ).count()
         else:
@@ -1994,7 +1991,7 @@ def mark_contact_read(request):
     if demande.annonce:
         try:
             agence = Agence.objects.get(responsable=request.user)
-            is_owner = demande.annonce.client_reference == agence.reference
+            is_owner = demande.annonce.agence_id == agence.id
         except Agence.DoesNotExist:
             pass
     elif demande.pro:
@@ -2238,10 +2235,10 @@ def agence_profil(request, agence_id):
     """Page publique d'une agence immobiliere"""
     agence = get_object_or_404(Agence, id=agence_id, is_active=True)
     biens = Annonce.objects.filter(
-        client_reference=agence.reference, is_active=True
+        agence=agence, is_active=True
     ).prefetch_related('photos').order_by('-mise_en_avant', '-created_at')[:24]
     nb_biens_total = Annonce.objects.filter(
-        client_reference=agence.reference, is_active=True
+        agence=agence, is_active=True
     ).count()
     context = {
         'agence': agence,

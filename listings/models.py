@@ -41,6 +41,12 @@ class Annonce(models.Model):
     # Références
     reference = models.CharField(max_length=50, unique=True, db_index=True)
     client_reference = models.CharField(max_length=50, blank=True)
+    # Vraie relation vers l'agence (remplie depuis client_reference a
+    # l'import ; client_reference reste la cle texte du flux XML)
+    agence = models.ForeignKey(
+        'Agence', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='annonces'
+    )
 
     # Infos principales
     titre = models.CharField(max_length=255)

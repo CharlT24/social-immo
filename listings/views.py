@@ -561,9 +561,70 @@ def decoration_list(request):
     # Pros actifs pour le compteur
     total_pros = ProProfile.objects.filter(is_active=True).count()
 
+    # ===== Feed unifie (photos agences + realisations pros melangees) =====
+    pro_fav_ids = set()
+    annonce_fav_ids = set()
+    if request.user.is_authenticated:
+        annonce_fav_ids = set(PhotoFavori.objects.filter(
+            user=request.user, photo__isnull=False
+        ).values_list('photo_id', flat=True))
+        pro_fav_ids = set(PhotoFavori.objects.filter(
+            user=request.user, photo_pro__isnull=False
+        ).values_list('photo_pro_id', flat=True))
+
+    items = []
+    if source != 'pro':
+        agences_map = {a.reference: a for a in Agence.objects.filter(is_active=True)}
+        for photo in inspiration_photos:
+            agence = agences_map.get(photo.annonce.client_reference)
+            items.append({
+                'type': 'annonce',
+                'id': photo.id,
+                'url': photo.src,
+                'categorie_label': photo.get_inspiration_categorie_display() if photo.inspiration_categorie else '',
+                'tags': list(photo.tags.all()),
+                'auteur': agence.nom if agence else photo.annonce.contact_nom,
+                'link': f'/agence/{agence.id}/' if agence else f'/annonce/{photo.annonce.reference}/',
+                'une': photo.mise_en_avant,
+                'date': photo.annonce.updated_at,
+                'is_fav': photo.id in annonce_fav_ids,
+            })
+    if source != 'agence':
+        for realisation in realisations_pro:
+            for photo in realisation.photos.all():
+                items.append({
+                    'type': 'pro',
+                    'id': photo.id,
+                    'url': photo.src,
+                    'categorie_label': realisation.get_categorie_display() if realisation.categorie else '',
+                    'tags': list(realisation.tags.all()),
+                    'auteur': realisation.pro.nom_entreprise,
+                    'link': f'/pro/{realisation.pro.id}/',
+                    'une': photo.mise_en_avant,
+                    'date': realisation.created_at,
+                    'is_fav': photo.id in pro_fav_ids,
+                })
+
+    # A la une d'abord, puis du plus recent au plus ancien
+    items.sort(key=lambda i: (i['une'], i['date']), reverse=True)
+
+    from django.core.paginator import Paginator, EmptyPage
+    paginator = Paginator(items, 36)
+    try:
+        page_obj = paginator.page(int(request.GET.get('page') or 1))
+    except (EmptyPage, ValueError):
+        if request.GET.get('partial'):
+            return HttpResponse('')  # fin du scroll infini
+        page_obj = paginator.page(1)
+
+    # Reponse partielle pour le scroll infini
+    if request.GET.get('partial'):
+        return render(request, 'listings/includes/inspi_items.html', {'items': page_obj.object_list})
+
     context = {
-        'inspiration_photos': inspiration_photos if source != 'pro' else [],
-        'realisations_pro': realisations_pro if source != 'agence' else [],
+        'items': page_obj.object_list,
+        'page_obj': page_obj,
+        'total_items': paginator.count,
         'categories': categories,
         'current_categorie': current_categorie,
         'current_tag': current_tag,
@@ -575,17 +636,6 @@ def decoration_list(request):
         'total_pros': total_pros,
         'sidebar_favs_json': json.dumps(sidebar_favs),
     }
-
-    # Annoter chaque photo avec son agence (nom + id) pour le template
-    agences_map = {a.reference: a for a in Agence.objects.filter(is_active=True)}
-    photos_list = list(context['inspiration_photos'])
-    for photo in photos_list:
-        agence = agences_map.get(photo.annonce.client_reference)
-        photo.agence_obj = agence
-        photo.agence_nom = agence.nom if agence else photo.annonce.contact_nom
-        photo.agence_link = f'/agence/{agence.id}/' if agence else f'/annonce/{photo.annonce.reference}/'
-    context['inspiration_photos'] = photos_list
-
     return render(request, 'listings/decoration_list.html', context)
 
 

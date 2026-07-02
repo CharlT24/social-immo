@@ -1,0 +1,57 @@
+{% comment %}
+Items du feed Inspirations (boucle sur `items`, dicts construits par decoration_list).
+Rendu aussi en reponse partielle pour le scroll infini.
+{% endcomment %}
+{% for item in items %}
+<div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer inspi-item"
+     onclick="openPhotoModal('{{ item.url|escapejs }}', {{ item.id }}, '{{ item.type }}', '{{ item.categorie_label|escapejs }}', '{{ item.auteur|escapejs }}', '{{ item.link|escapejs }}')">
+    <img src="{{ item.url }}" alt="{{ item.categorie_label|default:'Inspiration' }} - {{ item.auteur }}"
+         class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+
+    <!-- Badges -->
+    <div class="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[70%]">
+        {% if item.une %}
+        <span class="text-[10px] font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+            <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            A la une
+        </span>
+        {% endif %}
+        {% if item.categorie_label %}
+        <span class="text-xs font-semibold text-white bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
+            {{ item.categorie_label }}
+        </span>
+        {% endif %}
+        {% for tag in item.tags|slice:":3" %}
+        <span class="text-[10px] font-medium text-white bg-indigo-500/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+            {{ tag.nom }}
+        </span>
+        {% endfor %}
+    </div>
+
+    <!-- Coeur -->
+    <div class="absolute top-3 right-3" onclick="event.stopPropagation()">
+        <button onclick="togglePhotoFav({{ item.id }}, '{{ item.type }}', this)"
+                class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm photo-fav-btn"
+                data-photo-id="{{ item.id }}" data-type="{{ item.type }}">
+            <svg class="w-5 h-5 {% if item.is_fav %}text-red-500 fill-red-500{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Barre du bas au survol -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1 text-white/90">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <span class="text-xs font-medium">Commenter</span>
+            </div>
+            <span class="text-xs text-white/90 font-medium {% if item.type == 'pro' %}bg-purple-600/60{% else %}bg-apple-blue/60{% endif %} backdrop-blur-sm px-2.5 py-1 rounded-full truncate max-w-[55%]">
+                {{ item.auteur }}
+            </span>
+        </div>
+    </div>
+</div>
+{% endfor %}

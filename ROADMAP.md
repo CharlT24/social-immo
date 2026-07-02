@@ -69,6 +69,18 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/c
 
 > CRON à ajouter : `python manage.py rapport_vendeurs` (1×/semaine, lundi matin).
 
+## 📋 Avancement v5 — "Remplacer SeLoger/LeBonCoin/Zefir" (2026-07-02)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 15 | **Tunnel vendeur 3 portes** après l'estimation : Vendre avec un pro (lead + consentement RGPD), Vendre moi-même (wizard), Suivre le marché (alerte 1 clic) | ✅ Terminé |
+| 16 | **Devis travaux** `/devis/` : 3 artisans du département rappellent (emails + dashboard pro) ; boutons sur annonce, page ville, annuaire | ✅ Terminé |
+| 17 | **Baromètre public des prix** `/barometre/` : médianes des ventes réelles par commune + évolution, s'enrichit à chaque estimation | ✅ Terminé |
+| 18 | **Panneau "À VENDRE" A4** imprimable avec QR code (celebration + dashboard) + section homepage "Vendez comme un pro. Gratuitement." + kit copier-coller | ✅ Terminé |
+
+- 📋 Kit de prospection prêt à copier-coller : [LEADS-COPIER-COLLER.md](LEADS-COPIER-COLLER.md)
+- 💰 Plan 1 M€ : [MONETISATION.md](MONETISATION.md) — prochaine brique payante : **Stripe** (il me faudra tes clés API, guide au moment venu)
+
 ## 📌 Prochaine étape : v4
 
 - Backlog UX complet : [AMELIORATIONS-UX.md](AMELIORATIONS-UX.md) — priorité 1 = le dépôt d'annonce "comme un pro" (assistant 4 étapes, prix suggéré en direct, aperçu, kit de diffusion, rapport hebdo vendeur)

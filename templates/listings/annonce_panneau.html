@@ -1,0 +1,103 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Panneau {{ annonce.reference }} | Social Immo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: #F5F5F7; }
+
+        .toolbar { padding: 16px; text-align: center; background: white; border-bottom: 1px solid #E5E5EA; }
+        .toolbar button, .toolbar a {
+            display: inline-block; margin: 0 6px; padding: 12px 28px; border-radius: 99px;
+            font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; border: none;
+        }
+        .btn-print { background: #0071E3; color: white; }
+        .btn-back { background: #F5F5F7; color: #1D1D1F; }
+
+        .page {
+            width: 210mm; min-height: 296mm; margin: 24px auto; background: white;
+            padding: 18mm; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+        }
+        .bandeau {
+            background: #E7372F; color: white; text-align: center;
+            padding: 14mm 0; border-radius: 6mm; margin-bottom: 12mm;
+        }
+        .bandeau h1 { font-size: 26mm; letter-spacing: 2mm; font-weight: 800; line-height: 1; }
+        .prix { text-align: center; font-size: 15mm; font-weight: 800; color: #1D1D1F; margin-bottom: 6mm; }
+        .details { text-align: center; font-size: 7mm; color: #6E6E73; margin-bottom: 14mm; }
+        .qr-zone { display: flex; align-items: center; justify-content: center; gap: 12mm; margin-bottom: 14mm; }
+        #qrcode img, #qrcode canvas { width: 55mm !important; height: 55mm !important; }
+        .qr-texte { max-width: 70mm; }
+        .qr-texte p:first-child { font-size: 8mm; font-weight: 700; color: #1D1D1F; margin-bottom: 3mm; }
+        .qr-texte p:last-child { font-size: 5.5mm; color: #6E6E73; line-height: 1.4; }
+        .contact { text-align: center; background: #F5F5F7; border-radius: 5mm; padding: 8mm; margin-top: auto; }
+        .contact .tel { font-size: 11mm; font-weight: 800; color: #1D1D1F; letter-spacing: 1mm; }
+        .footer { text-align: center; margin-top: 8mm; font-size: 4.5mm; color: #86868B; }
+        .footer strong { color: #0071E3; }
+
+        @media print {
+            .toolbar { display: none; }
+            body { background: white; }
+            .page { margin: 0; box-shadow: none; width: auto; min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <a href="{% url 'listings:particulier_dashboard' %}" class="btn-back">&larr; Mon compte</a>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+</div>
+
+<div class="page">
+    <div class="bandeau">
+        <h1>{% if annonce.type_transaction == 'L' %}A LOUER{% else %}A VENDRE{% endif %}</h1>
+    </div>
+
+    <div class="prix">
+        {% if annonce.type_transaction == 'L' and annonce.loyer_mensuel %}
+            {{ annonce.loyer_mensuel|floatformat:0 }} € / mois
+        {% else %}
+            {{ annonce.prix_format }}
+        {% endif %}
+    </div>
+    <div class="details">
+        {{ annonce.libelle_type|default:"Bien" }}
+        {% if annonce.nb_pieces %} · {{ annonce.nb_pieces }} pieces{% endif %}
+        {% if annonce.surface %} · {{ annonce.surface|floatformat:0 }} m²{% endif %}
+        <br>{{ annonce.ville }} ({{ annonce.code_postal }})
+    </div>
+
+    <div class="qr-zone">
+        <div id="qrcode"></div>
+        <div class="qr-texte">
+            <p>📱 Scannez-moi</p>
+            <p>Photos, description complete et visite immersive de ce bien sur votre telephone.</p>
+        </div>
+    </div>
+
+    {% if annonce.contact_telephone %}
+    <div class="contact">
+        <div class="tel">{{ annonce.contact_telephone }}</div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Annonce {{ annonce.reference }} — vue sur <strong>social-immo.com</strong>, l'immobilier qui inspire
+    </div>
+</div>
+
+<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+new QRCode(document.getElementById('qrcode'), {
+    text: "{{ url_annonce|escapejs }}",
+    width: 220, height: 220,
+    colorDark: '#1D1D1F', colorLight: '#FFFFFF',
+    correctLevel: QRCode.CorrectLevel.M
+});
+</script>
+</body>
+</html>

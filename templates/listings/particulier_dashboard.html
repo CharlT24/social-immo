@@ -142,6 +142,7 @@
                         <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
                             <a href="{% url 'listings:detail' annonce.reference %}" class="flex-1 text-center text-sm font-medium text-gray-600 hover:text-gray-900 py-2 rounded-lg hover:bg-gray-50 transition-colors">Voir</a>
                             <a href="{% url 'listings:particulier_modifier_annonce' annonce.id %}" class="flex-1 text-center text-sm font-medium text-teal-600 hover:text-teal-700 py-2 rounded-lg hover:bg-teal-50 transition-colors">Modifier</a>
+                            <a href="{% url 'listings:annonce_panneau' annonce.id %}" target="_blank" title="Panneau A4 avec QR code" class="text-sm font-medium text-gray-500 hover:text-gray-800 py-2 px-2 rounded-lg hover:bg-gray-50 transition-colors">🖨️</a>
                             <form method="post" action="{% url 'listings:particulier_supprimer_annonce' annonce.id %}" onsubmit="return confirm('Supprimer cette annonce ?')">
                                 {% csrf_token %}
                                 <button type="submit" class="text-sm font-medium text-red-400 hover:text-red-600 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors">Suppr.</button>

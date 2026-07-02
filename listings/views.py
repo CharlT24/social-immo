@@ -3179,6 +3179,18 @@ def particulier_creer_annonce(request):
 
 
 @login_required
+def annonce_panneau(request, annonce_id):
+    """Panneau 'A VENDRE / A LOUER' imprimable (A4) avec QR code."""
+    annonce = get_object_or_404(
+        Annonce, id=annonce_id, user=request.user, source='particulier'
+    )
+    return render(request, 'listings/annonce_panneau.html', {
+        'annonce': annonce,
+        'url_annonce': request.build_absolute_uri(f'/annonce/{annonce.reference}/'),
+    })
+
+
+@login_required
 def annonce_publiee(request, annonce_id):
     """Ecran de celebration + kit de diffusion apres publication."""
     from .models import RechercheSauvegardee

@@ -63,12 +63,16 @@
             </button>
         </div>
 
-        <!-- QR Code -->
+        <!-- QR Code + panneau -->
         <div class="flex items-center gap-5 bg-apple-bg rounded-2xl p-5">
             <div id="qrcode" class="bg-white p-2 rounded-xl flex-shrink-0"></div>
             <div>
-                <p class="text-sm font-semibold text-apple-text">QR code de votre annonce</p>
-                <p class="text-xs text-apple-gray mt-1">A imprimer sur une affichette "A vendre" en vitrine, sur le portail ou chez les commercants du quartier — les passants scannent et arrivent sur votre annonce.</p>
+                <p class="text-sm font-semibold text-apple-text">Votre panneau "A vendre" pret a imprimer</p>
+                <p class="text-xs text-apple-gray mt-1">Affiche A4 avec QR code : sur le portail, en vitrine, chez les commercants — les passants scannent et visitent votre bien sur leur telephone.</p>
+                <a href="{% url 'listings:annonce_panneau' annonce.id %}" target="_blank"
+                   class="inline-block mt-3 bg-apple-text text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-gray-700 transition-colors">
+                    🖨️ Imprimer mon panneau A4
+                </a>
             </div>
         </div>
     </div>

@@ -308,6 +308,52 @@
 </section>
 {% endif %}
 
+<!-- ==================== POURQUOI SOCIAL IMMO ==================== -->
+<section class="max-w-7xl mx-auto px-6 mb-16">
+    <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 md:p-12 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+        <div class="relative">
+            <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight text-center mb-2">Vendez comme un pro. Gratuitement.</h2>
+            <p class="text-white/60 text-center max-w-2xl mx-auto mb-10">Tout ce que les autres sites font payer, ici c'est inclus.</p>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 reveal-stagger">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-white mb-1">Estimation sur ventes reelles</p>
+                    <p class="text-xs text-white/60">Votre prix calcule sur les ventes notariees de votre commune, en 30 secondes.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-white mb-1">Annonce niveau agence</p>
+                    <p class="text-xs text-white/60">4 etapes guidees, photos optimisees automatiquement, texte redige pour vous.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-white mb-1">Diffusion immediate</p>
+                    <p class="text-xs text-white/60">Votre bien part par email aux acheteurs en alerte des la publication. Panneau QR inclus.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-white mb-1">Artisans a portee de main</p>
+                    <p class="text-xs text-white/60">Travaux avant la vente ? 3 devis gratuits d'artisans notes de votre secteur.</p>
+                </div>
+            </div>
+            <div class="text-center mt-10">
+                <a href="{% url 'listings:estimation' %}" class="inline-block bg-white text-slate-900 font-bold px-8 py-4 rounded-2xl hover:bg-blue-50 transition-colors">
+                    Estimer mon bien gratuitement
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- ==================== SEO LINKS ==================== -->
 {% if villes_populaires %}
 <section class="bg-white border-t border-gray-100">

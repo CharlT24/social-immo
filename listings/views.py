@@ -2223,6 +2223,39 @@ def supprimer_recherche(request, recherche_id):
     return redirect('/mon-compte/?tab=acquereur')
 
 
+def barometre(request):
+    """Barometre public des prix : medianes par commune depuis les ventes
+    reelles DVF deja en cache (alimente au fil des estimations)."""
+    from statistics import median
+    from .models import CommuneDVF
+
+    communes_stats = []
+    for commune in CommuneDVF.objects.filter(nb_ventes__gt=0).order_by('ville'):
+        ventes = list(commune.ventes.all().values('type_local', 'surface', 'prix', 'date_mutation'))
+        if len(ventes) < 5:
+            continue
+        stats = {'commune': commune, 'total': len(ventes)}
+        for type_local, cle in (('maison', 'maison'), ('appartement', 'appart')):
+            sous = [v for v in ventes if v['type_local'] == type_local]
+            if len(sous) >= 5:
+                stats[cle + '_m2'] = int(median(v['prix'] / v['surface'] for v in sous))
+                stats[cle + '_n'] = len(sous)
+                # Evolution : mediane annee la plus recente vs precedente
+                annees = sorted({v['date_mutation'].year for v in sous}, reverse=True)
+                if len(annees) >= 2:
+                    recentes = [v['prix'] / v['surface'] for v in sous if v['date_mutation'].year == annees[0]]
+                    anciennes = [v['prix'] / v['surface'] for v in sous if v['date_mutation'].year == annees[1]]
+                    if len(recentes) >= 3 and len(anciennes) >= 3:
+                        evo = (median(recentes) - median(anciennes)) / median(anciennes) * 100
+                        stats[cle + '_evo'] = round(evo, 1)
+        if 'maison_m2' in stats or 'appart_m2' in stats:
+            communes_stats.append(stats)
+
+    return render(request, 'listings/barometre.html', {
+        'communes_stats': communes_stats,
+    })
+
+
 def demande_devis(request):
     """Demande de devis travaux : 3 pros du secteur rappellent."""
     metier_choices = ProProfile.METIER_CHOICES

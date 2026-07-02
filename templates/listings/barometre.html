@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Barometre des prix immobiliers : prix au m2 par ville (ventes reelles) | Social Immo{% endblock %}
+{% block meta_description %}Prix au m2 reel par ville, calcule sur les ventes notariees (donnees publiques DVF) : maisons, appartements, evolution. Le barometre immobilier Social Immo.{% endblock %}
+{% block og_title %}Barometre des prix immobiliers — ventes reelles par ville{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+
+    <!-- Hero -->
+    <div class="text-center mb-12">
+        <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+        </div>
+        <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-4">Barometre des prix</h1>
+        <p class="text-lg text-apple-gray max-w-2xl mx-auto">
+            Les prix au m² <strong class="text-apple-text">reellement payes</strong>, calcules sur les ventes
+            enregistrees par les notaires (donnees publiques DVF) — pas sur les prix affiches.
+        </p>
+    </div>
+
+    {% if communes_stats %}
+    <div class="space-y-4 reveal-stagger">
+        {% for s in communes_stats %}
+        <div class="bg-white rounded-2xl shadow-apple p-6">
+            <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <div class="md:w-56 flex-shrink-0">
+                    <p class="text-lg font-bold text-apple-text">{{ s.commune.ville }}</p>
+                    <p class="text-xs text-apple-gray">{{ s.total }} ventes analysees</p>
+                </div>
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% if s.maison_m2 %}
+                    <div class="bg-apple-bg rounded-xl px-4 py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-apple-gray">Maisons <span class="text-gray-400">({{ s.maison_n }} ventes)</span></p>
+                            <p class="text-xl font-bold">{{ s.maison_m2 }} €/m²</p>
+                        </div>
+                        {% if s.maison_evo is not None %}
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full {% if s.maison_evo >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">
+                            {% if s.maison_evo >= 0 %}+{% endif %}{{ s.maison_evo }} %
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if s.appart_m2 %}
+                    <div class="bg-apple-bg rounded-xl px-4 py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-apple-gray">Appartements <span class="text-gray-400">({{ s.appart_n }} ventes)</span></p>
+                            <p class="text-xl font-bold">{{ s.appart_m2 }} €/m²</p>
+                        </div>
+                        {% if s.appart_evo is not None %}
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full {% if s.appart_evo >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">
+                            {% if s.appart_evo >= 0 %}+{% endif %}{{ s.appart_evo }} %
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'listings:estimation' %}" class="flex-shrink-0 text-sm font-semibold text-orange-600 hover:underline">
+                    Estimer mon bien &rarr;
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16 bg-white rounded-3xl shadow-apple">
+        <p class="text-xl font-medium text-apple-text mb-2">Le barometre se remplit automatiquement</p>
+        <p class="text-apple-gray max-w-md mx-auto mb-6">Chaque estimation realisee sur le site enrichit le barometre avec les ventes reelles de la commune. Estimez un bien pour voir apparaitre votre ville !</p>
+        <a href="{% url 'listings:estimation' %}" class="inline-block bg-orange-600 text-white font-semibold px-8 py-3.5 rounded-2xl hover:bg-orange-700 transition-colors">
+            Estimer un bien
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Methodologie -->
+    <div class="mt-12 bg-white rounded-3xl shadow-apple p-8 text-sm text-apple-gray leading-relaxed">
+        <h2 class="text-lg font-bold text-apple-text mb-3">Methodologie</h2>
+        <p>
+            Les prix affiches sont les <strong class="text-apple-text">medianes des prix au m² des ventes reelles</strong>
+            issues des Demandes de Valeurs Foncieres (DVF), donnees publiques produites par la DGFiP et diffusees par Etalab.
+            Les ventes aberrantes (lots, dependances, valeurs extremes) sont ecartees. L'evolution compare la mediane du
+            dernier millesime disponible a celle du precedent. Ces chiffres sont indicatifs et ne remplacent pas
+            l'expertise d'un professionnel — <a href="{% url 'listings:estimation' %}" class="text-apple-blue hover:underline">estimez votre bien</a>
+            pour une analyse personnalisee.
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -16,6 +16,8 @@ class StaticSitemap(Sitemap):
             'listings:estimation',
             'listings:agence_immo',
             'listings:locaux_pro',
+            'listings:barometre',
+            'listings:demande_devis',
         ]
 
     def location(self, item):

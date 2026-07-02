@@ -74,6 +74,8 @@ urlpatterns = [
     path('immobilier/<slug:ville_slug>/', views.ville_page, name='ville_page'),
     # Devis travaux
     path('devis/', views.demande_devis, name='demande_devis'),
+    # Barometre des prix
+    path('barometre/', views.barometre, name='barometre'),
     # Partage inspiration
     path('inspirations/photo/<str:photo_type>/<int:photo_id>/', views.inspiration_partage, name='inspiration_partage'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),

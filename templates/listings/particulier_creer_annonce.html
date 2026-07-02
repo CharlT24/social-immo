@@ -9,16 +9,29 @@
     <div class="mb-8">
         <a href="{% url 'listings:particulier_dashboard' %}" class="text-sm text-teal-600 hover:text-teal-700 font-medium">&larr; Retour au dashboard</a>
         <h1 class="text-3xl font-bold text-gray-900 mt-4">Deposer une annonce</h1>
-        <p class="text-gray-500 mt-1">Remplissez les informations de votre bien. Votre annonce sera publiee immediatement.</p>
+        <p class="text-gray-500 mt-1">4 etapes guidees, comme un pro de l'immobilier.</p>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="mb-10">
+        <div class="flex items-center justify-between mb-2">
+            <span class="wizard-label text-xs font-semibold" data-etape="1">1. Votre bien</span>
+            <span class="wizard-label text-xs font-semibold" data-etape="2">2. Photos</span>
+            <span class="wizard-label text-xs font-semibold" data-etape="3">3. Prix</span>
+            <span class="wizard-label text-xs font-semibold" data-etape="4">4. Annonce</span>
+        </div>
+        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div id="wizard-progress" class="h-full bg-teal-600 rounded-full transition-all duration-500" style="width: 25%;"></div>
+        </div>
     </div>
 
     <!-- Form -->
-    <form method="post" enctype="multipart/form-data" class="space-y-8">
+    <form id="wizard-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- Erreurs globales -->
+        <!-- Erreurs globales (apres soumission serveur) -->
         {% if form.errors %}
-        <div class="bg-red-50 text-red-700 px-5 py-4 rounded-xl text-sm">
+        <div class="bg-red-50 text-red-700 px-5 py-4 rounded-xl text-sm mb-6">
             <p class="font-semibold mb-2">Veuillez corriger les erreurs :</p>
             {% for field, errors in form.errors.items %}
                 {% for error in errors %}
@@ -28,42 +41,9 @@
         </div>
         {% endif %}
 
-        <!-- Section 1 : Infos de base -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">1</span>
-                Informations generales
-            </h2>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.titre.label }} *</label>
-                    {{ form.titre }}
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.texte.label }}</label>
-                    {{ form.texte }}
-                </div>
-
-                <!-- Assistant IA redaction -->
-                <div class="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-100">
-                    <div class="flex items-start justify-between gap-3 flex-wrap">
-                        <div>
-                            <p class="text-sm font-semibold text-teal-800 flex items-center gap-1.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                                Assistant de redaction
-                            </p>
-                            <p class="text-xs text-teal-600 mt-0.5">Remplissez d'abord le type, la ville et les caracteristiques, puis laissez l'assistant rediger pour vous.</p>
-                        </div>
-                        <button type="button" onclick="suggererAnnonce()" id="btn-suggerer"
-                                class="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-full transition-colors flex-shrink-0">
-                            Suggerer titre + description
-                        </button>
-                    </div>
-                    <div id="suggestions-zone" class="hidden mt-4 space-y-2"></div>
-                </div>
-
+        <!-- ============ ETAPE 1 : LE BIEN ============ -->
+        <div class="wizard-etape" data-etape="1">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.libelle_type.label }} *</label>
@@ -74,20 +54,116 @@
                         {{ form.type_transaction }}
                     </div>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.ville.label }} *</label>
+                        {{ form.ville }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.code_postal.label }} *</label>
+                        {{ form.code_postal }}
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface.label }}</label>
+                        {{ form.surface }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_pieces.label }}</label>
+                        {{ form.nb_pieces }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_chambres.label }}</label>
+                        {{ form.nb_chambres }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface_terrain.label }}</label>
+                        {{ form.surface_terrain }}
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800 mb-3">Diagnostic energetique <span class="font-normal text-gray-400">(recommande — les annonces avec DPE sont mieux classees)</span></p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ form.dpe_etiquette_conso.label }}</label>
+                            {{ form.dpe_etiquette_conso }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ form.dpe_valeur_conso.label }}</label>
+                            {{ form.dpe_valeur_conso }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ form.dpe_etiquette_ges.label }}</label>
+                            {{ form.dpe_etiquette_ges }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ form.dpe_valeur_ges.label }}</label>
+                            {{ form.dpe_valeur_ges }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Section 2 : Prix -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">2</span>
-                Prix
-            </h2>
+        <!-- ============ ETAPE 2 : PHOTOS ============ -->
+        <div class="wizard-etape hidden" data-etape="2">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 mb-4">Les annonces avec au moins 3 photos recoivent <strong class="text-gray-800">2x plus de contacts</strong>. La premiere photo est votre vitrine.</p>
 
-            <div class="space-y-4">
+                <div id="photo-upload-zone"
+                     class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-all"
+                     onclick="document.getElementById('photo-input').click()">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="text-sm text-gray-500 font-medium">Cliquez pour ajouter des photos</p>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG — 5 photos maximum</p>
+                    <input type="file" id="photo-input" name="photos" multiple accept="image/*" class="hidden" onchange="ajouterPhotos(this)">
+                </div>
+
+                <!-- Previews reordonnables -->
+                <div id="photo-preview" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 hidden"></div>
+
+                <label class="flex items-start gap-3 mt-5 p-4 bg-teal-50/60 rounded-xl cursor-pointer hover:bg-teal-50 transition-colors">
+                    <input type="checkbox" name="ameliorer_photos" checked class="mt-0.5 w-4 h-4 accent-teal-600">
+                    <span>
+                        <span class="block text-sm font-semibold text-gray-800">Optimiser mes photos automatiquement</span>
+                        <span class="block text-xs text-gray-500 mt-0.5">Luminosite, contraste et nettete ajustes pour un rendu professionnel.</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <!-- ============ ETAPE 3 : PRIX ============ -->
+        <div class="wizard-etape hidden" data-etape="3">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+
+                <!-- Estimation live (vente uniquement) -->
+                <div id="estimation-bloc" class="hidden">
+                    <div id="estimation-loading" class="flex items-center gap-3 bg-slate-900 text-white rounded-2xl px-5 py-4">
+                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-sm">Analyse des ventes reelles de votre secteur...</span>
+                    </div>
+                    <div id="estimation-resultat" class="hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl px-6 py-5 text-white">
+                        <p class="text-xs text-white/60 mb-1">Valeur estimee de votre bien</p>
+                        <div class="flex items-baseline gap-3 flex-wrap">
+                            <span id="est-prix" class="text-3xl font-bold"></span>
+                            <span id="est-fourchette" class="text-sm text-white/60"></span>
+                        </div>
+                        <p id="est-source" class="text-[11px] text-white/50 mt-2"></p>
+                        <div id="est-exemples" class="mt-3 space-y-1.5"></div>
+                        <button type="button" id="btn-utiliser-prix" onclick="utiliserPrixEstime()"
+                                class="mt-4 bg-white text-slate-900 text-sm font-bold px-5 py-2.5 rounded-full hover:bg-blue-50 transition-colors">
+                            Utiliser ce prix
+                        </button>
+                    </div>
+                </div>
+
                 <div id="prix-vente">
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.prix.label }}</label>
                     {{ form.prix }}
+                    <p id="prix-position" class="hidden text-xs mt-2 px-3 py-2 rounded-lg"></p>
                 </div>
                 <div id="prix-location" class="hidden">
                     <div class="grid grid-cols-2 gap-4">
@@ -104,172 +180,346 @@
             </div>
         </div>
 
-        <!-- Section 3 : Localisation -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                Localisation
-            </h2>
+        <!-- ============ ETAPE 4 : ANNONCE & APERCU ============ -->
+        <div class="wizard-etape hidden" data-etape="4">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.titre.label }} *</label>
+                    {{ form.titre }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.texte.label }}</label>
+                    {{ form.texte }}
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.ville.label }} *</label>
-                    {{ form.ville }}
+                <!-- Assistant IA redaction -->
+                <div class="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-100">
+                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div>
+                            <p class="text-sm font-semibold text-teal-800 flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                Assistant de redaction
+                            </p>
+                            <p class="text-xs text-teal-600 mt-0.5">L'assistant redige a partir des informations de l'etape 1.</p>
+                        </div>
+                        <button type="button" onclick="suggererAnnonce()" id="btn-suggerer"
+                                class="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-full transition-colors flex-shrink-0">
+                            Suggerer titre + description
+                        </button>
+                    </div>
+                    <div id="suggestions-zone" class="hidden mt-4 space-y-2"></div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.code_postal.label }} *</label>
-                    {{ form.code_postal }}
-                </div>
-            </div>
-        </div>
 
-        <!-- Section 4 : Caracteristiques -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">4</span>
-                Caracteristiques
-            </h2>
+                <!-- Score de qualite -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-semibold text-gray-800">Qualite de votre annonce</p>
+                        <span id="score-valeur" class="text-sm font-bold text-teal-600">0 %</span>
+                    </div>
+                    <div class="h-2.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+                        <div id="score-jauge" class="h-full rounded-full transition-all duration-500 bg-red-400" style="width: 0%;"></div>
+                    </div>
+                    <ul id="score-conseils" class="space-y-1"></ul>
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
+                <!-- Apercu -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_pieces.label }}</label>
-                    {{ form.nb_pieces }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_chambres.label }}</label>
-                    {{ form.nb_chambres }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface.label }}</label>
-                    {{ form.surface }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface_terrain.label }}</label>
-                    {{ form.surface_terrain }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 5 : DPE -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">5</span>
-                Diagnostic energetique (DPE)
-            </h2>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_etiquette_conso.label }}</label>
-                    {{ form.dpe_etiquette_conso }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_valeur_conso.label }}</label>
-                    {{ form.dpe_valeur_conso }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_etiquette_ges.label }}</label>
-                    {{ form.dpe_etiquette_ges }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.dpe_valeur_ges.label }}</label>
-                    {{ form.dpe_valeur_ges }}
+                    <p class="text-sm font-semibold text-gray-800 mb-3">Apercu — ce que verront les acheteurs</p>
+                    <div class="max-w-sm">
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-apple border border-gray-100">
+                            <div class="aspect-[4/3] bg-gray-100 relative">
+                                <img id="apercu-photo" src="" alt="" class="w-full h-full object-cover hidden">
+                                <div id="apercu-photo-vide" class="w-full h-full flex items-center justify-center text-gray-300">
+                                    <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                </div>
+                                <span class="absolute top-3 left-3 bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Nouveau</span>
+                                <span class="absolute top-3 right-3 bg-teal-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Particulier</span>
+                            </div>
+                            <div class="p-5">
+                                <div id="apercu-prix" class="text-xl font-bold tracking-tight mb-1">—</div>
+                                <h3 id="apercu-titre" class="text-sm text-gray-700 font-medium mb-2 line-clamp-1">Votre titre apparaitra ici</h3>
+                                <div id="apercu-specs" class="flex items-center gap-2 text-xs text-gray-500 mb-3"></div>
+                                <div id="apercu-ville" class="text-xs text-gray-500"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Section 6 : Photos -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <span class="w-7 h-7 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-sm font-bold">6</span>
-                Photos (5 max)
-            </h2>
-
-            <div id="photo-upload-zone"
-                 class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-all"
-                 onclick="document.getElementById('photo-input').click()">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <p class="text-sm text-gray-500 font-medium">Cliquez pour ajouter des photos</p>
-                <p class="text-xs text-gray-400 mt-1">JPG, PNG - 5 photos maximum</p>
-                <input type="file" id="photo-input" name="photos" multiple accept="image/*" class="hidden" onchange="previewPhotos(this)">
-            </div>
-
-            <!-- Preview -->
-            <div id="photo-preview" class="grid grid-cols-5 gap-3 mt-4 hidden"></div>
-
-            <!-- Amelioration auto -->
-            <label class="flex items-start gap-3 mt-4 p-4 bg-teal-50/60 rounded-xl cursor-pointer hover:bg-teal-50 transition-colors">
-                <input type="checkbox" name="ameliorer_photos" checked class="mt-0.5 w-4 h-4 accent-teal-600">
-                <span>
-                    <span class="block text-sm font-semibold text-gray-800">Optimiser mes photos automatiquement</span>
-                    <span class="block text-xs text-gray-500 mt-0.5">Luminosite, contraste et nettete ajustes pour un rendu professionnel. Recommande pour les photos de telephone.</span>
-                </span>
-            </label>
+        <!-- ============ NAVIGATION ============ -->
+        <div class="flex items-center justify-between mt-8">
+            <button type="button" id="btn-retour" onclick="etapePrecedente()"
+                    class="hidden text-sm font-semibold text-gray-500 hover:text-gray-800 px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">
+                &larr; Retour
+            </button>
+            <div class="flex-1"></div>
+            <button type="button" id="btn-continuer" onclick="etapeSuivante()"
+                    class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3.5 rounded-xl transition-colors shadow-sm">
+                Continuer &rarr;
+            </button>
+            <button type="submit" id="btn-publier"
+                    class="hidden bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3.5 rounded-xl text-lg transition-colors shadow-lg shadow-teal-500/25">
+                🚀 Publier mon annonce
+            </button>
         </div>
-
-        <!-- Submit -->
-        <button type="submit"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl text-lg transition-colors shadow-sm">
-            Publier mon annonce
-        </button>
     </form>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Toggle prix/loyer selon type de transaction
-const typeSelect = document.getElementById('id_type_transaction');
-const prixVente = document.getElementById('prix-vente');
-const prixLocation = document.getElementById('prix-location');
+// ================== WIZARD ==================
+let etapeCourante = 1;
+const NB_ETAPES = 4;
 
-function updatePrixFields() {
-    if (typeSelect.value === 'L') {
-        prixVente.classList.add('hidden');
-        prixLocation.classList.remove('hidden');
-    } else {
-        prixVente.classList.remove('hidden');
-        prixLocation.classList.add('hidden');
-    }
-}
-
-typeSelect.addEventListener('change', updatePrixFields);
-updatePrixFields();
-
-// Photo preview
-function previewPhotos(input) {
-    const preview = document.getElementById('photo-preview');
-    preview.innerHTML = '';
-
-    if (input.files.length > 5) {
-        showToast('Maximum 5 photos autorisees.', 'error');
-        input.value = '';
-        preview.classList.add('hidden');
-        return;
-    }
-
-    if (input.files.length > 0) {
-        preview.classList.remove('hidden');
-        Array.from(input.files).slice(0, 5).forEach((file, i) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = 'relative aspect-square rounded-xl overflow-hidden bg-gray-100';
-                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"><span class="absolute top-1 right-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded-full">${i + 1}</span>`;
-                preview.appendChild(div);
-            };
-            reader.readAsDataURL(file);
-        });
-    } else {
-        preview.classList.add('hidden');
-    }
-}
-
-// ===== Assistant de redaction =====
 function champ(id) {
     const el = document.getElementById(id);
     return el ? el.value : '';
 }
 
+function afficherEtape(n) {
+    etapeCourante = n;
+    document.querySelectorAll('.wizard-etape').forEach(e => {
+        e.classList.toggle('hidden', parseInt(e.dataset.etape) !== n);
+    });
+    document.querySelectorAll('.wizard-label').forEach(l => {
+        const num = parseInt(l.dataset.etape);
+        l.classList.toggle('text-teal-600', num <= n);
+        l.classList.toggle('text-gray-400', num > n);
+    });
+    document.getElementById('wizard-progress').style.width = (n / NB_ETAPES * 100) + '%';
+    document.getElementById('btn-retour').classList.toggle('hidden', n === 1);
+    document.getElementById('btn-continuer').classList.toggle('hidden', n === NB_ETAPES);
+    document.getElementById('btn-publier').classList.toggle('hidden', n !== NB_ETAPES);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (n === 3) preparerEtapePrix();
+    if (n === 4) { majApercu(); majScore(); }
+}
+
+function validerEtape(n) {
+    if (n === 1) {
+        const requis = [['id_libelle_type', 'le type de bien'], ['id_type_transaction', "le type d'annonce"],
+                        ['id_ville', 'la ville'], ['id_code_postal', 'le code postal']];
+        for (const [id, label] of requis) {
+            if (!champ(id).trim()) { showToast('Renseignez ' + label, 'error'); document.getElementById(id).focus(); return false; }
+        }
+    }
+    if (n === 3) {
+        const estLocation = champ('id_type_transaction') === 'L';
+        if (estLocation && !champ('id_loyer_mensuel')) { showToast('Renseignez le loyer mensuel', 'error'); return false; }
+        if (!estLocation && !champ('id_prix')) { showToast('Renseignez le prix de vente', 'error'); return false; }
+    }
+    return true;
+}
+
+function etapeSuivante() { if (validerEtape(etapeCourante)) afficherEtape(Math.min(etapeCourante + 1, NB_ETAPES)); }
+function etapePrecedente() { afficherEtape(Math.max(etapeCourante - 1, 1)); }
+
+// Validation finale avant POST
+document.getElementById('wizard-form').addEventListener('submit', function(e) {
+    if (!champ('id_titre').trim()) {
+        e.preventDefault();
+        showToast("Donnez un titre a votre annonce (l'assistant peut le faire !)", 'error');
+        document.getElementById('id_titre').focus();
+        return;
+    }
+    reconstruireInputPhotos();
+});
+
+// ================== PHOTOS (reordonnables) ==================
+let photosArr = [];
+
+function ajouterPhotos(input) {
+    const nouveaux = Array.from(input.files);
+    for (const f of nouveaux) {
+        if (photosArr.length >= 5) { showToast('Maximum 5 photos.', 'error'); break; }
+        photosArr.push(f);
+    }
+    input.value = '';
+    rendrePhotos();
+}
+
+function rendrePhotos() {
+    const zone = document.getElementById('photo-preview');
+    zone.innerHTML = '';
+    zone.classList.toggle('hidden', photosArr.length === 0);
+    photosArr.forEach((file, i) => {
+        const div = document.createElement('div');
+        div.className = 'relative aspect-square rounded-xl overflow-hidden bg-gray-100 group';
+        const url = URL.createObjectURL(file);
+        div.innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover">
+            ${i === 0 ? '<span class="absolute top-1.5 left-1.5 bg-teal-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">Principale</span>' : ''}
+            <div class="absolute inset-x-0 bottom-0 bg-black/50 flex items-center justify-center gap-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                ${i > 0 ? `<button type="button" onclick="deplacerPhoto(${i}, -1)" class="text-white text-xs px-1.5" title="Avancer">&larr;</button>` : ''}
+                <button type="button" onclick="supprimerPhoto(${i})" class="text-white text-xs px-1.5" title="Supprimer">&#10005;</button>
+                ${i < photosArr.length - 1 ? `<button type="button" onclick="deplacerPhoto(${i}, 1)" class="text-white text-xs px-1.5" title="Reculer">&rarr;</button>` : ''}
+            </div>`;
+        zone.appendChild(div);
+    });
+}
+
+function deplacerPhoto(i, dir) {
+    const j = i + dir;
+    [photosArr[i], photosArr[j]] = [photosArr[j], photosArr[i]];
+    rendrePhotos();
+}
+
+function supprimerPhoto(i) {
+    photosArr.splice(i, 1);
+    rendrePhotos();
+}
+
+function reconstruireInputPhotos() {
+    const dt = new DataTransfer();
+    photosArr.forEach(f => dt.items.add(f));
+    document.getElementById('photo-input').files = dt.files;
+}
+
+// ================== PRIX / ESTIMATION LIVE ==================
+let prixEstime = null;
+
+function typePourEstimation() {
+    const t = (champ('id_libelle_type') || '').toLowerCase();
+    if (t.includes('maison') || t.includes('villa')) return 'maison';
+    if (t.includes('appart') || t.includes('studio')) return 'appartement';
+    return null;
+}
+
+function preparerEtapePrix() {
+    const estLocation = champ('id_type_transaction') === 'L';
+    document.getElementById('prix-vente').classList.toggle('hidden', estLocation);
+    document.getElementById('prix-location').classList.toggle('hidden', !estLocation);
+
+    const bloc = document.getElementById('estimation-bloc');
+    const type = typePourEstimation();
+    if (estLocation || !type || !champ('id_surface') || !champ('id_ville')) {
+        bloc.classList.add('hidden');
+        return;
+    }
+    bloc.classList.remove('hidden');
+    document.getElementById('estimation-loading').classList.remove('hidden');
+    document.getElementById('estimation-resultat').classList.add('hidden');
+
+    fetch("{% url 'listings:api_estimer' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({
+            type_bien: type, ville: champ('id_ville'), code_postal: champ('id_code_postal'),
+            surface: champ('id_surface'), nb_pieces: champ('id_nb_pieces')
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('estimation-loading').classList.add('hidden');
+        if (data.error) { bloc.classList.add('hidden'); return; }
+        prixEstime = data.prix_estime;
+        document.getElementById('est-prix').textContent = data.prix_estime.toLocaleString('fr-FR') + ' €';
+        document.getElementById('est-fourchette').textContent =
+            'entre ' + data.prix_min.toLocaleString('fr-FR') + ' € et ' + data.prix_max.toLocaleString('fr-FR') + ' €';
+        document.getElementById('est-source').textContent = data.zone === 'dvf'
+            ? 'Base sur ' + data.nb_comparables + ' ventes reelles notariees (DVF) dans votre commune'
+            : 'Base sur les annonces comparables du secteur';
+        const ex = document.getElementById('est-exemples');
+        ex.innerHTML = (data.exemples || []).map(e =>
+            `<p class="text-xs text-white/70">• ${e.label} — <strong class="text-white">${e.prix.toLocaleString('fr-FR')} €</strong> ${e.source === 'vente' ? '(vendu en ' + e.annee + ')' : '(en vente)'}</p>`
+        ).join('');
+        document.getElementById('estimation-resultat').classList.remove('hidden');
+        surveillerPositionPrix();
+    })
+    .catch(() => bloc.classList.add('hidden'));
+}
+
+function utiliserPrixEstime() {
+    if (!prixEstime) return;
+    document.getElementById('id_prix').value = prixEstime;
+    showToast('Prix estime applique : ' + prixEstime.toLocaleString('fr-FR') + ' €', 'success');
+    surveillerPositionPrix();
+}
+
+function surveillerPositionPrix() {
+    const el = document.getElementById('prix-position');
+    const prix = parseFloat(champ('id_prix'));
+    if (!prixEstime || !prix) { el.classList.add('hidden'); return; }
+    const ecart = (prix - prixEstime) / prixEstime * 100;
+    el.classList.remove('hidden', 'bg-amber-50', 'text-amber-700', 'bg-emerald-50', 'text-emerald-700', 'bg-blue-50', 'text-blue-700');
+    if (ecart > 12) {
+        el.classList.add('bg-amber-50', 'text-amber-700');
+        el.textContent = 'Votre prix est ' + Math.round(ecart) + ' % au-dessus de l\'estimation — la vente peut prendre plus de temps.';
+    } else if (ecart < -12) {
+        el.classList.add('bg-blue-50', 'text-blue-700');
+        el.textContent = 'Votre prix est ' + Math.round(-ecart) + ' % en-dessous de l\'estimation — vous pouvez peut-etre viser plus haut.';
+    } else {
+        el.classList.add('bg-emerald-50', 'text-emerald-700');
+        el.textContent = 'Prix aligne avec le marche de votre secteur. 👍';
+    }
+}
+document.getElementById('id_prix').addEventListener('input', surveillerPositionPrix);
+
+// ================== SCORE DE QUALITE ==================
+function majScore() {
+    let score = 0;
+    const conseils = [];
+    const titre = champ('id_titre').trim();
+    const texte = champ('id_texte').trim();
+
+    if (titre.length >= 20) score += 15;
+    else conseils.push('Un titre descriptif d\'au moins 20 caracteres (+15 %)');
+    if (texte.length >= 200) score += 20;
+    else if (texte.length >= 50) { score += 10; conseils.push('Etoffez la description a 200 caracteres (+10 %)'); }
+    else conseils.push('Ajoutez une description — l\'assistant peut la rediger (+20 %)');
+    if (photosArr.length >= 3) score += 25;
+    else if (photosArr.length >= 1) { score += 10; conseils.push('Passez a 3 photos ou plus (+15 %)'); }
+    else conseils.push('Ajoutez des photos — indispensable (+25 %)');
+    if (champ('id_surface')) score += 10; else conseils.push('Indiquez la surface (+10 %)');
+    if (champ('id_nb_pieces')) score += 5; else conseils.push('Indiquez le nombre de pieces (+5 %)');
+    if (champ('id_nb_chambres')) score += 5;
+    if (champ('id_dpe_etiquette_conso')) score += 10; else conseils.push('Renseignez le DPE (+10 %)');
+    if (champ('id_prix') || champ('id_loyer_mensuel')) score += 10;
+
+    score = Math.min(100, score);
+    document.getElementById('score-valeur').textContent = score + ' %';
+    const jauge = document.getElementById('score-jauge');
+    jauge.style.width = score + '%';
+    jauge.className = 'h-full rounded-full transition-all duration-500 ' +
+        (score >= 75 ? 'bg-emerald-500' : score >= 45 ? 'bg-amber-400' : 'bg-red-400');
+    document.getElementById('score-conseils').innerHTML = conseils.slice(0, 3).map(c =>
+        `<li class="text-xs text-gray-500 flex items-start gap-1.5"><span class="text-amber-500 mt-0.5">→</span>${c}</li>`
+    ).join('');
+}
+['id_titre', 'id_texte'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { majScore(); majApercu(); });
+});
+
+// ================== APERCU ==================
+function majApercu() {
+    const estLocation = champ('id_type_transaction') === 'L';
+    const prix = estLocation ? champ('id_loyer_mensuel') : champ('id_prix');
+    document.getElementById('apercu-prix').textContent = prix
+        ? parseInt(prix).toLocaleString('fr-FR') + ' €' + (estLocation ? '/mois' : '') : '—';
+    document.getElementById('apercu-titre').textContent = champ('id_titre').trim() || 'Votre titre apparaitra ici';
+    const specs = [];
+    if (champ('id_nb_pieces')) specs.push(champ('id_nb_pieces') + ' p.');
+    if (champ('id_nb_chambres')) specs.push(champ('id_nb_chambres') + ' ch.');
+    if (champ('id_surface')) specs.push(parseInt(champ('id_surface')) + ' m²');
+    document.getElementById('apercu-specs').innerHTML = specs.map(s => `<span class="bg-gray-100 px-2 py-0.5 rounded">${s}</span>`).join('');
+    document.getElementById('apercu-ville').textContent = champ('id_ville') + (champ('id_code_postal') ? ' (' + champ('id_code_postal') + ')' : '');
+    const img = document.getElementById('apercu-photo');
+    const vide = document.getElementById('apercu-photo-vide');
+    if (photosArr.length) {
+        img.src = URL.createObjectURL(photosArr[0]);
+        img.classList.remove('hidden');
+        vide.classList.add('hidden');
+    } else {
+        img.classList.add('hidden');
+        vide.classList.remove('hidden');
+    }
+}
+
+// ================== ASSISTANT REDACTION ==================
 function suggererAnnonce() {
     const btn = document.getElementById('btn-suggerer');
     const zone = document.getElementById('suggestions-zone');
@@ -295,7 +545,6 @@ function suggererAnnonce() {
         btn.disabled = false;
         btn.textContent = 'Suggerer titre + description';
         if (data.error) { showToast(data.error, 'error'); return; }
-
         let html = '<p class="text-xs font-semibold text-teal-700 uppercase tracking-wide">Titres suggeres (cliquez pour utiliser)</p>';
         data.titres.forEach(t => {
             html += `<button type="button" class="block w-full text-left text-sm bg-white hover:bg-teal-100 border border-teal-100 rounded-lg px-3 py-2 transition-colors" onclick="utiliserTitre(this)">${t}</button>`;
@@ -314,14 +563,19 @@ function suggererAnnonce() {
 }
 
 function utiliserTitre(btn) {
-    const input = document.getElementById('id_titre');
-    if (input) { input.value = btn.textContent.trim(); showToast('Titre applique'); }
+    document.getElementById('id_titre').value = btn.textContent.trim();
+    showToast('Titre applique');
+    majScore(); majApercu();
 }
 
 function utiliserDescription() {
     const texte = document.getElementById('suggestion-texte');
-    const input = document.getElementById('id_texte');
-    if (texte && input) { input.value = texte.textContent.trim(); showToast('Description appliquee'); }
+    document.getElementById('id_texte').value = texte.textContent.trim();
+    showToast('Description appliquee');
+    majScore(); majApercu();
 }
+
+// Init
+afficherEtape(1);
 </script>
 {% endblock %}

@@ -78,12 +78,20 @@
             </svg>
         </div>
         {% endfor %}
-        {% if annonce.photos.count > 3 %}
-        <button onclick="openCarousel(0)" class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-apple-text text-sm font-medium px-4 py-2.5 rounded-xl shadow-apple hover:bg-white transition-all flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            Voir les {{ annonce.photos.count }} photos
-        </button>
-        {% endif %}
+        <div class="absolute bottom-4 right-4 flex items-center gap-2">
+            {% if annonce.photos.count >= 2 %}
+            <button onclick="openVisite()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-500/30 hover:from-indigo-500 hover:to-purple-500 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Pre-visiter
+            </button>
+            {% endif %}
+            {% if annonce.photos.count > 3 %}
+            <button onclick="openCarousel(0)" class="bg-white/90 backdrop-blur-sm text-apple-text text-sm font-medium px-4 py-2.5 rounded-xl shadow-apple hover:bg-white transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                Voir les {{ annonce.photos.count }} photos
+            </button>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Content Grid -->
@@ -841,5 +849,167 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowLeft') carouselNav(-1);
     if (e.key === 'ArrowRight') carouselNav(1);
 });
+</script>
+
+<!-- ==================== PRE-VISITE IMMERSIVE ==================== -->
+<div id="visite-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:#000;">
+    <style>
+    @keyframes kenburns-a { from { transform: scale(1.02) translate(0,0); } to { transform: scale(1.14) translate(-1.5%, -1%); } }
+    @keyframes kenburns-b { from { transform: scale(1.14) translate(1.5%, 1%); } to { transform: scale(1.02) translate(0,0); } }
+    .visite-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.9s ease; will-change:transform, opacity; }
+    .visite-img.active { opacity:1; }
+    .visite-img.kb-a { animation: kenburns-a 6.5s ease-out forwards; }
+    .visite-img.kb-b { animation: kenburns-b 6.5s ease-out forwards; }
+    @media (prefers-reduced-motion: reduce) { .visite-img.kb-a, .visite-img.kb-b { animation: none; } }
+    </style>
+
+    <div id="visite-stage" style="position:absolute; inset:0; overflow:hidden;"></div>
+
+    <!-- Degrade haut/bas pour lisibilite -->
+    <div style="position:absolute; top:0; left:0; right:0; height:120px; background:linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); pointer-events:none;"></div>
+    <div style="position:absolute; bottom:0; left:0; right:0; height:140px; background:linear-gradient(to top, rgba(0,0,0,0.65), transparent); pointer-events:none;"></div>
+
+    <!-- Barres de progression (style story) -->
+    <div id="visite-bars" style="position:absolute; top:14px; left:16px; right:16px; display:flex; gap:5px; z-index:12;"></div>
+
+    <!-- Fermer -->
+    <button onclick="closeVisite()" style="position:absolute; top:34px; right:20px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.12); border:none; cursor:pointer; padding:10px; border-radius:50%; z-index:12; backdrop-filter:blur(4px);">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+
+    <!-- Infos bien -->
+    <div style="position:absolute; top:34px; left:20px; z-index:12; color:white;">
+        <p style="font-size:15px; font-weight:700; text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ annonce.prix_format }}</p>
+        <p style="font-size:12px; color:rgba(255,255,255,0.75);">{{ annonce.titre|truncatechars:60 }} — {{ annonce.ville }}</p>
+    </div>
+
+    <!-- Lecture / pause + compteur -->
+    <div style="position:absolute; bottom:28px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:18px; z-index:12;">
+        <button onclick="visiteNav(-1)" style="color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.12); border:none; cursor:pointer; padding:12px; border-radius:50%; backdrop-filter:blur(4px);">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button id="visite-play" onclick="visiteTogglePlay()" style="color:white; background:rgba(255,255,255,0.18); border:none; cursor:pointer; padding:16px; border-radius:50%; backdrop-filter:blur(4px);">
+            <svg id="visite-icon-pause" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+            <svg id="visite-icon-play" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button onclick="visiteNav(1)" style="color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.12); border:none; cursor:pointer; padding:12px; border-radius:50%; backdrop-filter:blur(4px);">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+// ========== Pre-visite immersive (Ken Burns + barres story) ==========
+var visiteIdx = 0;
+var visiteTimer = null;
+var visitePlaying = true;
+var VISITE_DUREE = 5000;
+
+function visiteBuild() {
+    var stage = document.getElementById('visite-stage');
+    var bars = document.getElementById('visite-bars');
+    stage.innerHTML = '';
+    bars.innerHTML = '';
+    carouselPhotos.forEach(function(src, i) {
+        var img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Piece ' + (i + 1);
+        img.className = 'visite-img';
+        img.id = 'visite-img-' + i;
+        stage.appendChild(img);
+
+        var bar = document.createElement('div');
+        bar.style.cssText = 'flex:1; height:3px; background:rgba(255,255,255,0.25); border-radius:99px; overflow:hidden;';
+        bar.innerHTML = '<div id="visite-bar-' + i + '" style="height:100%; width:0%; background:white; border-radius:99px; transition:width 0.2s linear;"></div>';
+        bars.appendChild(bar);
+    });
+}
+
+function visiteShow(idx) {
+    visiteIdx = (idx + carouselPhotos.length) % carouselPhotos.length;
+    carouselPhotos.forEach(function(_, i) {
+        var img = document.getElementById('visite-img-' + i);
+        img.classList.remove('active', 'kb-a', 'kb-b');
+        var bar = document.getElementById('visite-bar-' + i);
+        bar.style.transition = 'none';
+        bar.style.width = i < visiteIdx ? '100%' : '0%';
+    });
+    var current = document.getElementById('visite-img-' + visiteIdx);
+    current.classList.add('active', visiteIdx % 2 === 0 ? 'kb-a' : 'kb-b');
+
+    // Precharge la suivante
+    var next = document.getElementById('visite-img-' + ((visiteIdx + 1) % carouselPhotos.length));
+    if (next && !next.complete) { /* le navigateur la chargera, src deja pose */ }
+
+    if (visitePlaying) visiteStartBar();
+}
+
+function visiteStartBar() {
+    clearTimeout(visiteTimer);
+    var bar = document.getElementById('visite-bar-' + visiteIdx);
+    requestAnimationFrame(function() {
+        bar.style.transition = 'width ' + VISITE_DUREE + 'ms linear';
+        bar.style.width = '100%';
+    });
+    visiteTimer = setTimeout(function() { visiteNav(1); }, VISITE_DUREE);
+}
+
+function visiteNav(dir) {
+    clearTimeout(visiteTimer);
+    visiteShow(visiteIdx + dir);
+}
+
+function visiteTogglePlay() {
+    visitePlaying = !visitePlaying;
+    document.getElementById('visite-icon-pause').style.display = visitePlaying ? '' : 'none';
+    document.getElementById('visite-icon-play').style.display = visitePlaying ? 'none' : '';
+    if (visitePlaying) {
+        visiteStartBar();
+    } else {
+        clearTimeout(visiteTimer);
+        var bar = document.getElementById('visite-bar-' + visiteIdx);
+        var w = bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width * 100;
+        bar.style.transition = 'none';
+        bar.style.width = w + '%';
+    }
+}
+
+function openVisite() {
+    if (!carouselPhotos.length) return;
+    var overlay = document.getElementById('visite-overlay');
+    if (!document.getElementById('visite-img-0')) visiteBuild();
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    visitePlaying = true;
+    document.getElementById('visite-icon-pause').style.display = '';
+    document.getElementById('visite-icon-play').style.display = 'none';
+    visiteShow(0);
+}
+
+function closeVisite() {
+    clearTimeout(visiteTimer);
+    document.getElementById('visite-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Clavier + swipe
+document.addEventListener('keydown', function(e) {
+    if (document.getElementById('visite-overlay').style.display === 'none') return;
+    if (e.key === 'Escape') closeVisite();
+    if (e.key === 'ArrowLeft') visiteNav(-1);
+    if (e.key === 'ArrowRight') visiteNav(1);
+    if (e.key === ' ') { e.preventDefault(); visiteTogglePlay(); }
+});
+(function() {
+    var overlay = document.getElementById('visite-overlay');
+    var startX = null;
+    overlay.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, { passive: true });
+    overlay.addEventListener('touchend', function(e) {
+        if (startX === null) return;
+        var dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 50) visiteNav(dx < 0 ? 1 : -1);
+        startX = null;
+    }, { passive: true });
+})();
 </script>
 {% endblock %}

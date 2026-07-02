@@ -7,12 +7,27 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
-    {% if not dept and not q %}
+    {% if not dept and not q and not metier %}
     <!-- ========== VUE CARTE ========== -->
     <div class="text-center mb-8">
         <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-3">Annuaire</h1>
         <p class="text-lg text-apple-gray max-w-xl mx-auto">Cliquez sur un departement pour trouver les agences immobilieres et professionnels pres de chez vous.</p>
     </div>
+
+    <!-- Recherche directe par metier -->
+    {% if metier_choices %}
+    <div class="max-w-3xl mx-auto mb-10">
+        <p class="text-center text-sm font-semibold text-apple-gray uppercase tracking-wide mb-3">Ou cherchez directement un corps de metier</p>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+            {% for code, label in metier_choices %}
+            <a href="?metier={{ code }}"
+               class="text-sm font-medium px-4 py-2 rounded-full bg-white text-apple-gray shadow-apple hover:bg-purple-50 hover:text-purple-700 hover:-translate-y-0.5 transition-all">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Carte de France SVG -->
     <div class="max-w-2xl mx-auto mb-12 relative">
@@ -50,6 +65,30 @@
         </div>
     </div>
 
+    <!-- Pros a la une -->
+    {% if pros_vedette %}
+    <div class="max-w-5xl mx-auto mb-12">
+        <h2 class="text-lg font-semibold text-center mb-6">Ils font confiance a Social Immo</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 reveal-stagger">
+            {% for pro in pros_vedette %}
+            <a href="{% url 'listings:pro_profil' pro.id %}" class="group flex items-center gap-3 bg-white rounded-2xl p-4 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+                {% if pro.photo_url %}
+                <img src="{{ pro.photo_url }}" alt="{{ pro.nom_entreprise }}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy">
+                {% else %}
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-bold text-purple-600">{{ pro.nom_entreprise|truncatechars:2|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold truncate group-hover:text-purple-700 transition-colors">{{ pro.nom_entreprise }}</p>
+                    <p class="text-xs text-apple-gray truncate">{{ pro.get_metier_display }}{% if pro.ville %} · {{ pro.ville }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- CTA inscription -->
     <div class="max-w-md mx-auto text-center">
         <a href="{% url 'listings:pro_inscription' %}"
@@ -69,10 +108,13 @@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-semibold tracking-tight">
-                {% if dept_name %}{{ dept_name }} <span class="text-apple-gray">({{ dept }})</span>{% else %}Resultats{% endif %}
+                {% if metier_label %}{{ metier_label }}{% if dept_name %} - {{ dept_name }} ({{ dept }}){% endif %}
+                {% elif dept_name %}{{ dept_name }} <span class="text-apple-gray">({{ dept }})</span>
+                {% else %}Resultats{% endif %}
             </h1>
             <p class="text-apple-gray mt-1">
-                {% if type_filter == 'immo' %}Agences et reseaux immobiliers{% elif type_filter == 'pro' %}Professionnels et artisans{% else %}Tous les professionnels{% endif %}
+                {% if metier_label %}Tous les {{ metier_label|lower }}s de l'annuaire
+                {% elif type_filter == 'immo' %}Agences et reseaux immobiliers{% elif type_filter == 'pro' %}Professionnels et artisans{% else %}Tous les professionnels{% endif %}
                 {% if q %} - Recherche : "{{ q }}"{% endif %}
             </p>
         </div>
@@ -91,10 +133,19 @@
     <form method="get" class="mb-8">
         <input type="hidden" name="dept" value="{{ dept }}">
         <input type="hidden" name="type" value="{{ type_filter }}">
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-3">
             <input type="text" name="q" value="{{ q }}"
                    placeholder="Affiner par ville ou code postal..."
                    class="flex-1 px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent transition-all shadow-apple">
+            {% if metier_choices %}
+            <select name="metier" onchange="this.form.submit()"
+                    class="px-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm {% if metier %}text-purple-700 font-semibold{% else %}text-apple-gray{% endif %} focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-apple cursor-pointer">
+                <option value="">Tous les metiers</option>
+                {% for code, label in metier_choices %}
+                <option value="{{ code }}" {% if metier == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
             <button type="submit" class="bg-apple-blue text-white font-medium px-6 py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">Rechercher</button>
         </div>
     </form>

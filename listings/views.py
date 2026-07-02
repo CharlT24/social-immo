@@ -673,13 +673,15 @@ def partenaire_list(request):
     dept = request.GET.get('dept', '').strip()
     type_filter = request.GET.get('type', '').strip()
     q = request.GET.get('q', '').strip()
+    metier = request.GET.get('metier', '').strip()
 
     agences = []
     pros = []
+    pros_vedette = []
 
-    if dept or q:
-        # Agences immobilieres
-        if type_filter != 'pro':
+    if dept or q or metier:
+        # Agences immobilieres (pas de filtre metier : le metier implique les pros)
+        if type_filter != 'pro' and not metier:
             agences_qs = Agence.objects.filter(is_active=True).prefetch_related('conseillers')
             if dept:
                 agences_qs = agences_qs.filter(departement=dept)
@@ -707,17 +709,35 @@ def partenaire_list(request):
                 pros_qs = pros_qs.filter(
                     Q(nom_entreprise__icontains=q) | Q(ville__icontains=q) | Q(code_postal__startswith=q)
                 )
-            pros = list(pros_qs)
+            if metier:
+                pros_qs = pros_qs.filter(metier=metier)
+            pros = list(pros_qs.order_by('-mise_en_avant', 'nom_entreprise'))
+    else:
+        # Page carte : montrer quand meme des pros pour donner envie
+        pros_vedette = list(
+            ProProfile.objects.filter(is_active=True)
+            .order_by('-mise_en_avant', '?')[:6]
+        )
 
     dept_name = DEPARTEMENTS.get(dept, '')
+
+    # Metiers reellement presents dans l'annuaire (pour les filtres)
+    metiers_presents = set(
+        ProProfile.objects.filter(is_active=True).values_list('metier', flat=True)
+    )
+    metier_choices = [(c, l) for c, l in ProProfile.METIER_CHOICES if c in metiers_presents]
 
     context = {
         'dept': dept,
         'dept_name': dept_name,
         'type_filter': type_filter,
         'q': q,
+        'metier': metier,
+        'metier_label': dict(ProProfile.METIER_CHOICES).get(metier, ''),
+        'metier_choices': metier_choices,
         'agences': agences,
         'pros': pros,
+        'pros_vedette': pros_vedette,
     }
     return render(request, 'listings/partenaire_list.html', context)
 

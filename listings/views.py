@@ -2216,6 +2216,143 @@ def agence_profil(request, agence_id):
     return render(request, 'listings/agence_profil.html', context)
 
 
+@login_required
+@require_POST
+def sauvegarder_recherche(request):
+    """Cree une alerte email a partir des criteres de recherche courants."""
+    from .models import RechercheSauvegardee
+
+    def _int(name):
+        try:
+            v = int(request.POST.get(name) or 0)
+            return v if v > 0 else None
+        except ValueError:
+            return None
+
+    ville = (request.POST.get('ville') or '').strip()[:100]
+    type_transaction = request.POST.get('type', '')
+    if type_transaction not in ('V', 'L'):
+        type_transaction = ''
+
+    # Pas de doublon strict
+    alerte, created = RechercheSauvegardee.objects.get_or_create(
+        user=request.user,
+        ville=ville,
+        type_transaction=type_transaction,
+        prix_min=_int('prix_min'),
+        prix_max=_int('prix_max'),
+        surface_min=_int('surface_min'),
+        pieces_min=_int('pieces_min'),
+        defaults={'is_active': True},
+    )
+    if not created and not alerte.is_active:
+        alerte.is_active = True
+        alerte.save(update_fields=['is_active'])
+        created = True
+
+    if created:
+        messages.success(request, 'Alerte creee ! Vous recevrez les nouveaux biens par email.')
+    else:
+        messages.info(request, 'Vous avez deja une alerte identique.')
+    return redirect(request.POST.get('next') or alerte.url_recherche())
+
+
+@login_required
+@require_POST
+def supprimer_recherche(request, recherche_id):
+    """Desactive une alerte."""
+    from .models import RechercheSauvegardee
+    alerte = get_object_or_404(RechercheSauvegardee, id=recherche_id, user=request.user)
+    alerte.is_active = False
+    alerte.save(update_fields=['is_active'])
+    messages.success(request, 'Alerte supprimee.')
+    return redirect('/mon-compte/?tab=acquereur')
+
+
+def ville_page(request, ville_slug):
+    """Page SEO par ville : biens, prix au m2, pros du secteur."""
+    from django.utils.text import slugify
+    from .services.estimation import _comparables_qs, _prix_m2_liste
+    from statistics import median
+
+    # Retrouve la ville reelle depuis le slug
+    villes = Annonce.objects.filter(is_active=True).exclude(ville='') \
+        .values_list('ville', 'code_postal').distinct()
+    ville_nom, code_postal = None, ''
+    for v, cp in villes:
+        if slugify(v) == ville_slug:
+            ville_nom, code_postal = v, cp or ''
+            break
+    if not ville_nom:
+        from django.http import Http404
+        raise Http404("Ville inconnue")
+
+    annonces = Annonce.objects.filter(is_active=True, ville__iexact=ville_nom) \
+        .prefetch_related(Prefetch('photos', queryset=Photo.objects.order_by('ordre')))
+    ventes = annonces.filter(type_transaction='V')
+    locations = annonces.filter(type_transaction='L')
+
+    # Prix au m2 : mediane des biens en vente de la ville
+    valeurs = _prix_m2_liste(_comparables_qs('autre', ville=ville_nom))
+    prix_m2_median = int(median(valeurs)) if valeurs else None
+
+    # Pros du departement
+    dept = code_postal[:2] if code_postal else ''
+    pros_secteur = ProProfile.objects.filter(is_active=True)
+    if dept:
+        pros_secteur = pros_secteur.filter(departement=dept)
+    pros_secteur = list(pros_secteur.order_by('-mise_en_avant')[:6])
+
+    user_favorites = []
+    if request.user.is_authenticated:
+        user_favorites = list(Favori.objects.filter(user=request.user).values_list('annonce_id', flat=True))
+
+    context = {
+        'ville': ville_nom,
+        'ville_slug': ville_slug,
+        'code_postal': code_postal,
+        'annonces_vente': ventes.order_by('-created_at')[:9],
+        'annonces_location': locations.order_by('-created_at')[:6],
+        'nb_ventes': ventes.count(),
+        'nb_locations': locations.count(),
+        'prix_m2_median': prix_m2_median,
+        'nb_comparables': len(valeurs),
+        'pros_secteur': pros_secteur,
+        'user_favorites': user_favorites,
+    }
+    return render(request, 'listings/ville_page.html', context)
+
+
+def inspiration_partage(request, photo_type, photo_id):
+    """URL de partage d'une photo d'inspiration : page dediee avec OG tags,
+    puis la modal s'ouvre sur le feed."""
+    if photo_type == 'pro':
+        photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
+        realisation = photo.realisation
+        titre = realisation.titre if realisation else 'Realisation'
+        auteur = realisation.pro.nom_entreprise if realisation else ''
+        lien = f'/pro/{realisation.pro.id}/' if realisation else '/pros/'
+        categorie = realisation.get_categorie_display() if realisation and realisation.categorie else ''
+    else:
+        photo_type = 'annonce'
+        photo = get_object_or_404(Photo, id=photo_id, is_inspiration=True)
+        titre = photo.get_inspiration_categorie_display() if photo.inspiration_categorie else 'Inspiration deco'
+        auteur = photo.annonce.contact_nom
+        lien = f'/annonce/{photo.annonce.reference}/'
+        categorie = titre
+
+    context = {
+        'photo': photo,
+        'photo_type': photo_type,
+        'photo_url': photo.src,
+        'titre': titre,
+        'auteur': auteur,
+        'lien': lien,
+        'categorie': categorie,
+    }
+    return render(request, 'listings/inspiration_partage.html', context)
+
+
 @require_POST
 def api_estimer(request):
     """Estimation instantanee (moteur maison par comparables). JSON."""
@@ -2842,6 +2979,10 @@ def particulier_dashboard(request):
         ).select_related('annonce').prefetch_related(
             Prefetch('annonce__photos', queryset=Photo.objects.order_by('ordre'))
         ).order_by('-created_at')
+        from .models import RechercheSauvegardee
+        context['mes_alertes'] = RechercheSauvegardee.objects.filter(
+            user=request.user, is_active=True
+        )
 
     # --- Onglet Inspirations ---
     elif current_tab == 'inspirations':

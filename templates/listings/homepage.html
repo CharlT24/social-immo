@@ -315,7 +315,7 @@
         <h2 class="text-lg font-bold tracking-tight mb-6">Recherches populaires</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {% for v in villes_populaires %}
-            <a href="{% url 'listings:search_results' %}?ville={{ v.ville }}"
+            <a href="{% url 'listings:ville_page' v.ville|slugify %}"
                class="text-sm text-apple-gray hover:text-apple-blue hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors">
                 Immobilier {{ v.ville }}
                 <span class="text-xs text-gray-400">({{ v.count }})</span>

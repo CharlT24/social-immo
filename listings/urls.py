@@ -67,6 +67,13 @@ urlpatterns = [
     path('estimer/', views.estimation, name='estimation'),
     path('api/estimer/', views.api_estimer, name='api_estimer'),
     path('api/suggerer-annonce/', views.api_suggerer_annonce, name='api_suggerer_annonce'),
+    # Alertes de recherche
+    path('alertes/creer/', views.sauvegarder_recherche, name='sauvegarder_recherche'),
+    path('alertes/<int:recherche_id>/supprimer/', views.supprimer_recherche, name='supprimer_recherche'),
+    # SEO villes
+    path('immobilier/<slug:ville_slug>/', views.ville_page, name='ville_page'),
+    # Partage inspiration
+    path('inspirations/photo/<str:photo_type>/<int:photo_id>/', views.inspiration_partage, name='inspiration_partage'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),
     # Page agence immo (landing)
     path('agence-immobiliere/', views.agence_immo, name='agence_immo'),

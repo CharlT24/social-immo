@@ -847,3 +847,98 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profil de {self.user.username}"
+
+class RechercheSauvegardee(models.Model):
+    """Alerte email : le user sauvegarde une recherche et recoit les
+    nouveaux biens correspondants (CRON envoyer_alertes)."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recherches')
+    # Criteres (memes params que search_results)
+    ville = models.CharField(max_length=100, blank=True, default='')
+    type_transaction = models.CharField(max_length=2, blank=True, default='')
+    prix_min = models.PositiveIntegerField(null=True, blank=True)
+    prix_max = models.PositiveIntegerField(null=True, blank=True)
+    surface_min = models.PositiveIntegerField(null=True, blank=True)
+    pieces_min = models.PositiveIntegerField(null=True, blank=True)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    derniere_alerte = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Recherche sauvegardee'
+        verbose_name_plural = 'Recherches sauvegardees'
+
+    def __str__(self):
+        return f"Alerte {self.user.username} - {self.resume()}"
+
+    def resume(self):
+        parts = []
+        if self.ville:
+            parts.append(self.ville)
+        if self.type_transaction == 'V':
+            parts.append('achat')
+        elif self.type_transaction == 'L':
+            parts.append('location')
+        if self.prix_max:
+            parts.append(f"max {self.prix_max:,} EUR".replace(',', ' '))
+        if self.surface_min:
+            parts.append(f"des {self.surface_min} m2")
+        if self.pieces_min:
+            parts.append(f"{self.pieces_min}+ pieces")
+        return ', '.join(parts) or 'tous les biens'
+
+    def annonces_correspondantes(self, depuis=None):
+        qs = Annonce.objects.filter(is_active=True)
+        if self.ville:
+            qs = qs.filter(ville__icontains=self.ville)
+        if self.type_transaction:
+            qs = qs.filter(type_transaction=self.type_transaction)
+        if self.prix_min:
+            qs = qs.filter(prix__gte=self.prix_min)
+        if self.prix_max:
+            qs = qs.filter(prix__lte=self.prix_max)
+        if self.surface_min:
+            qs = qs.filter(surface__gte=self.surface_min)
+        if self.pieces_min:
+            qs = qs.filter(nb_pieces__gte=self.pieces_min)
+        if depuis:
+            qs = qs.filter(created_at__gte=depuis)
+        return qs.order_by('-created_at')
+
+    def url_recherche(self):
+        from urllib.parse import urlencode
+        params = {}
+        if self.ville:
+            params['ville'] = self.ville
+        if self.type_transaction:
+            params['type'] = self.type_transaction
+        if self.prix_min:
+            params['prix_min'] = self.prix_min
+        if self.prix_max:
+            params['prix_max'] = self.prix_max
+        if self.surface_min:
+            params['surface_min'] = self.surface_min
+        if self.pieces_min:
+            params['pieces_min'] = self.pieces_min
+        return '/recherche/' + ('?' + urlencode(params) if params else '')
+
+
+class VilleGeo(models.Model):
+    """Coordonnees geographiques d'une ville (geocodees via
+    api-adresse.data.gouv.fr, commande geocoder_villes)."""
+
+    ville = models.CharField(max_length=100)
+    code_postal = models.CharField(max_length=10, blank=True, default='')
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('ville', 'code_postal')
+        verbose_name = 'Ville geocodee'
+        verbose_name_plural = 'Villes geocodees'
+
+    def __str__(self):
+        return f"{self.ville} ({self.code_postal})"

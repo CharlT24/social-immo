@@ -21,13 +21,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
-from listings.sitemaps import StaticSitemap, AnnonceSitemap, AgenceSitemap, ProSitemap
+from listings.sitemaps import StaticSitemap, AnnonceSitemap, AgenceSitemap, ProSitemap, VilleSitemap
 
 sitemaps = {
     'static': StaticSitemap,
     'annonces': AnnonceSitemap,
     'agences': AgenceSitemap,
     'pros': ProSitemap,
+    'villes': VilleSitemap,
 }
 
 urlpatterns = [

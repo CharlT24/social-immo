@@ -182,7 +182,12 @@
                         <p id="modalCategorie" class="text-xs text-apple-gray"></p>
                     </div>
                 </div>
-                <a id="modalLink" href="#" class="text-xs font-medium text-apple-blue hover:underline flex-shrink-0">Voir</a>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <button onclick="partagerPhoto()" title="Partager" class="text-apple-gray hover:text-apple-text transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    </button>
+                    <a id="modalLink" href="#" class="text-xs font-medium text-apple-blue hover:underline">Voir</a>
+                </div>
             </div>
 
             <!-- Action bar (heart + stars) -->
@@ -409,6 +414,19 @@ function closePhotoModal() {
 
 // Close on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+// Partage de la photo courante (URL dediee avec OG tags)
+function partagerPhoto() {
+    if (!currentPhotoId) return;
+    const url = window.location.origin + '/inspirations/photo/' + currentPhotoType + '/' + currentPhotoId + '/';
+    if (navigator.share) {
+        navigator.share({ title: 'Inspiration Social Immo', url: url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url)
+            .then(() => showToast('Lien copie !'))
+            .catch(() => showToast('Impossible de copier le lien', 'error'));
+    }
+}
 
 let userIsStaff = false;
 function loadComments(photoId, type) {

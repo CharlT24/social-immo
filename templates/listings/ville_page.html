@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Immobilier {{ ville }} : {{ nb_ventes }} bien{{ nb_ventes|pluralize }} a vendre{% if prix_m2_median %}, prix au m2{% endif %} | Social Immo{% endblock %}
+{% block meta_description %}Immobilier a {{ ville }}{% if code_postal %} ({{ code_postal }}){% endif %} : {{ nb_ventes }} bien{{ nb_ventes|pluralize }} en vente, {{ nb_locations }} en location{% if prix_m2_median %}, prix median {{ prix_m2_median }} EUR/m2{% endif %}. Annonces, estimation et artisans du secteur.{% endblock %}
+{% block og_title %}Immobilier {{ ville }} - annonces et prix au m2{% endblock %}
+{% block canonical %}https://social-immo.com/immobilier/{{ ville_slug }}/{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Fil d'ariane -->
+    <nav class="text-sm text-apple-gray mb-6">
+        <a href="{% url 'listings:homepage' %}" class="hover:text-apple-text transition-colors">Accueil</a>
+        <span class="mx-2">/</span>
+        <span class="text-apple-text font-medium">Immobilier {{ ville }}</span>
+    </nav>
+
+    <!-- Hero ville -->
+    <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 md:p-12 mb-10 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+        <div class="relative">
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight mb-3">
+                Immobilier a {{ ville }}{% if code_postal %} <span class="text-white/50 font-normal">({{ code_postal }})</span>{% endif %}
+            </h1>
+            <p class="text-white/70 mb-6 max-w-2xl">
+                Retrouvez les biens a vendre et a louer a {{ ville }}, le prix du marche local et les artisans du secteur pour vos projets.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <div class="bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3">
+                    <p class="text-2xl font-bold text-white">{{ nb_ventes }}</p>
+                    <p class="text-xs text-white/60">bien{{ nb_ventes|pluralize }} en vente</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3">
+                    <p class="text-2xl font-bold text-white">{{ nb_locations }}</p>
+                    <p class="text-xs text-white/60">en location</p>
+                </div>
+                {% if prix_m2_median %}
+                <div class="bg-emerald-500/20 backdrop-blur-sm rounded-2xl px-5 py-3 ring-1 ring-emerald-400/30">
+                    <p class="text-2xl font-bold text-emerald-300">{{ prix_m2_median }} €/m²</p>
+                    <p class="text-xs text-white/60">prix median ({{ nb_comparables }} biens compares)</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex flex-wrap gap-3 mt-6">
+                <a href="{% url 'listings:search_results' %}?ville={{ ville|urlencode }}"
+                   class="bg-white text-slate-900 text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-blue-50 transition-colors">
+                    Voir toutes les annonces
+                </a>
+                <a href="{% url 'listings:estimation' %}"
+                   class="bg-orange-500 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-orange-600 transition-colors">
+                    Estimer mon bien a {{ ville }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biens en vente -->
+    {% if annonces_vente %}
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold tracking-tight">A vendre a {{ ville }}</h2>
+            <a href="{% url 'listings:search_results' %}?ville={{ ville|urlencode }}&type=V" class="text-sm font-semibold text-apple-blue hover:underline">Voir tout ({{ nb_ventes }})</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
+            {% for annonce in annonces_vente %}
+            {% include 'listings/includes/carte_annonce.html' %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Locations -->
+    {% if annonces_location %}
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold tracking-tight">A louer a {{ ville }}</h2>
+            <a href="{% url 'listings:search_results' %}?ville={{ ville|urlencode }}&type=L" class="text-sm font-semibold text-apple-blue hover:underline">Voir tout ({{ nb_locations }})</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
+            {% for annonce in annonces_location %}
+            {% include 'listings/includes/carte_annonce.html' %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Pros du secteur -->
+    {% if pros_secteur %}
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">Artisans et pros pres de {{ ville }}</h2>
+                <p class="text-sm text-apple-gray mt-1">Pour vos travaux, votre deco ou la preparation de votre vente</p>
+            </div>
+            <a href="{% url 'listings:partenaire_list' %}" class="text-sm font-semibold text-purple-600 hover:underline">Tout l'annuaire</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 reveal-stagger">
+            {% for pro in pros_secteur %}
+            <a href="{% url 'listings:pro_profil' pro.id %}" class="group flex items-center gap-3 bg-white rounded-2xl p-4 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+                {% if pro.photo_url %}
+                <img src="{{ pro.photo_url }}" alt="{{ pro.nom_entreprise }}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy">
+                {% else %}
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-bold text-purple-600">{{ pro.nom_entreprise|truncatechars:2|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold truncate group-hover:text-purple-700 transition-colors">{{ pro.nom_entreprise }}</p>
+                    <p class="text-xs text-apple-gray truncate">{{ pro.get_metier_display }}{% if pro.ville %} · {{ pro.ville }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Texte SEO -->
+    <section class="bg-white rounded-3xl shadow-apple p-8 text-sm text-apple-gray leading-relaxed">
+        <h2 class="text-lg font-bold text-apple-text mb-3">Le marche immobilier a {{ ville }}</h2>
+        <p class="mb-3">
+            {{ ville }} compte actuellement {{ nb_ventes }} bien{{ nb_ventes|pluralize }} a la vente et
+            {{ nb_locations }} bien{{ nb_locations|pluralize }} a la location sur Social Immo.
+            {% if prix_m2_median %}Le prix median constate sur les annonces du secteur est de
+            <strong class="text-apple-text">{{ prix_m2_median }} €/m²</strong>, calcule a partir de {{ nb_comparables }} biens comparables.{% endif %}
+        </p>
+        <p>
+            Vous vendez a {{ ville }} ? <a href="{% url 'listings:estimation' %}" class="text-apple-blue hover:underline">Estimez votre bien gratuitement en 30 secondes</a>,
+            ou <a href="{% url 'listings:signup' %}" class="text-apple-blue hover:underline">deposez votre annonce</a> en quelques minutes.
+            Besoin de travaux avant la vente ? Consultez les <a href="{% url 'listings:partenaire_list' %}" class="text-purple-600 hover:underline">artisans du secteur</a>.
+        </p>
+    </section>
+
+</div>
+{% endblock %}

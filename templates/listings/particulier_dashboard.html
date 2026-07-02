@@ -138,6 +138,39 @@
         <!-- ============ ONGLET ACQUEREUR ============ -->
         {% elif current_tab == 'acquereur' %}
         <div>
+            <!-- Mes alertes -->
+            <div class="mb-10">
+                <h2 class="text-xl font-bold mb-4">Mes alertes de recherche</h2>
+                {% if mes_alertes %}
+                <div class="space-y-3">
+                    {% for alerte in mes_alertes %}
+                    <div class="flex items-center justify-between gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 truncate">{{ alerte.resume|capfirst }}</p>
+                                <p class="text-xs text-gray-400">Creee le {{ alerte.created_at|date:"d/m/Y" }}{% if alerte.derniere_alerte %} · dernier envoi {{ alerte.derniere_alerte|date:"d/m/Y" }}{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <a href="{{ alerte.url_recherche }}" class="text-xs font-semibold text-apple-blue hover:underline">Voir</a>
+                            <form method="post" action="{% url 'listings:supprimer_recherche' alerte.id %}" onsubmit="return confirm('Supprimer cette alerte ?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors">Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-blue-50/60 rounded-2xl px-5 py-4 text-sm text-gray-500">
+                    Aucune alerte. Lancez une <a href="{% url 'listings:search_results' %}" class="text-apple-blue font-semibold hover:underline">recherche</a> puis cliquez sur "Creer une alerte" pour recevoir les nouveaux biens par email.
+                </div>
+                {% endif %}
+            </div>
+
             <h2 class="text-xl font-bold mb-6">Mes biens favoris</h2>
 
             {% if favoris %}

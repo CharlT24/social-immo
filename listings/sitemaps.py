@@ -29,6 +29,22 @@ class StaticSitemap(Sitemap):
         return 0.7
 
 
+class VilleSitemap(Sitemap):
+    """Pages SEO /immobilier/<ville>/"""
+    changefreq = 'daily'
+    priority = 0.9
+
+    def items(self):
+        from django.utils.text import slugify
+        villes = Annonce.objects.filter(is_active=True).exclude(ville='') \
+            .values_list('ville', flat=True).distinct()
+        # Slugs uniques, ordonnes pour un sitemap stable
+        return sorted({slugify(v) for v in villes if slugify(v)})
+
+    def location(self, slug):
+        return reverse('listings:ville_page', args=[slug])
+
+
 class AnnonceSitemap(Sitemap):
     changefreq = 'daily'
     priority = 0.8

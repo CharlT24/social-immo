@@ -59,6 +59,11 @@ python manage.py generer_miniatures   # miniatures des images uploadées
 npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/css/app.css --minify
 ```
 
+## 📌 Prochaine étape : v4
+
+- Backlog UX complet : [AMELIORATIONS-UX.md](AMELIORATIONS-UX.md) — priorité 1 = le dépôt d'annonce "comme un pro" (assistant 4 étapes, prix suggéré en direct, aperçu, kit de diffusion, rapport hebdo vendeur)
+- Stratégie réseaux sociaux : [STRATEGIE-RESEAUX.md](STRATEGIE-RESEAUX.md) — LinkedIn (agences + artisans) et Facebook (particuliers, groupes locaux)
+
 ## 🔮 Plus tard (nécessite plus que o2switch)
 
 - Vraie reconstruction 3D depuis photos (type Matterport) — demande du GPU, à faire via un service externe (Vercel + API, Replicate, etc.)

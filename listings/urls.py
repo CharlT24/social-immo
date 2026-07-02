@@ -72,6 +72,8 @@ urlpatterns = [
     path('alertes/<int:recherche_id>/supprimer/', views.supprimer_recherche, name='supprimer_recherche'),
     # SEO villes
     path('immobilier/<slug:ville_slug>/', views.ville_page, name='ville_page'),
+    # Devis travaux
+    path('devis/', views.demande_devis, name='demande_devis'),
     # Partage inspiration
     path('inspirations/photo/<str:photo_type>/<int:photo_id>/', views.inspiration_partage, name='inspiration_partage'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),

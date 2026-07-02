@@ -562,9 +562,14 @@
                 </h2>
                 <p class="text-sm text-apple-gray mt-1">Travaux, deco, diagnostics : des artisans du secteur pour votre projet</p>
             </div>
-            <a href="{% url 'listings:partenaire_list' %}{% if annonce.code_postal %}?dept={{ annonce.code_postal|slice:':2' }}&type=pro{% endif %}" class="text-sm font-semibold text-purple-600 hover:underline flex-shrink-0">
-                Voir tous
-            </a>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <a href="{% url 'listings:demande_devis' %}?ville={{ annonce.ville|urlencode }}&cp={{ annonce.code_postal }}" class="bg-purple-600 text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-purple-700 transition-colors">
+                    Obtenir des devis
+                </a>
+                <a href="{% url 'listings:partenaire_list' %}{% if annonce.code_postal %}?dept={{ annonce.code_postal|slice:':2' }}&type=pro{% endif %}" class="text-sm font-semibold text-purple-600 hover:underline">
+                    Voir tous
+                </a>
+            </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {% for pro in pros_secteur %}

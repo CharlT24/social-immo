@@ -2223,6 +2223,77 @@ def supprimer_recherche(request, recherche_id):
     return redirect('/mon-compte/?tab=acquereur')
 
 
+def demande_devis(request):
+    """Demande de devis travaux : 3 pros du secteur rappellent."""
+    metier_choices = ProProfile.METIER_CHOICES
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect(f"/accounts/login/?next={request.path}")
+        metier = request.POST.get('metier', '')
+        ville = (request.POST.get('ville') or '').strip()
+        code_postal = (request.POST.get('code_postal') or '').strip()
+        description = (request.POST.get('description') or '').strip()
+        telephone = (request.POST.get('telephone') or '').strip()
+
+        if not (metier and description and code_postal):
+            messages.error(request, 'Merci de renseigner le metier, le code postal et votre projet.')
+        else:
+            dept = code_postal[:2]
+            pros = list(ProProfile.objects.filter(
+                is_active=True, metier=metier, departement=dept
+            ).order_by('-mise_en_avant')[:3])
+            if not pros:
+                # Elargir au national plutot que perdre la demande
+                pros = list(ProProfile.objects.filter(
+                    is_active=True, metier=metier
+                ).order_by('-mise_en_avant')[:3])
+
+            if not pros:
+                messages.error(request, "Aucun professionnel de ce metier n'est encore inscrit. Reessayez bientot !")
+            else:
+                corps = (f"[Demande de devis] {description}\n\n"
+                         f"Projet a {ville} ({code_postal})")
+                for pro in pros:
+                    DemandeContact.objects.create(
+                        expediteur=request.user, pro=pro,
+                        message=corps, telephone=telephone,
+                    )
+                    email_pro = pro.email or (pro.user.email if pro.user_id else '')
+                    if email_pro:
+                        try:
+                            send_mail(
+                                subject=f'[Social Immo] Nouvelle demande de devis - {pro.get_metier_display()} a {ville or code_postal}',
+                                message=(
+                                    f'Bonjour {pro.nom_entreprise},\n\n'
+                                    f'Un particulier demande un devis pres de chez vous :\n\n'
+                                    f'{corps}\n\n'
+                                    f'Contact : {request.user.get_full_name() or request.user.username}'
+                                    f'{" - " + telephone if telephone else ""} - {request.user.email}\n\n'
+                                    f'Retrouvez la demande dans votre espace pro : /pro/dashboard/\n\n'
+                                    f"L'equipe Social Immo"
+                                ),
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                recipient_list=[email_pro],
+                                fail_silently=True,
+                            )
+                        except Exception:
+                            pass
+                messages.success(
+                    request,
+                    f'Votre demande a ete envoyee a {len(pros)} professionnel{"s" if len(pros) > 1 else ""} — vous serez rappele(e) rapidement !'
+                )
+                return redirect('listings:demande_devis')
+
+    context = {
+        'metier_choices': metier_choices,
+        'prefill_metier': request.GET.get('metier', ''),
+        'prefill_ville': request.GET.get('ville', ''),
+        'prefill_cp': request.GET.get('cp', ''),
+    }
+    return render(request, 'listings/demande_devis.html', context)
+
+
 def ville_page(request, ville_slug):
     """Page SEO par ville : biens, prix au m2, pros du secteur."""
     from django.utils.text import slugify

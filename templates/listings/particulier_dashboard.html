@@ -88,7 +88,12 @@
                         {% if annonce.is_active %}
                         <span class="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">En ligne</span>
                         {% else %}
-                        <span class="absolute top-3 left-3 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded-full">Inactive</span>
+                        <form method="post" action="{% url 'listings:particulier_republier_annonce' annonce.id %}" class="absolute top-3 left-3">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full hover:bg-amber-600 transition-colors">
+                                En pause — Republier
+                            </button>
+                        </form>
                         {% endif %}
                         <span class="absolute top-3 right-3 bg-teal-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Particulier</span>
                     </div>

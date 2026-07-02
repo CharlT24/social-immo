@@ -96,6 +96,7 @@ urlpatterns = [
     path('mon-compte/deposer/', views.particulier_creer_annonce, name='particulier_creer_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/publiee/', views.annonce_publiee, name='annonce_publiee'),
     path('mon-compte/annonce/<int:annonce_id>/panneau/', views.annonce_panneau, name='annonce_panneau'),
+    path('mon-compte/annonce/<int:annonce_id>/republier/', views.particulier_republier_annonce, name='particulier_republier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/modifier/', views.particulier_modifier_annonce, name='particulier_modifier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/supprimer/', views.particulier_supprimer_annonce, name='particulier_supprimer_annonce'),
     # Pages legales

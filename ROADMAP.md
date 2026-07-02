@@ -79,7 +79,18 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/c
 | 18 | **Panneau "À VENDRE" A4** imprimable avec QR code (celebration + dashboard) + section homepage "Vendez comme un pro. Gratuitement." + kit copier-coller | ✅ Terminé |
 
 - 📋 Kit de prospection prêt à copier-coller : [LEADS-COPIER-COLLER.md](LEADS-COPIER-COLLER.md)
-- 💰 Plan 1 M€ : [MONETISATION.md](MONETISATION.md) — prochaine brique payante : **Stripe** (il me faudra tes clés API, guide au moment venu)
+- 💰 Plan 1 M€ : [MONETISATION.md](MONETISATION.md)
+
+## 📋 Avancement v6 — "Full autonome" (2026-07-02)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 19 | **Stripe complet** (dormant sans clés) : /tarifs/ 3 offres, Checkout, webhook qui active/retire les avantages tout seul, portail factures/résiliation self-service | ✅ Terminé |
+| 20 | **Inscription agence self-service** (compte + flux XML + email bienvenue, zéro admin) + **SAV auto** : /aide/ FAQ + tickets avec accusé de réception | ✅ Terminé |
+| 21 | **Autopilot quotidien** : imports, géocodage, alertes, miniatures, expiration annonces 60 j + relance, expiration boosts, rapport hebdo vendeurs (lundi), sauvegarde BDD (rotation 7 j), rapport admin par email | ✅ Terminé |
+
+> 🚀 **Pour lancer le site : suis [DEPLOIEMENT.md](DEPLOIEMENT.md)** — .env à copier-coller,
+> 1 seule ligne de CRON (`autopilot`), guide Stripe pas-à-pas, plan de secours crash.
 
 ## 📌 Prochaine étape : v4
 

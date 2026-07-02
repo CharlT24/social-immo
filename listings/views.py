@@ -3442,6 +3442,19 @@ def particulier_creer_annonce(request):
 
 
 @login_required
+@require_POST
+def particulier_republier_annonce(request, annonce_id):
+    """Republie une annonce mise en pause par l'autopilot (1 clic)."""
+    annonce = get_object_or_404(
+        Annonce, id=annonce_id, user=request.user, source='particulier'
+    )
+    annonce.is_active = True
+    annonce.save()  # updated_at repart, l'annonce a 60 jours de plus
+    messages.success(request, 'Votre annonce est de nouveau en ligne pour 60 jours !')
+    return redirect('listings:particulier_dashboard')
+
+
+@login_required
 def annonce_panneau(request, annonce_id):
     """Panneau 'A VENDRE / A LOUER' imprimable (A4) avec QR code."""
     annonce = get_object_or_404(

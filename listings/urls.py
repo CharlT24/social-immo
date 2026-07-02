@@ -65,6 +65,8 @@ urlpatterns = [
     path('gestion/commentaire/<int:commentaire_id>/supprimer/', views.supprimer_commentaire, name='supprimer_commentaire'),
     # Estimation
     path('estimer/', views.estimation, name='estimation'),
+    path('api/estimer/', views.api_estimer, name='api_estimer'),
+    path('api/suggerer-annonce/', views.api_suggerer_annonce, name='api_suggerer_annonce'),
     path('gestion/estimation/<int:estimation_id>/assigner/', views.assigner_estimation, name='assigner_estimation'),
     # Page agence immo (landing)
     path('agence-immobiliere/', views.agence_immo, name='agence_immo'),

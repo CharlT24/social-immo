@@ -2146,8 +2146,29 @@ def agence_profil(request, agence_id):
     return render(request, 'listings/agence_profil.html', context)
 
 
+@require_POST
+def api_estimer(request):
+    """Estimation instantanee (moteur maison par comparables). JSON."""
+    from .services.estimation import estimer_bien
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Requete invalide'}, status=400)
+
+    resultat = estimer_bien(
+        type_bien=data.get('type_bien') or 'autre',
+        ville=data.get('ville') or '',
+        code_postal=data.get('code_postal') or '',
+        surface=data.get('surface'),
+        nb_pieces=data.get('nb_pieces') or None,
+    )
+    if resultat is None:
+        return JsonResponse({'error': 'Surface requise pour estimer le bien'}, status=400)
+    return JsonResponse(resultat)
+
+
 def estimation(request):
-    """Formulaire de demande d'estimation immobiliere"""
+    """Estimation instantanee + demande d'estimation affinee par un pro"""
     if request.method == 'POST':
         est = Estimation.objects.create(
             type_bien=request.POST.get('type_bien', 'autre'),
@@ -2160,6 +2181,8 @@ def estimation(request):
             telephone=request.POST.get('telephone', ''),
             message=request.POST.get('message', ''),
         )
+        # L'estimation instantanee affichee au visiteur (renvoyee par le JS)
+        estimation_affichee = request.POST.get('estimation_affichee', '')
         # Email a l'admin
         try:
             send_mail(
@@ -2170,7 +2193,8 @@ def estimation(request):
                     f'Type de bien: {est.get_type_bien_display()}\n'
                     f'Localisation: {est.ville} ({est.code_postal})\n'
                     f'Surface: {est.surface or "?"} m2\nPieces: {est.nb_pieces or "?"}\n\n'
-                    f'Message:\n{est.message or "(aucun)"}'
+                    + (f'Estimation instantanee affichee: {estimation_affichee}\n\n' if estimation_affichee else '')
+                    + f'Message:\n{est.message or "(aucun)"}'
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[settings.DEFAULT_FROM_EMAIL],
@@ -2791,6 +2815,55 @@ def particulier_dashboard(request):
 
 
 @login_required
+def _creer_photo_annonce(annonce, photo_file, ordre, ameliorer=False):
+    """Cree une Photo, en l'ameliorant automatiquement si demande."""
+    photo = Photo(annonce=annonce, ordre=ordre)
+    if ameliorer:
+        try:
+            from django.core.files.base import ContentFile
+            from .services.photos import ameliorer_photo
+            buffer, _infos = ameliorer_photo(photo_file)
+            nom = (photo_file.name.rsplit('.', 1)[0] or 'photo') + '.jpg'
+            photo.image.save(nom, ContentFile(buffer.read()), save=False)
+        except Exception:
+            photo.image = photo_file
+    else:
+        photo.image = photo_file
+    photo.save()
+    return photo
+
+
+@login_required
+@require_POST
+def api_suggerer_annonce(request):
+    """Assistant redaction : suggestions de titres et description. JSON."""
+    from .services.redaction import suggerer_titres, suggerer_description
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Requete invalide'}, status=400)
+
+    ville = (data.get('ville') or 'votre ville').strip() or 'votre ville'
+    commun = dict(
+        type_bien=data.get('type_bien') or '',
+        ville=ville,
+        surface=data.get('surface') or None,
+        nb_pieces=data.get('nb_pieces') or None,
+        nb_chambres=data.get('nb_chambres') or None,
+        surface_terrain=data.get('surface_terrain') or None,
+        transaction=data.get('transaction') or 'V',
+    )
+    return JsonResponse({
+        'titres': suggerer_titres(**commun),
+        'description': suggerer_description(
+            annee_construction=data.get('annee_construction') or None,
+            dpe=data.get('dpe') or None,
+            **commun,
+        ),
+    })
+
+
+@login_required
 def particulier_creer_annonce(request):
     """Deposer une annonce en tant que particulier"""
     import uuid
@@ -2806,16 +2879,16 @@ def particulier_creer_annonce(request):
             annonce.contact_email = request.user.email
             annonce.save()
 
-            # Upload photos (max 5)
+            # Upload photos (max 5), avec amelioration auto en option
+            ameliorer = request.POST.get('ameliorer_photos') == 'on'
             photos = request.FILES.getlist('photos')
             for i, photo_file in enumerate(photos[:5]):
-                Photo.objects.create(
-                    annonce=annonce,
-                    image=photo_file,
-                    ordre=i + 1,
-                )
+                _creer_photo_annonce(annonce, photo_file, i + 1, ameliorer)
 
-            messages.success(request, 'Votre annonce a ete publiee !')
+            if ameliorer and photos:
+                messages.success(request, 'Votre annonce a ete publiee, photos optimisees automatiquement !')
+            else:
+                messages.success(request, 'Votre annonce a ete publiee !')
             return redirect('listings:particulier_dashboard')
     else:
         form = ParticulierAnnonceForm()
@@ -2844,13 +2917,10 @@ def particulier_modifier_annonce(request, annonce_id):
             # Ajout de nouvelles photos
             nb_photos_actuelles = annonce.photos.count()
             nouvelles_photos = request.FILES.getlist('photos')
+            ameliorer = request.POST.get('ameliorer_photos') == 'on'
             places_dispo = 5 - nb_photos_actuelles
             for i, photo_file in enumerate(nouvelles_photos[:max(0, places_dispo)]):
-                Photo.objects.create(
-                    annonce=annonce,
-                    image=photo_file,
-                    ordre=nb_photos_actuelles + i + 1,
-                )
+                _creer_photo_annonce(annonce, photo_file, nb_photos_actuelles + i + 1, ameliorer)
 
             messages.success(request, 'Annonce mise a jour !')
             return redirect('listings:particulier_dashboard')

@@ -1,127 +1,59 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon compte | Social Immo</title>
+{% extends 'base.html' %}
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+{% block title %}Mon compte | Social Immo{% endblock %}
+{% block meta_description %}Gerez vos annonces, favoris, inspirations et messages sur votre espace particulier Social Immo.{% endblock %}
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-    </style>
-</head>
-<body class="bg-[#F0FDFA] text-gray-900 font-inter min-h-screen">
-
-    <!-- Top Bar -->
-    <header class="bg-white sticky top-0 z-50 border-b border-gray-200/60 shadow-sm">
-        <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
-            <div class="flex items-center gap-3">
-                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2">
-                    <span class="text-xl font-bold tracking-tight">Social<span class="text-teal-600">Immo</span></span>
-                </a>
-                <span class="bg-teal-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Mon compte</span>
-            </div>
-            <div class="flex items-center gap-5">
-                <a href="{% url 'listings:homepage' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
-                    Voir le site
-                </a>
-                <a href="{% url 'listings:decoration_list' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
-                    Inspirations
-                </a>
-                <div class="w-px h-6 bg-gray-200"></div>
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
-                        <span class="text-xs font-bold text-white">{{ user.username|slice:":2"|upper }}</span>
-                    </div>
-                    <span class="text-sm font-medium text-gray-700">{{ user.username }}</span>
-                </div>
-                <a href="{% url 'account_logout' %}" class="text-sm text-gray-400 hover:text-red-500 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-6 py-8">
+{% block content %}
+<div class="bg-teal-50/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
         <!-- Page Title -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Mon espace</h1>
+            <div class="flex items-center gap-3">
+                <h1 class="text-3xl font-bold text-gray-900">Mon espace</h1>
+                <span class="bg-teal-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Mon compte</span>
+            </div>
             <p class="text-gray-500 mt-1">Gerez vos annonces, favoris et inspirations</p>
         </div>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 reveal-stagger">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-apple">
                 <div class="text-2xl font-bold text-teal-600">{{ nb_annonces }}</div>
                 <div class="text-sm text-gray-500 mt-1">Mes annonces</div>
             </div>
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-apple">
                 <div class="text-2xl font-bold text-rose-500">{{ nb_favoris }}</div>
                 <div class="text-sm text-gray-500 mt-1">Favoris</div>
             </div>
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-apple">
                 <div class="text-2xl font-bold text-purple-500">{{ nb_inspi_likes }}</div>
                 <div class="text-sm text-gray-500 mt-1">Inspirations likees</div>
             </div>
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-apple">
                 <div class="text-2xl font-bold text-orange-500">{{ nb_messages_non_lus }}</div>
                 <div class="text-sm text-gray-500 mt-1">Messages non lus</div>
             </div>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-8 overflow-x-auto">
-            {% with tabs="vendeur:Vendeur,acquereur:Acquereur,inspirations:Inspirations,messages:Messages,profil:Profil" %}
-            {% for tab_pair in tabs.split %}
-                {% with tab_id=tab_pair|cut:","|slice:":20" %}
-                {% endwith %}
-            {% endfor %}
-            {% endwith %}
-            <a href="?tab=vendeur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'vendeur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+        <div class="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-8 overflow-x-auto scrollbar-hide">
+            <a href="?tab=vendeur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'vendeur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Vendeur
             </a>
-            <a href="?tab=acquereur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'acquereur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <a href="?tab=acquereur" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'acquereur' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Acquereur
             </a>
-            <a href="?tab=inspirations" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'inspirations' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <a href="?tab=inspirations" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'inspirations' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Inspirations
             </a>
-            <a href="?tab=messages" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'messages' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <a href="?tab=messages" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'messages' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Messages {% if nb_messages_non_lus %}<span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ nb_messages_non_lus }}</span>{% endif %}
             </a>
-            <a href="?tab=profil" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all {% if current_tab == 'profil' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <a href="?tab=profil" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'profil' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Profil
             </a>
         </div>
-
-        <!-- Django Messages -->
-        {% if messages %}
-        <div class="mb-6">
-            {% for message in messages %}
-            <div class="bg-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-50 text-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-700 px-4 py-3 rounded-xl text-sm">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
 
         <!-- ============ ONGLET VENDEUR ============ -->
         {% if current_tab == 'vendeur' %}
@@ -136,16 +68,16 @@
             </div>
 
             {% if annonces %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
                 {% for annonce in annonces %}
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-apple-hover hover:-translate-y-0.5 transition-all duration-300">
                     <!-- Photo -->
                     <div class="relative aspect-[4/3] bg-gray-100">
                         {% if annonce.photo_principale %}
                             {% if annonce.photo_principale.image %}
-                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover">
+                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover" loading="lazy">
                             {% elif annonce.photo_principale.url %}
-                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover">
+                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover" loading="lazy">
                             {% endif %}
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-gray-300">
@@ -191,7 +123,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 reveal">
                 <div class="text-6xl mb-4">&#127968;</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Aucune annonce</h3>
                 <p class="text-gray-500 mb-6">Deposez votre premiere annonce gratuitement, comme sur Le Bon Coin !</p>
@@ -209,16 +141,16 @@
             <h2 class="text-xl font-bold mb-6">Mes biens favoris</h2>
 
             {% if favoris %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
                 {% for fav in favoris %}
                 {% with annonce=fav.annonce %}
-                <a href="{% url 'listings:detail' annonce.reference %}" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                    <div class="relative aspect-[4/3] bg-gray-100">
+                <a href="{% url 'listings:detail' annonce.reference %}" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-apple-hover hover:-translate-y-0.5 transition-all duration-300 group">
+                    <div class="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                         {% if annonce.photo_principale %}
                             {% if annonce.photo_principale.image %}
-                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <img src="{{ annonce.photo_principale.image.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                             {% elif annonce.photo_principale.url %}
-                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <img src="{{ annonce.photo_principale.url }}" alt="{{ annonce.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                             {% endif %}
                         {% endif %}
                         <span class="absolute top-3 right-3 bg-rose-500 text-white p-2 rounded-full">
@@ -250,7 +182,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 reveal">
                 <div class="text-6xl mb-4">&#10084;&#65039;</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Pas encore de favoris</h3>
                 <p class="text-gray-500 mb-6">Parcourez les annonces et cliquez sur le coeur pour sauvegarder vos biens preferes.</p>
@@ -268,15 +200,15 @@
             <h2 class="text-xl font-bold mb-6">Mes inspirations likees</h2>
 
             {% if photo_favoris %}
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 reveal-stagger">
                 {% for fav in photo_favoris %}
-                <div class="relative group rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white">
+                <div class="relative group rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white hover:shadow-apple-hover transition-shadow duration-300">
                     {% if fav.photo %}
                     <div class="aspect-square bg-gray-100">
                         {% if fav.photo.image %}
-                        <img src="{{ fav.photo.image.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <img src="{{ fav.photo.image.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                         {% elif fav.photo.url %}
-                        <img src="{{ fav.photo.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <img src="{{ fav.photo.url }}" alt="Inspiration" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                         {% endif %}
                     </div>
                     {% if fav.photo.inspiration_categorie %}
@@ -287,9 +219,9 @@
                     {% elif fav.photo_pro %}
                     <div class="aspect-square bg-gray-100">
                         {% if fav.photo_pro.image %}
-                        <img src="{{ fav.photo_pro.image.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <img src="{{ fav.photo_pro.image.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                         {% elif fav.photo_pro.url %}
-                        <img src="{{ fav.photo_pro.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <img src="{{ fav.photo_pro.url }}" alt="Inspiration pro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                         {% endif %}
                     </div>
                     <div class="absolute top-3 right-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">Pro</div>
@@ -302,7 +234,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 reveal">
                 <div class="text-6xl mb-4">&#10024;</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Pas encore d'inspirations</h3>
                 <p class="text-gray-500 mb-6">Explorez les inspirations deco et likez celles qui vous plaisent !</p>
@@ -320,9 +252,9 @@
             <h2 class="text-xl font-bold mb-6">Messages recus</h2>
 
             {% if messages_recus %}
-            <div class="space-y-3">
+            <div class="space-y-3 reveal-stagger">
                 {% for msg in messages_recus %}
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 {% if not msg.is_read %}border-l-4 border-l-teal-500{% endif %}">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-apple {% if not msg.is_read %}border-l-4 border-l-teal-500{% endif %}">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
@@ -347,7 +279,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+            <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 reveal">
                 <div class="text-6xl mb-4">&#128172;</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Pas de messages</h3>
                 <p class="text-gray-500">Les messages de contact sur vos annonces apparaitront ici.</p>
@@ -360,7 +292,7 @@
         <div>
             <h2 class="text-xl font-bold mb-6">Mon profil</h2>
 
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-xl">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-xl reveal">
                 <form method="post" action="?tab=profil">
                     {% csrf_token %}
 
@@ -409,7 +341,6 @@
         </div>
         {% endif %}
 
-    </main>
-
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

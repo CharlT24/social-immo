@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Estimation immobiliere gratuite | Social Immo{% endblock %}
-{% block meta_description %}Estimez gratuitement la valeur de votre bien immobilier sur Social Immo. Estimation rapide par des professionnels de l'immobilier.{% endblock %}
-{% block og_title %}Estimation immobiliere gratuite{% endblock %}
+{% block title %}Estimation immobiliere gratuite et instantanee | Social Immo{% endblock %}
+{% block meta_description %}Estimez gratuitement et instantanement la valeur de votre bien immobilier sur Social Immo, puis affinez avec un professionnel de votre secteur.{% endblock %}
+{% block og_title %}Estimation immobiliere gratuite et instantanee{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
@@ -14,34 +14,21 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
             </svg>
         </div>
-        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Estimez votre bien</h1>
-        <p class="text-lg text-apple-gray">Remplissez ce formulaire et recevez une estimation gratuite par un professionnel de votre secteur.</p>
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Estimez votre bien en 30 secondes</h1>
+        <p class="text-lg text-apple-gray">Une estimation instantanee basee sur les biens de votre secteur, affinable gratuitement par un professionnel.</p>
     </div>
 
-    <!-- Flash messages -->
-    {% if messages %}
-    <div class="mb-8 space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-2xl flex items-center gap-3 text-sm font-medium {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-600 border border-red-200{% endif %}">
-            {% if message.tags == 'success' %}
-            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            {% endif %}
-            {{ message }}
+    <!-- ==================== ETAPE 1 : LE BIEN ==================== -->
+    <div id="etape-bien" class="bg-white rounded-3xl shadow-apple p-8 mb-6">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="w-8 h-8 bg-orange-600 text-white text-sm font-bold rounded-full flex items-center justify-center">1</span>
+            <h2 class="text-lg font-semibold">Votre bien</h2>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Formulaire -->
-    <form method="post" class="bg-white rounded-3xl shadow-apple p-8">
-        {% csrf_token %}
-
-        <h2 class="text-lg font-semibold mb-6">Votre bien</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
             <div>
                 <label class="block text-sm font-medium text-apple-text mb-2">Type de bien *</label>
-                <select name="type_bien" required
+                <select id="est-type" required
                         class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
                     <option value="">-- Choisir --</option>
                     <option value="appartement">Appartement</option>
@@ -53,29 +40,72 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-apple-text mb-2">Surface (m&sup2;)</label>
-                <input type="number" name="surface" min="1" placeholder="Ex: 75"
+                <label class="block text-sm font-medium text-apple-text mb-2">Surface (m&sup2;) *</label>
+                <input type="number" id="est-surface" min="1" placeholder="Ex: 75" required
                        class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-apple-text mb-2">Ville *</label>
-                <input type="text" name="ville" required placeholder="Ex: Lyon"
+                <input type="text" id="est-ville" required placeholder="Ex: Lyon"
                        class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-apple-text mb-2">Code postal *</label>
-                <input type="text" name="code_postal" required placeholder="Ex: 69001" maxlength="5"
+                <input type="text" id="est-cp" required placeholder="Ex: 69001" maxlength="5" inputmode="numeric"
                        class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-apple-text mb-2">Nombre de pieces</label>
-                <input type="number" name="nb_pieces" min="1" placeholder="Ex: 3"
+                <input type="number" id="est-pieces" min="1" placeholder="Ex: 3"
                        class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
             </div>
         </div>
 
-        <hr class="border-gray-100 mb-8">
-        <h2 class="text-lg font-semibold mb-6">Vos coordonnees</h2>
+        <button type="button" id="btn-estimer" onclick="lancerEstimation()"
+                class="w-full bg-orange-600 text-white font-semibold py-4 px-6 rounded-2xl hover:bg-orange-700 active:scale-[0.99] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span id="btn-estimer-label">Estimer instantanement</span>
+        </button>
+        <p id="est-erreur" class="hidden text-sm text-red-500 text-center mt-3"></p>
+    </div>
+
+    <!-- ==================== RESULTAT ==================== -->
+    <div id="etape-resultat" class="hidden mb-6">
+        <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl shadow-2xl p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+            <p class="text-sm font-medium text-white/60 mb-2">Valeur estimee de votre bien</p>
+            <p id="res-prix" class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4"></p>
+            <div class="flex items-center justify-center gap-3 text-sm text-white/70 mb-5">
+                <span>Entre <span id="res-min" class="font-semibold text-white"></span></span>
+                <div class="flex-1 max-w-[140px] h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full w-1/2 mx-auto bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full"></div>
+                </div>
+                <span>et <span id="res-max" class="font-semibold text-white"></span></span>
+            </div>
+            <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                <span class="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full"><span id="res-m2"></span> €/m²</span>
+                <span id="res-confiance" class="text-xs font-medium px-3 py-1.5 rounded-full"></span>
+                <span id="res-zone" class="text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full"></span>
+            </div>
+            <p class="text-[11px] text-white/40 mt-5">Estimation indicative calculee a partir des annonces du secteur. Elle ne remplace pas l'avis d'un professionnel.</p>
+        </div>
+    </div>
+
+    <!-- ==================== ETAPE 2 : AFFINAGE PAR UN PRO ==================== -->
+    <form id="etape-contact" method="post" class="hidden bg-white rounded-3xl shadow-apple p-8">
+        {% csrf_token %}
+        <input type="hidden" name="type_bien" id="h-type">
+        <input type="hidden" name="ville" id="h-ville">
+        <input type="hidden" name="code_postal" id="h-cp">
+        <input type="hidden" name="surface" id="h-surface">
+        <input type="hidden" name="nb_pieces" id="h-pieces">
+        <input type="hidden" name="estimation_affichee" id="h-estimation">
+
+        <div class="flex items-center gap-3 mb-2">
+            <span class="w-8 h-8 bg-orange-600 text-white text-sm font-bold rounded-full flex items-center justify-center">2</span>
+            <h2 class="text-lg font-semibold">Affinez avec un expert de votre secteur</h2>
+        </div>
+        <p class="text-sm text-apple-gray mb-6 ml-11">Gratuit et sans engagement : un professionnel verifie l'estimation sur place et vous conseille.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
@@ -102,8 +132,8 @@
         </div>
 
         <button type="submit"
-                class="w-full bg-orange-600 text-white font-semibold py-4 px-6 rounded-2xl hover:bg-orange-700 transition-colors shadow-lg shadow-orange-500/20">
-            Demander mon estimation gratuite
+                class="w-full bg-apple-blue text-white font-semibold py-4 px-6 rounded-2xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20">
+            Recevoir mon estimation affinee gratuite
         </button>
 
         <p class="text-xs text-apple-gray text-center mt-4">
@@ -113,4 +143,98 @@
     </form>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function formatEuros(v) {
+    return v.toLocaleString('fr-FR') + ' €';
+}
+
+function lancerEstimation() {
+    const type = document.getElementById('est-type').value;
+    const surface = document.getElementById('est-surface').value;
+    const ville = document.getElementById('est-ville').value.trim();
+    const cp = document.getElementById('est-cp').value.trim();
+    const pieces = document.getElementById('est-pieces').value;
+    const err = document.getElementById('est-erreur');
+    err.classList.add('hidden');
+
+    if (!type || !surface || !ville || !cp) {
+        err.textContent = 'Merci de renseigner le type, la surface, la ville et le code postal.';
+        err.classList.remove('hidden');
+        return;
+    }
+
+    const btn = document.getElementById('btn-estimer');
+    const label = document.getElementById('btn-estimer-label');
+    btn.disabled = true;
+    label.textContent = 'Calcul en cours...';
+
+    fetch("{% url 'listings:api_estimer' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ type_bien: type, surface: surface, ville: ville, code_postal: cp, nb_pieces: pieces })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        label.textContent = 'Re-estimer';
+        if (data.error) {
+            err.textContent = data.error;
+            err.classList.remove('hidden');
+            return;
+        }
+        afficherResultat(data, { type, surface, ville, cp, pieces });
+    })
+    .catch(() => {
+        btn.disabled = false;
+        label.textContent = 'Estimer instantanement';
+        err.textContent = 'Le service est momentanement indisponible, reessayez.';
+        err.classList.remove('hidden');
+    });
+}
+
+function afficherResultat(data, bien) {
+    document.getElementById('res-prix').textContent = formatEuros(data.prix_estime);
+    document.getElementById('res-min').textContent = formatEuros(data.prix_min);
+    document.getElementById('res-max').textContent = formatEuros(data.prix_max);
+    document.getElementById('res-m2').textContent = data.prix_m2.toLocaleString('fr-FR');
+
+    const conf = document.getElementById('res-confiance');
+    if (data.confiance === 'haute') {
+        conf.textContent = 'Fiabilite elevee (' + data.nb_comparables + ' biens compares)';
+        conf.className = 'text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-400/20 text-emerald-300';
+    } else if (data.confiance === 'moyenne') {
+        conf.textContent = 'Fiabilite moyenne (' + data.nb_comparables + ' biens compares)';
+        conf.className = 'text-xs font-medium px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-300';
+    } else {
+        conf.textContent = 'Estimation indicative';
+        conf.className = 'text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 text-white/80';
+    }
+    const zones = { ville: 'Base : votre ville', departement: 'Base : votre departement', bareme: 'Base : moyennes nationales' };
+    document.getElementById('res-zone').textContent = zones[data.zone] || '';
+
+    // Prepare l'etape 2
+    document.getElementById('h-type').value = bien.type;
+    document.getElementById('h-ville').value = bien.ville;
+    document.getElementById('h-cp').value = bien.cp;
+    document.getElementById('h-surface').value = bien.surface;
+    document.getElementById('h-pieces').value = bien.pieces;
+    document.getElementById('h-estimation').value =
+        formatEuros(data.prix_estime) + ' (fourchette ' + formatEuros(data.prix_min) + ' - ' + formatEuros(data.prix_max) + ')';
+
+    const res = document.getElementById('etape-resultat');
+    const contact = document.getElementById('etape-contact');
+    res.classList.remove('hidden');
+    contact.classList.remove('hidden');
+    res.classList.add('reveal');
+    contact.classList.add('reveal');
+    requestAnimationFrame(() => {
+        res.classList.add('revealed');
+        contact.classList.add('revealed');
+    });
+    res.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
 {% endblock %}

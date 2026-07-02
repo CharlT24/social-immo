@@ -4,7 +4,7 @@ Rendu aussi en reponse partielle pour le scroll infini.
 {% endcomment %}
 {% for item in items %}
 <div class="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer inspi-item"
-     onclick="openPhotoModal('{{ item.url|escapejs }}', {{ item.id }}, '{{ item.type }}', '{{ item.categorie_label|escapejs }}', '{{ item.auteur|escapejs }}', '{{ item.link|escapejs }}')">
+     onclick="openPhotoModal('{{ item.url_full|escapejs }}', {{ item.id }}, '{{ item.type }}', '{{ item.categorie_label|escapejs }}', '{{ item.auteur|escapejs }}', '{{ item.link|escapejs }}')">
     <img src="{{ item.url }}" alt="{{ item.categorie_label|default:'Inspiration' }} - {{ item.auteur }}"
          class="w-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
 

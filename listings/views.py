@@ -231,9 +231,23 @@ def search_results(request):
         ann.badge_premium = ad.get('badge_premium', False)
         ann.bandeau_exclusif = ad.get('bandeau_exclusif', False)
 
+    # Points pour la carte des resultats (regroupes par ville geocodee)
+    from .models import VilleGeo
+    villes_counts = {}
+    for v in annonces_page.paginator.object_list.values_list('ville', flat=True):
+        if v:
+            villes_counts[v] = villes_counts.get(v, 0) + 1
+    geos = {g.ville: g for g in VilleGeo.objects.filter(ville__in=list(villes_counts)[:300])}
+    carte_points = [
+        {'ville': v, 'count': n, 'lat': geos[v].latitude, 'lng': geos[v].longitude}
+        for v, n in villes_counts.items() if v in geos
+    ]
+
     context = {
         'annonces': annonces_page,
         'annonces_page': annonces_page,
+        'carte_points_json': json.dumps(carte_points),
+        'nb_points_carte': len(carte_points),
         'result_count': result_count,
         'villes_disponibles': villes_disponibles,
         'user_favorites': user_favorites,
@@ -590,7 +604,8 @@ def decoration_list(request):
             items.append({
                 'type': 'annonce',
                 'id': photo.id,
-                'url': photo.src,
+                'url': photo.src_thumb,
+                'url_full': photo.src,
                 'categorie_label': photo.get_inspiration_categorie_display() if photo.inspiration_categorie else '',
                 'tags': list(photo.tags.all()),
                 'auteur': agence.nom if agence else photo.annonce.contact_nom,
@@ -605,7 +620,8 @@ def decoration_list(request):
                 items.append({
                     'type': 'pro',
                     'id': photo.id,
-                    'url': photo.src,
+                    'url': photo.src_thumb,
+                    'url_full': photo.src,
                     'categorie_label': realisation.get_categorie_display() if realisation.categorie else '',
                     'tags': list(realisation.tags.all()),
                     'auteur': realisation.pro.nom_entreprise,
@@ -1598,14 +1614,23 @@ def pro_ajouter_realisation(request):
             tags = form.cleaned_data.get('tags')
             if tags:
                 realisation.tags.set(tags)
-            # Sauvegarder les photos uploadees
+            # Sauvegarder les photos uploadees (+ miniatures)
+            from django.core.files.base import ContentFile
+            from .services.photos import generer_miniature
             photos = request.FILES.getlist('photos')
             for i, photo_file in enumerate(photos[:10], 1):
-                ProRealisationPhoto.objects.create(
+                photo = ProRealisationPhoto(
                     realisation=realisation,
                     image=photo_file,
                     ordre=i
                 )
+                try:
+                    thumb = generer_miniature(photo_file)
+                    nom = (photo_file.name.rsplit('.', 1)[0] or 'photo') + '_thumb.jpg'
+                    photo.image_thumb.save(nom, ContentFile(thumb.read()), save=False)
+                except Exception:
+                    pass
+                photo.save()
             messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
             return redirect('listings:pro_dashboard')
     else:
@@ -3058,19 +3083,29 @@ def particulier_dashboard(request):
 
 @login_required
 def _creer_photo_annonce(annonce, photo_file, ordre, ameliorer=False):
-    """Cree une Photo, en l'ameliorant automatiquement si demande."""
+    """Cree une Photo (+ miniature), en l'ameliorant si demande."""
+    from django.core.files.base import ContentFile
+    from .services.photos import ameliorer_photo, generer_miniature
+
     photo = Photo(annonce=annonce, ordre=ordre)
+    nom = (photo_file.name.rsplit('.', 1)[0] or 'photo')
+    source_thumb = photo_file
     if ameliorer:
         try:
-            from django.core.files.base import ContentFile
-            from .services.photos import ameliorer_photo
             buffer, _infos = ameliorer_photo(photo_file)
-            nom = (photo_file.name.rsplit('.', 1)[0] or 'photo') + '.jpg'
-            photo.image.save(nom, ContentFile(buffer.read()), save=False)
+            contenu = buffer.read()
+            photo.image.save(nom + '.jpg', ContentFile(contenu), save=False)
+            import io as _io
+            source_thumb = _io.BytesIO(contenu)
         except Exception:
             photo.image = photo_file
     else:
         photo.image = photo_file
+    try:
+        thumb = generer_miniature(source_thumb)
+        photo.image_thumb.save(nom + '_thumb.jpg', ContentFile(thumb.read()), save=False)
+    except Exception:
+        pass
     photo.save()
     return photo
 

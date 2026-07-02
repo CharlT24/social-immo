@@ -216,6 +216,7 @@ class Photo(models.Model):
     )
     url = models.URLField(max_length=500, blank=True, default='')
     image = models.ImageField(upload_to='annonces/', blank=True, default='')
+    image_thumb = models.ImageField(upload_to='annonces/thumbs/', blank=True, default='')
     ordre = models.PositiveIntegerField(default=1)
     is_inspiration = models.BooleanField(default=False)
     mise_en_avant = models.BooleanField(default=False, verbose_name='A la une inspirations')
@@ -239,6 +240,13 @@ class Photo(models.Model):
         if self.image:
             return self.image.url
         return self.url
+
+    @property
+    def src_thumb(self):
+        """Miniature si disponible (uploads), sinon la photo pleine taille."""
+        if self.image_thumb:
+            return self.image_thumb.url
+        return self.src
 
 
 class Commentaire(models.Model):
@@ -550,6 +558,7 @@ class ProRealisationPhoto(models.Model):
     realisation = models.ForeignKey(ProRealisation, on_delete=models.CASCADE, related_name='photos')
     url = models.URLField(max_length=500, blank=True, default='')
     image = models.ImageField(upload_to='realisations/', blank=True, default='')
+    image_thumb = models.ImageField(upload_to='realisations/thumbs/', blank=True, default='')
     mise_en_avant = models.BooleanField(default=False, verbose_name='A la une inspirations')
     ordre = models.PositiveIntegerField(default=1)
 
@@ -565,6 +574,13 @@ class ProRealisationPhoto(models.Model):
         if self.image:
             return self.image.url
         return self.url
+
+    @property
+    def src_thumb(self):
+        """Miniature si disponible (uploads), sinon la photo pleine taille."""
+        if self.image_thumb:
+            return self.image_thumb.url
+        return self.src
 
 
 class ProAvis(models.Model):

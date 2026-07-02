@@ -274,6 +274,12 @@
 
         <!-- View tabs -->
         <div class="flex items-center gap-2">
+            {% if nb_points_carte %}
+            <button type="button" onclick="toggleCarte()" id="btn-carte" class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-500 text-xs font-semibold rounded-full border border-gray-200 hover:bg-gray-50 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                Carte
+            </button>
+            {% endif %}
             <a href="{% url 'listings:search_results' %}?{{ request.GET.urlencode }}" class="flex items-center gap-1.5 px-3 py-1.5 bg-apple-blue text-white text-xs font-semibold rounded-full">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Biens
@@ -316,6 +322,14 @@
         {% for d in current_dpe %}
         <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-apple-blue text-sm font-medium rounded-full">DPE {{ d }}</span>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ==================== CARTE ==================== -->
+    {% if nb_points_carte %}
+    <div id="carte-container" class="hidden mb-8">
+        <div id="carte-resultats" class="w-full h-[420px] rounded-2xl shadow-apple overflow-hidden bg-gray-100"></div>
+        <p class="text-xs text-apple-gray mt-2 text-center">Les biens sont regroupes par ville. Cliquez sur un marqueur pour filtrer.</p>
     </div>
     {% endif %}
 
@@ -459,6 +473,66 @@ document.addEventListener('click', e => { if (!serpInput.contains(e.target) && !
 
 // Close drawer on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const d = document.getElementById('filter-drawer'); if (!d.classList.contains('hidden')) toggleDrawer(); } });
+
+// ========== CARTE DES RESULTATS (Leaflet, charge a la demande) ==========
+let carteChargee = false;
+const cartePoints = JSON.parse('{{ carte_points_json|escapejs }}');
+
+function toggleCarte() {
+    const container = document.getElementById('carte-container');
+    const btn = document.getElementById('btn-carte');
+    const visible = !container.classList.contains('hidden');
+    if (visible) {
+        container.classList.add('hidden');
+        btn.classList.remove('bg-apple-blue', 'text-white');
+        btn.classList.add('bg-white', 'text-gray-500');
+        return;
+    }
+    container.classList.remove('hidden');
+    btn.classList.add('bg-apple-blue', 'text-white');
+    btn.classList.remove('bg-white', 'text-gray-500');
+    if (carteChargee) return;
+    carteChargee = true;
+
+    // Charge Leaflet uniquement au premier affichage
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+    const js = document.createElement('script');
+    js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload = initCarte;
+    document.head.appendChild(js);
+}
+
+function initCarte() {
+    const map = L.map('carte-resultats');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18
+    }).addTo(map);
+
+    const bounds = [];
+    cartePoints.forEach(p => {
+        bounds.push([p.lat, p.lng]);
+        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        const params = new URLSearchParams(window.location.search);
+        params.set('ville', p.ville);
+        params.delete('page');
+        marker.bindPopup(
+            `<div style="font-family:Inter,sans-serif;">
+                <strong>${p.ville}</strong><br>
+                ${p.count} bien${p.count > 1 ? 's' : ''}<br>
+                <a href="?${params.toString()}" style="color:#0071E3;font-weight:600;">Voir les biens</a>
+            </div>`
+        );
+    });
+    if (bounds.length) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+    } else {
+        map.setView([46.6, 2.4], 5);
+    }
+}
 </script>
 
 {% endblock %}

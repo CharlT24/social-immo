@@ -12,6 +12,8 @@ from PIL import Image, ImageEnhance, ImageOps, ImageStat
 
 MAX_DIMENSION = 1920
 JPEG_QUALITY = 85
+THUMB_DIMENSION = 480
+THUMB_QUALITY = 78
 
 
 def _luminosite_moyenne(img):
@@ -59,3 +61,21 @@ def ameliorer_photo(fichier, max_dimension=MAX_DIMENSION):
     img.save(sortie, format='JPEG', quality=JPEG_QUALITY, optimize=True, progressive=True)
     sortie.seek(0)
     return sortie, {'retouches': retouches, 'largeur': img.size[0], 'hauteur': img.size[1]}
+
+
+def generer_miniature(fichier, max_dimension=THUMB_DIMENSION):
+    """Genere une miniature JPEG (grilles/listes) depuis un fichier image.
+
+    Retourne un io.BytesIO pret a etre sauvegarde.
+    """
+    if hasattr(fichier, 'seek'):
+        fichier.seek(0)
+    img = Image.open(fichier)
+    img = ImageOps.exif_transpose(img)
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
+    sortie = io.BytesIO()
+    img.save(sortie, format='JPEG', quality=THUMB_QUALITY, optimize=True, progressive=True)
+    sortie.seek(0)
+    return sortie

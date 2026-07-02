@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-    Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
-    Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
+    Annonce, Photo, Commentaire, Favori, Agence,
+    ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation
 )
 
@@ -65,26 +65,6 @@ class ConseillerAdmin(admin.ModelAdmin):
     def nb_biens(self, obj):
         return obj.annonces.filter(is_active=True).count()
     nb_biens.short_description = 'Biens actifs'
-
-
-@admin.register(Decoration)
-class DecorationAdmin(admin.ModelAdmin):
-    list_display = ['titre', 'auteur', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['titre']
-
-
-@admin.register(DecoCommentaire)
-class DecoCommentaireAdmin(admin.ModelAdmin):
-    list_display = ['auteur', 'decoration', 'created_at']
-    list_filter = ['created_at']
-
-
-@admin.register(Partenaire)
-class PartenaireAdmin(admin.ModelAdmin):
-    list_display = ['nom', 'metier', 'ville', 'is_active']
-    list_filter = ['metier', 'is_active', 'ville']
-    search_fields = ['nom', 'metier', 'ville']
 
 
 class ProRealisationPhotoInline(admin.TabularInline):

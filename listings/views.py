@@ -19,9 +19,10 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Q
 
+from .decorators import staff_required
 from .models import (
-    Annonce, Photo, Commentaire, Favori, Agence, Decoration, DecoCommentaire,
-    Partenaire, ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
+    Annonce, Photo, Commentaire, Favori, Agence,
+    ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
     Estimation, AgenceOptions, InspirationTag, UserProfile
 )
@@ -372,11 +373,9 @@ def signup(request):
 
 
 @login_required
+@staff_required
 def dashboard(request):
     """Dashboard admin : stats et gestion"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Accès réservé aux administrateurs.")
-
     today = timezone.now().date()
 
     # Stats générales
@@ -445,11 +444,9 @@ def dashboard(request):
 
 
 @login_required
+@staff_required
 def run_import(request):
     """Lance l'import XML manuellement depuis le flux HTTP"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Accès réservé aux administrateurs.")
-
     try:
         from io import StringIO
         out = StringIO()
@@ -1047,11 +1044,9 @@ def agence_settings(request):
 
 
 @login_required
+@staff_required
 def admin_agence_settings(request, agence_id):
     """Admin : modifier les informations d'une agence"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
 
     if request.method == 'POST':
@@ -1095,11 +1090,9 @@ def admin_agence_settings(request, agence_id):
 
 
 @login_required
+@staff_required
 def gestion_agences(request):
     """Page de gestion admin : liste des agences + creation"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agences = Agence.objects.all().select_related('responsable').prefetch_related('conseillers').order_by('-created_at')
     form = AgenceCreateForm()
 
@@ -1115,11 +1108,9 @@ def gestion_agences(request):
 
 
 @login_required
+@staff_required
 def gestion_pros(request):
     """Page de gestion admin : liste des pros + options"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     pros = ProProfile.objects.all().select_related('user').order_by('-created_at')
 
     context = {
@@ -1131,11 +1122,9 @@ def gestion_pros(request):
 
 
 @login_required
+@staff_required
 def creer_agence(request):
     """Cree une agence + compte utilisateur + envoi mail"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     if request.method != 'POST':
         return redirect('listings:gestion_agences')
 
@@ -1211,11 +1200,9 @@ L'equipe Social Immo
 
 
 @login_required
+@staff_required
 def lancer_import_agence(request, agence_id):
     """Lance l'import XML pour une agence specifique (admin)"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
 
     if not agence.feed_url and not (agence.feed_type == 'ftp' and agence.ftp_host):
@@ -1240,11 +1227,9 @@ def lancer_import_agence(request, agence_id):
 
 
 @login_required
+@staff_required
 def toggle_agence_active(request, agence_id):
     """Active/desactive une agence"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
     agence.is_active = not agence.is_active
     agence.save(update_fields=['is_active'])
@@ -1255,11 +1240,9 @@ def toggle_agence_active(request, agence_id):
 
 
 @login_required
+@staff_required
 def gestion_conseillers(request, agence_id):
     """Liste les conseillers d'une agence avec leurs coordonnees et stats"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
     conseillers = agence.conseillers.all().order_by('nom')
 
@@ -1281,11 +1264,9 @@ def gestion_conseillers(request, agence_id):
 
 
 @login_required
+@staff_required
 def renvoyer_acces_conseiller(request, conseiller_id):
     """Envoie les acces par mail au conseiller"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     conseiller = get_object_or_404(Conseiller, id=conseiller_id)
     from django.utils.crypto import get_random_string
     from django.core.mail import send_mail
@@ -1324,11 +1305,9 @@ L'equipe SocialImmo
 
 
 @login_required
+@staff_required
 def renvoyer_acces(request, agence_id):
     """Regenere un mot de passe et renvoie les acces par mail"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     from django.utils.crypto import get_random_string
     from django.core.mail import send_mail
     from django.conf import settings
@@ -2006,60 +1985,9 @@ def mark_contact_read(request):
 
 
 @login_required
-def mes_inspirations(request):
-    """Portfolio d'inspirations de l'utilisateur (photos favorites groupees par categorie)"""
-    # Favoris photos d'annonces
-    favs_annonce = PhotoFavori.objects.filter(
-        user=request.user, photo__isnull=False
-    ).select_related('photo__annonce').order_by('-created_at')
-
-    # Favoris photos de pros
-    favs_pro = PhotoFavori.objects.filter(
-        user=request.user, photo_pro__isnull=False
-    ).select_related('photo_pro__realisation__pro').order_by('-created_at')
-
-    # Grouper par categorie
-    categories = {}
-    for fav in favs_annonce:
-        cat = fav.photo.inspiration_categorie or 'sans_categorie'
-        cat_label = fav.photo.get_inspiration_categorie_display() if fav.photo.inspiration_categorie else 'Sans categorie'
-        if cat not in categories:
-            categories[cat] = {'label': cat_label, 'photos': []}
-        categories[cat]['photos'].append({
-            'url': fav.photo.url,
-            'reference': fav.photo.annonce.reference,
-            'type': 'annonce',
-            'fav_id': fav.id,
-            'photo_id': fav.photo.id,
-        })
-
-    for fav in favs_pro:
-        cat = 'pro'
-        if cat not in categories:
-            categories[cat] = {'label': 'Realisations Pro', 'photos': []}
-        categories[cat]['photos'].append({
-            'url': fav.photo_pro.url,
-            'pro_name': fav.photo_pro.realisation.pro.nom_entreprise if fav.photo_pro.realisation else '',
-            'type': 'pro',
-            'fav_id': fav.id,
-            'photo_id': fav.photo_pro.id,
-        })
-
-    total_favs = favs_annonce.count() + favs_pro.count()
-
-    context = {
-        'categories': categories,
-        'total_favs': total_favs,
-    }
-    return render(request, 'listings/mes_inspirations.html', context)
-
-
-@login_required
+@staff_required
 def gestion_utilisateurs(request):
     """Liste de tous les utilisateurs avec filtre par role"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     role_filter = request.GET.get('role', '').strip()
 
     users = User.objects.all().prefetch_related('agence').order_by('-date_joined')
@@ -2142,12 +2070,10 @@ def gestion_utilisateurs(request):
 
 
 @login_required
+@staff_required
 @require_POST
 def admin_reset_password(request, user_id):
     """Admin resets a user's password and shows it once"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     from django.utils.crypto import get_random_string
     target_user = get_object_or_404(User, id=user_id)
     new_password = get_random_string(10, 'abcdefghjkmnpqrstuvwxyz23456789')
@@ -2162,12 +2088,10 @@ def admin_reset_password(request, user_id):
 
 
 @login_required
+@staff_required
 @require_POST
 def admin_delete_user(request, user_id):
     """Admin supprime un utilisateur (sauf admin)"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     target_user = get_object_or_404(User, id=user_id)
     if target_user.is_staff:
         messages.error(request, "Impossible de supprimer un administrateur.")
@@ -2181,11 +2105,9 @@ def admin_delete_user(request, user_id):
 
 
 @login_required
+@staff_required
 def export_utilisateurs_csv(request):
     """Export CSV de tous les utilisateurs"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="utilisateurs_social_immo.csv"'
     response.write('\ufeff')  # BOM for Excel
@@ -2446,12 +2368,10 @@ def estimation(request):
 
 
 @login_required
+@staff_required
 @require_POST
 def assigner_estimation(request, estimation_id):
     """Assigner une demande d'estimation a une agence"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     est = get_object_or_404(Estimation, id=estimation_id)
     agence_id = request.POST.get('agence_id')
 
@@ -2497,11 +2417,9 @@ def assigner_estimation(request, estimation_id):
 
 
 @login_required
+@staff_required
 def toggle_mise_en_avant(request, annonce_id):
     """Toggle mise a la une d'une annonce - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     annonce = get_object_or_404(Annonce, id=annonce_id)
     annonce.mise_en_avant = not annonce.mise_en_avant
     annonce.save(update_fields=['mise_en_avant'])
@@ -2517,12 +2435,10 @@ def toggle_mise_en_avant(request, annonce_id):
 
 
 @login_required
+@staff_required
 @require_POST
 def toggle_vedette_agence(request, agence_id):
     """Toggle mise a la une d'une agence sur la homepage - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
     agence.mise_en_avant = not agence.mise_en_avant
     agence.save(update_fields=['mise_en_avant'])
@@ -2537,12 +2453,10 @@ def toggle_vedette_agence(request, agence_id):
 
 
 @login_required
+@staff_required
 @require_POST
 def toggle_vedette_pro(request, pro_id):
     """Toggle mise a la une d'un pro sur la homepage - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     pro = get_object_or_404(ProProfile, id=pro_id)
     pro.mise_en_avant = not pro.mise_en_avant
     pro.save(update_fields=['mise_en_avant'])
@@ -2557,11 +2471,9 @@ def toggle_vedette_pro(request, pro_id):
 
 
 @login_required
+@staff_required
 def gestion_options_pro(request, pro_id):
     """Gestion des options d'un professionnel - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     pro = get_object_or_404(ProProfile, id=pro_id)
 
     if request.method == 'POST':
@@ -2585,12 +2497,10 @@ def gestion_options_pro(request, pro_id):
 
 
 @login_required
+@staff_required
 @require_POST
 def supprimer_commentaire(request, commentaire_id):
     """Suppression d'un commentaire - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     commentaire = get_object_or_404(Commentaire, id=commentaire_id)
     annonce_ref = commentaire.annonce.reference
     commentaire.delete()
@@ -2648,11 +2558,9 @@ def locaux_pro(request):
 
 
 @login_required
+@staff_required
 def gestion_options_agence(request, agence_id):
     """Gestion des options d'une agence - admin uniquement"""
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Acces reserve aux administrateurs.")
-
     agence = get_object_or_404(Agence, id=agence_id)
     options, created = AgenceOptions.objects.get_or_create(agence=agence)
 

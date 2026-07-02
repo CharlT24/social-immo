@@ -36,11 +36,28 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 
 | Phase | Contenu | Statut |
 |-------|---------|--------|
-| 7 | **Prêt pour la prod** : SECRET_KEY/DEBUG sécurisés, nettoyage du repo (.gitignore, db/logs), image Open Graph | 🔄 En cours |
-| 8 | **Moteur de trafic** : alertes email sur recherche sauvegardée (+ CRON), pages SEO par ville avec prix au m², partage des inspirations | ⏳ À venir |
-| 9 | **Boucle particulier ↔ pro** : pros du secteur sur chaque annonce, stats vendeur (vues, favoris, conseil prix vs estimation) | ⏳ À venir |
-| 10 | **Performance** : Tailwind compilé (fin du CDN), miniatures d'images uploadées, carte des résultats (Leaflet) | ⏳ À venir |
-| 11 | **Dette technique** : vraie FK Annonce→Agence, suppression du legacy (Decoration/Partenaire/registration), décorateur staff | ⏳ À venir |
+| 7 | **Prêt pour la prod** : SECRET_KEY obligatoire hors DEBUG, image Open Graph générée | ✅ Terminé |
+| 8 | **Moteur de trafic** : alertes email (CRON `envoyer_alertes`), pages SEO `/immobilier/<ville>/` avec prix au m², partage des inspirations avec OG dédié | ✅ Terminé |
+| 9 | **Boucle particulier ↔ pro** : pros du secteur sur chaque annonce, stats vendeur (vues, favoris, conseil prix vs estimation) | ✅ Terminé |
+| 10 | **Performance** : Tailwind compilé (fin du CDN, 71 Ko de CSS statique), miniatures 480px auto, carte Leaflet des résultats (CRON `geocoder_villes`) | ✅ Terminé |
+| 11 | **Dette technique** : vraie FK Annonce→Agence (migrations 0028/0029), legacy supprimé (Decoration/Partenaire/registration login), décorateur staff sur 22 vues admin | ✅ Terminé |
+
+## ⚙️ CRON à configurer sur o2switch (après déploiement)
+
+```bash
+# Import des flux XML (déjà prévu)
+python manage.py import_xml --all-agences
+# Puis dans l'ordre, à la suite :
+python manage.py geocoder_villes      # géocode les nouvelles villes (carte)
+python manage.py envoyer_alertes      # emails des recherches sauvegardées
+python manage.py generer_miniatures   # miniatures des images uploadées
+```
+
+## 🎨 Rebuild du CSS (si de nouvelles classes Tailwind sont ajoutées)
+
+```bash
+npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/css/app.css --minify
+```
 
 ## 🔮 Plus tard (nécessite plus que o2switch)
 
@@ -57,6 +74,7 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 - **2026-07-02** : Phase 3 terminée — annuaire pros : recherche par corps de métier (chips + select), pros à la une sous la carte de France.
 - **2026-07-02** : Phase 5 terminée — bouton "Pré-visiter" sur chaque annonce : visite immersive plein écran façon story Instagram (effet Ken Burns, lecture auto, swipe mobile, clavier).
 - **2026-07-02** : Phase 6 terminée — **v3 livrée**. 34 pages testées sur les 6 rôles (public, particulier, pro, agence, conseiller, admin), toutes en 200. Pipeline photo validé (4000px → 1920px, luminosité corrigée).
+- **2026-07-02 (v3.1)** : Phases 7 à 11 livrées dans la foulée — sécurisation prod (SECRET_KEY), image Open Graph, **alertes email** sur recherches sauvegardées, **pages SEO par ville** avec prix au m², partage d'inspirations, pros du secteur sur chaque annonce, stats vendeur avec conseil prix, **Tailwind compilé** (fin du CDN), miniatures automatiques, **carte Leaflet** des résultats, vraie FK Annonce→Agence, suppression du legacy et décorateur staff. QA finale : 38 vérifications sur les 6 rôles, zéro échec.
 
 ## ✅ Reprendre le travail sur un autre PC
 

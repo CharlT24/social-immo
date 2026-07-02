@@ -47,6 +47,23 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
 - **Annuaire pros** : filtre par metier (`?metier=peintre`), pros a la une sur la carte
 - **Rollback** : tag `v2-stable` / branche `backup-avant-v3` sur GitHub
 
+## Fonctionnalites v3.1 (2026-07)
+- **Alertes email** : RechercheSauvegardee + CRON `envoyer_alertes` ;
+  bouton "Creer une alerte" sur la recherche, gestion dans /mon-compte/?tab=acquereur
+- **Pages SEO villes** `/immobilier/<slug>/` : prix m2 median, biens, pros du dept, sitemap 'villes'
+- **Partage inspirations** : /inspirations/photo/<type>/<id>/ avec og:image de la photo
+- **Pros du secteur** sur chaque annonce (meme departement) + stats vendeur
+  (vues, favoris, conseil prix vs estimation) dans le dashboard particulier
+- **Tailwind COMPILE** (plus de CDN !) : static/css/app.css commite.
+  IMPORTANT : toute NOUVELLE classe Tailwind exige un rebuild :
+  `npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/css/app.css --minify`
+- **Miniatures** : Photo.image_thumb / ProRealisationPhoto.image_thumb (auto a l'upload,
+  `src_thumb` dans les grilles, CRON `generer_miniatures` pour rattrapage)
+- **Carte des resultats** : Leaflet a la demande, VilleGeo rempli par CRON `geocoder_villes`
+- **FK Annonce.agence** : vraie relation (remplie a l'import) ; `client_reference`
+  reste uniquement la cle texte du flux XML
+- **SECRET_KEY obligatoire** en prod (DEBUG=False) — definir dans .env
+
 ## Modeles
 ### Annonce
 - `reference` (unique, cle d'import) - ex: "CT-00123"

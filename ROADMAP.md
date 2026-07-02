@@ -32,6 +32,16 @@ Un site immobilier d'avenir mêlant **SeLoger + Pinterest + Instagram** :
 | 5 | **Pré-visite immersive** : diaporama plein écran façon story (Ken Burns, barres de progression, swipe) sur chaque annonce | ✅ Terminé |
 | 6 | **QA + docs** : 34 pages testées (tous rôles), documentation à jour | ✅ Terminé |
 
+## 📋 Avancement v3.1 — "Mieux que parfait" (2026-07-02)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 7 | **Prêt pour la prod** : SECRET_KEY/DEBUG sécurisés, nettoyage du repo (.gitignore, db/logs), image Open Graph | 🔄 En cours |
+| 8 | **Moteur de trafic** : alertes email sur recherche sauvegardée (+ CRON), pages SEO par ville avec prix au m², partage des inspirations | ⏳ À venir |
+| 9 | **Boucle particulier ↔ pro** : pros du secteur sur chaque annonce, stats vendeur (vues, favoris, conseil prix vs estimation) | ⏳ À venir |
+| 10 | **Performance** : Tailwind compilé (fin du CDN), miniatures d'images uploadées, carte des résultats (Leaflet) | ⏳ À venir |
+| 11 | **Dette technique** : vraie FK Annonce→Agence, suppression du legacy (Decoration/Partenaire/registration), décorateur staff | ⏳ À venir |
+
 ## 🔮 Plus tard (nécessite plus que o2switch)
 
 - Vraie reconstruction 3D depuis photos (type Matterport) — demande du GPU, à faire via un service externe (Vercel + API, Replicate, etc.)

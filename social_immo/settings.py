@@ -25,11 +25,22 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-95r0d(#m*dw2=*d&%s*=x7z^ifs-we_1y=y%wd9jtm6mcojgje')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# En production (DEBUG=False), SECRET_KEY DOIT venir de l'environnement.
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-cle-de-dev-uniquement'
+    else:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            'SECRET_KEY manquante : definissez-la dans le fichier .env '
+            '(generez-en une avec : python -c "from django.core.management.utils '
+            'import get_random_secret_key; print(get_random_secret_key())")'
+        )
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,192.168.1.135').split(',')
 

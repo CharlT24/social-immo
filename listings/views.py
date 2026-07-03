@@ -2419,6 +2419,24 @@ def aide(request):
     return render(request, 'listings/aide.html')
 
 
+def assetlinks(request):
+    """Digital Asset Links pour l'app Android (TWA). S'active en definissant
+    ANDROID_CERT_SHA256 dans le .env (empreinte de signature Play Console)."""
+    import os as _os
+    sha = _os.environ.get('ANDROID_CERT_SHA256', '').strip()
+    if not sha:
+        from django.http import Http404
+        raise Http404
+    return JsonResponse([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": _os.environ.get('ANDROID_PACKAGE', 'com.socialimmo.app'),
+            "sha256_cert_fingerprints": [sha],
+        },
+    }], safe=False)
+
+
 def tarifs(request):
     """Page des offres : agences, artisans, pack vendeur."""
     from .services import paiements

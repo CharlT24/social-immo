@@ -1,0 +1,23 @@
+{
+  "name": "Social Immo — L'immobilier qui inspire",
+  "short_name": "Social Immo",
+  "description": "Biens immobiliers, inspirations deco et artisans de confiance. Estimation gratuite sur les ventes reelles.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0071E3",
+  "background_color": "#F5F5F7",
+  "categories": ["lifestyle", "shopping", "business"],
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Estimer mon bien", "url": "/estimer/", "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Rechercher un bien", "url": "/recherche/", "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Inspirations", "url": "/inspirations/", "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

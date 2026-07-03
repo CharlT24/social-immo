@@ -1,5 +1,6 @@
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView
 from . import views
 
 app_name = 'listings'
@@ -100,6 +101,10 @@ urlpatterns = [
     path('mon-compte/annonce/<int:annonce_id>/republier/', views.particulier_republier_annonce, name='particulier_republier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/modifier/', views.particulier_modifier_annonce, name='particulier_modifier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/supprimer/', views.particulier_supprimer_annonce, name='particulier_supprimer_annonce'),
+    # PWA / application mobile
+    path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript'), name='sw'),
+    path('offline/', TemplateView.as_view(template_name='listings/offline.html'), name='offline'),
+    path('.well-known/assetlinks.json', views.assetlinks, name='assetlinks'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),

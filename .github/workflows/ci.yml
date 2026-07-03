@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Dependances systeme (mysqlclient)
+        run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
+
+      - name: Dependances Python
+        run: pip install -r requirements.txt
+
+      # SQLite par defaut (pas de DATABASE_URL/MYSQL_HOST) et DEBUG=True
+      # par defaut, donc aucune SECRET_KEY requise.
+      # Cible 'listings' : les scripts de debug test_error.py / test_logo.py
+      # a la racine interrogent la BDD de dev a l'import et casseraient la
+      # decouverte de tests en CI (pas de db.sqlite3 sur le runner).
+      - name: Tests Django
+        run: python manage.py test listings --verbosity 2

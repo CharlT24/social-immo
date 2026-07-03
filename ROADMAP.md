@@ -92,6 +92,17 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/c
 > 🚀 **Pour lancer le site : suis [DEPLOIEMENT.md](DEPLOIEMENT.md)** — .env à copier-coller,
 > 1 seule ligne de CRON (`autopilot`), guide Stripe pas-à-pas, plan de secours crash.
 
+## 📋 Avancement v7 — "Blindage + application mobile" (2026-07-03)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 22 | **Dernier kilomètre** : suppression de compte RGPD, anti-spam (honeypot + rate limiting), vérification email avant publication (activation auto au clic), stats sans cookie dans le dashboard admin | ✅ Terminé |
+| 23 | **Application mobile** : PWA complète (manifest, service worker, icônes, hors-ligne, raccourcis) = l'app iOS/Android avec exactement les mêmes fonctionnalités. Publication : [GUIDE-APP-STORES.md](GUIDE-APP-STORES.md) | ✅ Terminé |
+| 24 | **Audit responsive** complet (tous les templates, mobile 375px) + **suite de tests pérenne** + CI GitHub Actions | 🔄 En cours |
+
+> 📱 Dès la mise en ligne, le site est installable sur téléphone sans store
+> ("Ajouter à l'écran d'accueil"). Google Play : ~1 h via PWABuilder (guide).
+
 ## 📌 Prochaine étape : v4
 
 - Backlog UX complet : [AMELIORATIONS-UX.md](AMELIORATIONS-UX.md) — priorité 1 = le dépôt d'annonce "comme un pro" (assistant 4 étapes, prix suggéré en direct, aperçu, kit de diffusion, rapport hebdo vendeur)

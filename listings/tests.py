@@ -1,3 +1,490 @@
-from django.test import TestCase
+"""
+Suite de tests Social Immo.
 
-# Create your tests here.
+Regle d'or : AUCUN appel reseau. Les chemins qui touchent des APIs externes
+(DVF, geocodage, Stripe, flux XML) sont soit evites (type_bien='terrain',
+avec_dvf=False), soit simules (signature webhook calculee localement).
+"""
+import hashlib
+import hmac
+import json
+import time
+
+from allauth.account.models import EmailAddress
+from allauth.account.signals import email_confirmed
+from django.contrib.auth.models import User
+from django.core import mail
+from django.core.cache import cache
+from django.test import TestCase, override_settings
+from django.utils import timezone
+
+from .models import (
+    Abonnement, Agence, AgenceOptions, Annonce, DemandeContact, Photo,
+    ProProfile, RechercheSauvegardee, StatJour, TicketSupport,
+)
+from .services.estimation import estimer_bien
+
+
+def creer_annonce(reference, **kwargs):
+    """Fabrique une annonce minimale valide."""
+    defaults = {
+        'titre': f'Annonce {reference}',
+        'type_transaction': 'V',
+        'prix': 150000,
+        'ville': 'Caen',
+        'code_postal': '14000',
+        'is_active': True,
+    }
+    defaults.update(kwargs)
+    return Annonce.objects.create(reference=reference, **defaults)
+
+
+class PagesPubliquesTests(TestCase):
+    """Les pages publiques repondent 200 sans authentification."""
+
+    URLS = [
+        '/',
+        '/recherche/',
+        '/inspirations/',
+        '/estimer/',
+        '/pros/',
+        '/devis/',
+        '/barometre/',
+        '/tarifs/',
+        '/aide/',
+        '/agence/inscription/',
+        '/cgu/',
+        '/sitemap.xml',
+    ]
+
+    def setUp(self):
+        cache.clear()
+
+    def test_pages_publiques_200(self):
+        for url in self.URLS:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200, f'{url} -> {response.status_code}')
+
+
+class RolesAccesTests(TestCase):
+    """Controle d'acces : gestion (staff) et mon-compte (login)."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('membre', 'membre@test.fr', 'motdepasse-123')
+        self.staff = User.objects.create_user(
+            'admin', 'admin@test.fr', 'motdepasse-123', is_staff=True
+        )
+
+    def test_gestion_anonyme_redirige_vers_login(self):
+        response = self.client.get('/gestion/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response['Location'])
+
+    def test_gestion_non_staff_403(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/gestion/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_gestion_staff_200(self):
+        self.client.force_login(self.staff)
+        response = self.client.get('/gestion/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_mon_compte_necessite_login(self):
+        response = self.client.get('/mon-compte/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response['Location'])
+
+    def test_mon_compte_connecte_200(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/mon-compte/')
+        self.assertEqual(response.status_code, 200)
+
+
+class ApiEstimerTests(TestCase):
+    """API d'estimation instantanee (type 'terrain' : jamais d'appel DVF)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _estimer(self, **payload):
+        return self.client.post(
+            '/api/estimer/', data=json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_estimation_terrain_ok(self):
+        response = self._estimer(
+            type_bien='terrain', ville='Caen', code_postal='14000', surface=500,
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        for cle in ('prix_estime', 'prix_min', 'prix_max'):
+            self.assertIn(cle, data)
+        self.assertLess(data['prix_min'], data['prix_estime'])
+        self.assertLess(data['prix_estime'], data['prix_max'])
+
+    def test_estimation_sans_surface_400(self):
+        response = self._estimer(type_bien='terrain', ville='Caen', code_postal='14000')
+        self.assertEqual(response.status_code, 400)
+
+    def test_rate_limit_apres_20_appels(self):
+        payload = dict(type_bien='terrain', ville='Caen', code_postal='14000', surface=500)
+        for i in range(20):
+            response = self._estimer(**payload)
+            self.assertEqual(response.status_code, 200, f'appel {i + 1} bloque trop tot')
+        response = self._estimer(**payload)
+        self.assertEqual(response.status_code, 429)
+
+
+class DepotAnnonceParticulierTests(TestCase):
+    """Depot d'annonce particulier : activation conditionnee a l'email verifie."""
+
+    DONNEES = {
+        'titre': 'Maison familiale avec jardin',
+        'texte': 'Belle maison lumineuse.',
+        'libelle_type': 'Maison',
+        'type_transaction': 'V',
+        'prix': '250000',
+        'ville': 'Caen',
+        'code_postal': '14000',
+    }
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('vendeur', 'vendeur@test.fr', 'motdepasse-123')
+        self.client.force_login(self.user)
+
+    def test_depot_sans_email_verifie_annonce_inactive(self):
+        response = self.client.post('/mon-compte/deposer/', self.DONNEES)
+        annonce = Annonce.objects.get(user=self.user)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(f'/mon-compte/annonce/{annonce.id}/publiee/', response['Location'])
+        self.assertFalse(annonce.is_active)
+        self.assertEqual(annonce.source, 'particulier')
+        self.assertEqual(annonce.contact_email, 'vendeur@test.fr')
+
+    def test_depot_avec_email_verifie_annonce_active(self):
+        EmailAddress.objects.create(
+            user=self.user, email=self.user.email, verified=True, primary=True,
+        )
+        response = self.client.post('/mon-compte/deposer/', self.DONNEES)
+        self.assertEqual(response.status_code, 302)
+        annonce = Annonce.objects.get(user=self.user)
+        self.assertTrue(annonce.is_active)
+
+
+class SignalEmailConfirmeTests(TestCase):
+    """Le signal email_confirmed active les annonces recentes en attente."""
+
+    def test_confirmation_active_les_annonces_recentes(self):
+        user = User.objects.create_user('confirme', 'confirme@test.fr', 'motdepasse-123')
+        annonce = creer_annonce(
+            'PART-TEST-1', user=user, source='particulier', is_active=False,
+        )
+        annonce_agence = creer_annonce('AGENCE-TEST-1', is_active=False)
+        email = EmailAddress.objects.create(
+            user=user, email=user.email, verified=True, primary=True,
+        )
+        email_confirmed.send(sender=EmailAddress, request=None, email_address=email)
+        annonce.refresh_from_db()
+        annonce_agence.refresh_from_db()
+        self.assertTrue(annonce.is_active)
+        self.assertFalse(annonce_agence.is_active)  # pas concernee
+
+
+class AlertesRechercheTests(TestCase):
+    """Alertes email : creation via la vue + logique de matching."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('acheteur', 'acheteur@test.fr', 'motdepasse-123')
+
+    def test_creation_alerte_necessite_login(self):
+        response = self.client.post('/alertes/creer/', {'ville': 'Caen', 'type': 'V'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response['Location'])
+        self.assertEqual(RechercheSauvegardee.objects.count(), 0)
+
+    def test_creation_alerte(self):
+        self.client.force_login(self.user)
+        response = self.client.post('/alertes/creer/', {
+            'ville': 'Caen', 'type': 'V', 'prix_max': '200000',
+        })
+        self.assertEqual(response.status_code, 302)
+        alerte = RechercheSauvegardee.objects.get(user=self.user)
+        self.assertEqual(alerte.ville, 'Caen')
+        self.assertEqual(alerte.type_transaction, 'V')
+        self.assertEqual(alerte.prix_max, 200000)
+        self.assertTrue(alerte.is_active)
+
+    def test_correspond_a(self):
+        alerte = RechercheSauvegardee.objects.create(
+            user=self.user, ville='Caen', type_transaction='V', prix_max=200000,
+        )
+        ok = creer_annonce('MATCH-1', ville='Caen', prix=150000)
+        trop_cher = creer_annonce('MATCH-2', ville='Caen', prix=250000)
+        ailleurs = creer_annonce('MATCH-3', ville='Paris', prix=150000)
+        location = creer_annonce('MATCH-4', ville='Caen', prix=650, type_transaction='L')
+        self.assertTrue(alerte.correspond_a(ok))
+        self.assertFalse(alerte.correspond_a(trop_cher))
+        self.assertFalse(alerte.correspond_a(ailleurs))
+        self.assertFalse(alerte.correspond_a(location))
+
+    def test_acheteurs_pour(self):
+        vendeur = User.objects.create_user('proprio', 'proprio@test.fr', 'motdepasse-123')
+        annonce = creer_annonce('VENTE-1', user=vendeur, ville='Caen', prix=180000)
+        autre = User.objects.create_user('acheteur2', 'a2@test.fr', 'motdepasse-123')
+        RechercheSauvegardee.objects.create(
+            user=self.user, ville='Caen', type_transaction='V', prix_max=200000,
+        )
+        RechercheSauvegardee.objects.create(user=autre, ville='Caen')
+        # Alerte du vendeur lui-meme : exclue du comptage
+        RechercheSauvegardee.objects.create(user=vendeur, ville='Caen')
+        # Alerte qui ne matche pas
+        RechercheSauvegardee.objects.create(
+            user=autre, ville='Paris', type_transaction='V',
+        )
+        self.assertEqual(RechercheSauvegardee.acheteurs_pour(annonce), 2)
+
+    def test_annonces_correspondantes(self):
+        alerte = RechercheSauvegardee.objects.create(
+            user=self.user, ville='Caen', type_transaction='V',
+            prix_max=200000, surface_min=50,
+        )
+        ok = creer_annonce('CORR-1', ville='Caen', prix=150000, surface=80)
+        creer_annonce('CORR-2', ville='Caen', prix=150000, surface=30)   # trop petit
+        creer_annonce('CORR-3', ville='Lisieux', prix=150000, surface=80)  # autre ville
+        creer_annonce('CORR-4', ville='Caen', prix=150000, surface=80,
+                      is_active=False)  # inactive
+        resultats = list(alerte.annonces_correspondantes())
+        self.assertEqual(resultats, [ok])
+
+
+class DemandeDevisTests(TestCase):
+    """Devis travaux : 3 pros max, departement respecte, honeypot."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('client', 'client@test.fr', 'motdepasse-123')
+        self.client.force_login(self.user)
+        # 4 plombiers dans le 14, 1 dans le 75
+        for i in range(4):
+            u = User.objects.create_user(f'plombier14-{i}', f'p14-{i}@test.fr', 'x-123456')
+            ProProfile.objects.create(
+                user=u, nom_entreprise=f'Plomberie 14 n{i}', metier='plombier',
+                departement='14', email=u.email, is_active=True,
+            )
+        u75 = User.objects.create_user('plombier75', 'p75@test.fr', 'x-123456')
+        ProProfile.objects.create(
+            user=u75, nom_entreprise='Plomberie Paris', metier='plombier',
+            departement='75', email=u75.email, is_active=True,
+        )
+
+    DONNEES = {
+        'metier': 'plombier',
+        'ville': 'Caen',
+        'code_postal': '14000',
+        'description': 'Remplacement du chauffe-eau.',
+        'telephone': '0601020304',
+    }
+
+    def test_devis_cree_3_demandes_dans_le_departement(self):
+        response = self.client.post('/devis/', self.DONNEES)
+        self.assertEqual(response.status_code, 302)
+        demandes = DemandeContact.objects.filter(expediteur=self.user)
+        self.assertEqual(demandes.count(), 3)
+        for demande in demandes:
+            self.assertEqual(demande.pro.departement, '14')
+
+    def test_devis_honeypot_ne_cree_rien(self):
+        donnees = dict(self.DONNEES, site_web_hp='http://spam.example.com')
+        response = self.client.post('/devis/', donnees)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(DemandeContact.objects.count(), 0)
+
+
+@override_settings(ADMINS=[])
+class SupportTests(TestCase):
+    """Centre d'aide : ticket + accuse de reception, honeypot."""
+
+    def setUp(self):
+        cache.clear()
+
+    DONNEES = {
+        'nom': 'Jean Dupont',
+        'email': 'jean@test.fr',
+        'sujet': 'technique',
+        'message': 'Je ne parviens pas a modifier mon annonce.',
+    }
+
+    def test_ticket_cree_avec_accuse_de_reception(self):
+        response = self.client.post('/aide/', self.DONNEES)
+        self.assertEqual(response.status_code, 302)
+        ticket = TicketSupport.objects.get()
+        self.assertEqual(ticket.email, 'jean@test.fr')
+        self.assertEqual(ticket.sujet, 'technique')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('jean@test.fr', mail.outbox[0].to)
+        self.assertIn(str(ticket.id), mail.outbox[0].subject)
+
+    def test_honeypot_ne_cree_pas_de_ticket(self):
+        donnees = dict(self.DONNEES, site_web_hp='http://spam.example.com')
+        response = self.client.post('/aide/', donnees)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(TicketSupport.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+
+class SuppressionCompteTests(TestCase):
+    """Droit a l'effacement : suppression de compte self-service."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('partant', 'partant@test.fr', 'motdepasse-123')
+        self.annonce = creer_annonce(
+            'PART-DEL-1', user=self.user, source='particulier',
+            contact_email='partant@test.fr', is_active=True,
+        )
+        self.client.force_login(self.user)
+
+    def test_mauvais_mot_de_passe_conserve_le_compte(self):
+        response = self.client.post('/mon-compte/supprimer/', {'password': 'mauvais'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+        self.annonce.refresh_from_db()
+        self.assertTrue(self.annonce.is_active)
+
+    def test_bon_mot_de_passe_supprime_et_purge(self):
+        response = self.client.post('/mon-compte/supprimer/', {'password': 'motdepasse-123'})
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
+        self.annonce.refresh_from_db()
+        self.assertFalse(self.annonce.is_active)
+        self.assertEqual(self.annonce.contact_email, '')
+        self.assertEqual(self.annonce.contact_telephone, '')
+
+
+@override_settings(STRIPE_WEBHOOK_SECRET='whsec_test_secret')
+class StripeWebhookTests(TestCase):
+    """Webhook Stripe : signature HMAC + activation/desactivation des avantages."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('agent', 'agent@test.fr', 'motdepasse-123')
+        self.agence = Agence.objects.create(
+            nom='Agence Test', reference='AGTEST', responsable=self.user,
+        )
+
+    def _signer(self, payload, secret='whsec_test_secret'):
+        t = int(time.time())
+        signature = hmac.new(
+            secret.encode(), f'{t}.'.encode() + payload, hashlib.sha256,
+        ).hexdigest()
+        return f't={t},v1={signature}'
+
+    def _poster(self, event, signature=None):
+        payload = json.dumps(event).encode()
+        extra = {}
+        if signature is not False:
+            extra['HTTP_STRIPE_SIGNATURE'] = signature or self._signer(payload)
+        return self.client.post(
+            '/stripe/webhook/', data=payload,
+            content_type='application/json', **extra,
+        )
+
+    def _event_checkout(self):
+        return {
+            'type': 'checkout.session.completed',
+            'data': {'object': {
+                'metadata': {'type_abonnement': 'agence', 'user_id': str(self.user.id)},
+                'subscription': 'sub_test_123',
+                'customer': 'cus_test_123',
+            }},
+        }
+
+    def test_sans_signature_400(self):
+        response = self._poster(self._event_checkout(), signature=False)
+        self.assertEqual(response.status_code, 400)
+
+    def test_signature_invalide_400(self):
+        response = self._poster(
+            self._event_checkout(), signature=f't={int(time.time())},v1=deadbeef',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_checkout_complete_active_abonnement_et_badge(self):
+        response = self._poster(self._event_checkout())
+        self.assertEqual(response.status_code, 200)
+        abo = Abonnement.objects.get(user=self.user)
+        self.assertEqual(abo.statut, 'actif')
+        self.assertEqual(abo.type_abonnement, 'agence')
+        self.assertEqual(abo.stripe_subscription_id, 'sub_test_123')
+        options = AgenceOptions.objects.get(agence=self.agence)
+        self.assertTrue(options.badge_premium)
+
+    def test_subscription_deleted_resilie_et_retire_le_badge(self):
+        self._poster(self._event_checkout())
+        response = self._poster({
+            'type': 'customer.subscription.deleted',
+            'data': {'object': {'id': 'sub_test_123'}},
+        })
+        self.assertEqual(response.status_code, 200)
+        abo = Abonnement.objects.get(user=self.user)
+        self.assertEqual(abo.statut, 'resilie')
+        options = AgenceOptions.objects.get(agence=self.agence)
+        self.assertFalse(options.badge_premium)
+
+
+class EstimationServiceTests(TestCase):
+    """Moteur d'estimation local (avec_dvf=False : aucun appel reseau)."""
+
+    def test_estimer_maison_ville_inconnue(self):
+        resultat = estimer_bien(
+            'maison', 'VilleInconnue', '14000', 100, avec_dvf=False,
+        )
+        self.assertIsNotNone(resultat)
+        self.assertIn(resultat['zone'], ('ville', 'departement', 'bareme'))
+        self.assertLess(resultat['prix_min'], resultat['prix_estime'])
+        self.assertLess(resultat['prix_estime'], resultat['prix_max'])
+        self.assertGreater(resultat['prix_m2'], 0)
+
+    def test_estimer_sans_surface_retourne_none(self):
+        self.assertIsNone(estimer_bien('maison', 'Caen', '14000', None, avec_dvf=False))
+        self.assertIsNone(estimer_bien('maison', 'Caen', '14000', 0, avec_dvf=False))
+
+    def test_estimer_avec_comparables_ville(self):
+        for i in range(10):
+            creer_annonce(
+                f'COMP-{i}', libelle_type='Maison', ville='Caen',
+                prix=200000 + i * 5000, surface=100,
+            )
+        resultat = estimer_bien('maison', 'Caen', '14000', 100, avec_dvf=False)
+        self.assertEqual(resultat['zone'], 'ville')
+        self.assertEqual(resultat['nb_comparables'], 10)
+
+
+class ModelesTests(TestCase):
+    """Petites logiques de modeles : formats, fallbacks, compteurs."""
+
+    def test_prix_format(self):
+        annonce = creer_annonce('FMT-1', prix=500000)
+        self.assertEqual(annonce.prix_format, '500 000 €')
+
+    def test_photo_src_thumb_fallback_url(self):
+        annonce = creer_annonce('PHOTO-1')
+        photo = Photo.objects.create(
+            annonce=annonce, url='https://exemple.fr/photo.jpg', ordre=1,
+        )
+        self.assertEqual(photo.src_thumb, 'https://exemple.fr/photo.jpg')
+        self.assertEqual(photo.src, 'https://exemple.fr/photo.jpg')
+
+    def test_statjour_incrementer(self):
+        StatJour.incrementer('estimations')
+        StatJour.incrementer('estimations')
+        StatJour.incrementer('visites')
+        stat = StatJour.objects.get(date=timezone.localdate())
+        self.assertEqual(stat.estimations, 2)
+        self.assertEqual(stat.visites, 1)

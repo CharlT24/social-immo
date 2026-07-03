@@ -406,6 +406,22 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Zone danger : suppression de compte (RGPD) -->
+            <div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-red-100">
+                <h3 class="text-sm font-bold text-red-600 mb-2">Supprimer mon compte</h3>
+                <p class="text-xs text-gray-500 mb-4">Vos annonces seront retirees et vos donnees personnelles supprimees definitivement (droit a l'effacement). Cette action est irreversible.</p>
+                <form method="post" action="{% url 'listings:supprimer_mon_compte' %}"
+                      onsubmit="return confirm('Supprimer definitivement votre compte et vos donnees ?')"
+                      class="flex flex-col sm:flex-row gap-3">
+                    {% csrf_token %}
+                    <input type="password" name="password" required placeholder="Votre mot de passe pour confirmer"
+                           class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <button type="submit" class="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 px-5 py-2.5 rounded-xl transition-colors">
+                        Supprimer definitivement
+                    </button>
+                </form>
+            </div>
         </div>
         {% endif %}
 

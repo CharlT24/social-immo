@@ -80,6 +80,7 @@ urlpatterns = [
     # Inscription agence self-service + aide
     path('agence/inscription/', views.agence_inscription, name='agence_inscription'),
     path('aide/', views.aide, name='aide'),
+    path('mon-compte/supprimer/', views.supprimer_mon_compte, name='supprimer_mon_compte'),
     # Paiements Stripe
     path('tarifs/', views.tarifs, name='tarifs'),
     path('abonnement/souscrire/<str:type_abonnement>/', views.souscrire, name='souscrire'),

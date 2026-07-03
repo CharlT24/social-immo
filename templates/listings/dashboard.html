@@ -20,6 +20,44 @@
         </a>
     </div>
 
+    <!-- Audience (compteurs sans cookie) -->
+    {% if stats_jours %}
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-8 overflow-x-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-apple-text">Audience — 7 derniers jours</h2>
+            {% if tickets_ouverts %}
+            <span class="text-xs font-bold text-white bg-red-500 px-3 py-1 rounded-full">{{ tickets_ouverts }} ticket{{ tickets_ouverts|pluralize }} support a traiter</span>
+            {% endif %}
+        </div>
+        <table class="w-full text-sm min-w-[560px]">
+            <thead>
+                <tr class="text-left text-xs text-apple-gray border-b border-gray-100">
+                    <th class="pb-2 font-medium">Jour</th>
+                    <th class="pb-2 font-medium">Visites</th>
+                    <th class="pb-2 font-medium">Estimations</th>
+                    <th class="pb-2 font-medium">Depots</th>
+                    <th class="pb-2 font-medium">Alertes</th>
+                    <th class="pb-2 font-medium">Devis</th>
+                    <th class="pb-2 font-medium">Inscriptions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in stats_jours %}
+                <tr class="border-b border-gray-50">
+                    <td class="py-2 font-medium">{{ s.date|date:"D d/m" }}</td>
+                    <td class="py-2">{{ s.visites }}</td>
+                    <td class="py-2">{{ s.estimations }}</td>
+                    <td class="py-2">{{ s.depots_annonces }}</td>
+                    <td class="py-2">{{ s.alertes_creees }}</td>
+                    <td class="py-2">{{ s.demandes_devis }}</td>
+                    <td class="py-2">{{ s.inscriptions }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
     <!-- Messages Flash -->
     {% if messages %}
     <div class="mb-8 space-y-3">

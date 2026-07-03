@@ -1033,3 +1033,34 @@ class TicketSupport(models.Model):
 
     def __str__(self):
         return f"[{self.get_sujet_display()}] {self.nom} ({self.created_at:%d/%m/%Y})"
+
+
+class StatJour(models.Model):
+    """Compteurs quotidiens sans cookie (pilotage du site)."""
+
+    date = models.DateField(unique=True)
+    visites = models.PositiveIntegerField(default=0)
+    estimations = models.PositiveIntegerField(default=0)
+    depots_annonces = models.PositiveIntegerField(default=0)
+    alertes_creees = models.PositiveIntegerField(default=0)
+    demandes_devis = models.PositiveIntegerField(default=0)
+    inscriptions = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = 'Statistiques du jour'
+        verbose_name_plural = 'Statistiques quotidiennes'
+
+    def __str__(self):
+        return f"{self.date} : {self.visites} visites"
+
+    @classmethod
+    def incrementer(cls, champ):
+        """Incremente un compteur du jour de maniere atomique et silencieuse."""
+        from django.db.models import F
+        from django.utils import timezone
+        try:
+            obj, _ = cls.objects.get_or_create(date=timezone.localdate())
+            cls.objects.filter(pk=obj.pk).update(**{champ: F(champ) + 1})
+        except Exception:
+            pass  # la stat ne doit jamais casser une requete

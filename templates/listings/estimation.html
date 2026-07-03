@@ -132,6 +132,7 @@
     <form id="etape-contact" method="post" class="hidden bg-white rounded-3xl shadow-apple p-8">
         {% csrf_token %}
         <input type="hidden" name="type_bien" id="h-type">
+        <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true"><label>Ne pas remplir<input type="text" name="site_web_hp" tabindex="-1" autocomplete="off"></label></div>
         <input type="hidden" name="ville" id="h-ville">
         <input type="hidden" name="code_postal" id="h-cp">
         <input type="hidden" name="surface" id="h-surface">

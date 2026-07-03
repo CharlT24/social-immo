@@ -440,6 +440,11 @@ def dashboard(request):
         'total_estimations_en_attente': total_estimations_en_attente,
         'agences_actives': agences_actives,
     }
+
+    # Audience des 7 derniers jours (compteurs sans cookie)
+    from .models import StatJour, TicketSupport
+    context['stats_jours'] = list(StatJour.objects.all()[:7])
+    context['tickets_ouverts'] = TicketSupport.objects.filter(is_traite=False).count()
     return render(request, 'listings/dashboard.html', context)
 
 
@@ -2205,6 +2210,8 @@ def sauvegarder_recherche(request):
         created = True
 
     if created:
+        from .models import StatJour
+        StatJour.incrementer('alertes_creees')
         messages.success(request, 'Alerte creee ! Vous recevrez les nouveaux biens par email.')
     else:
         messages.info(request, 'Vous avez deja une alerte identique.')
@@ -2223,12 +2230,58 @@ def supprimer_recherche(request, recherche_id):
     return redirect('/mon-compte/?tab=acquereur')
 
 
+@login_required
+@require_POST
+def supprimer_mon_compte(request):
+    """Suppression de compte self-service (droit a l'effacement RGPD).
+    Purge les donnees personnelles, desactive ce qui doit survivre."""
+    if not request.user.check_password(request.POST.get('password', '')):
+        messages.error(request, 'Mot de passe incorrect — compte non supprime.')
+        return redirect('/mon-compte/?tab=profil')
+
+    user = request.user
+    # Annonces particulieres : retirees + coordonnees purgees
+    Annonce.objects.filter(user=user, source='particulier').update(
+        is_active=False, contact_nom='', contact_email='', contact_telephone='',
+    )
+    # Agence dont il est responsable : desactivee (les annonces suivront au
+    # prochain autopilot faute de flux actif)
+    Agence.objects.filter(responsable=user).update(is_active=False)
+    # ProProfile, favoris, alertes, demandes : supprimes par cascade
+    from django.contrib.auth import logout
+    email = user.email
+    logout(request)
+    user.delete()
+
+    # Confirmation par email (derniere communication)
+    if email:
+        try:
+            send_mail(
+                subject='[Social Immo] Votre compte a ete supprime',
+                message=('Bonjour,\n\nVotre compte Social Immo et vos donnees personnelles '
+                         'ont bien ete supprimes, conformement a votre demande.\n\n'
+                         'Merci d\'avoir utilise Social Immo — vous serez toujours '
+                         'le bienvenu.\n\nL\'equipe Social Immo'),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+    messages.success(request, 'Votre compte et vos donnees ont ete supprimes. A bientot peut-etre !')
+    return redirect('listings:homepage')
+
+
 def agence_inscription(request):
     """Inscription agence 100% self-service : compte + agence + flux XML,
     sans intervention admin."""
     import re as _re
+    from .services.protection import trop_de_requetes, est_un_bot
 
     if request.method == 'POST':
+        if est_un_bot(request) or trop_de_requetes(request, 'inscription_agence', 5, 3600):
+            messages.error(request, 'Trop de tentatives — reessayez dans une heure.')
+            return redirect('listings:agence_inscription')
         nom = (request.POST.get('nom') or '').strip()
         email = (request.POST.get('email') or '').strip().lower()
         password1 = request.POST.get('password1') or ''
@@ -2299,6 +2352,8 @@ def agence_inscription(request):
                 )
             except Exception:
                 pass
+            from .models import StatJour
+            StatJour.incrementer('inscriptions')
             messages.success(request, f'Bienvenue {nom} ! Votre espace agence est pret.')
             return redirect('listings:agence_dashboard')
 
@@ -2308,8 +2363,12 @@ def agence_inscription(request):
 def aide(request):
     """Centre d'aide : FAQ auto-reponse + formulaire support (SAV)."""
     from .models import TicketSupport
+    from .services.protection import trop_de_requetes, est_un_bot
 
     if request.method == 'POST':
+        if est_un_bot(request) or trop_de_requetes(request, 'aide', 5, 3600):
+            messages.success(request, 'Demande envoyee — vous recevez un accuse de reception par email.')
+            return redirect('listings:aide')
         nom = (request.POST.get('nom') or '').strip()
         email = (request.POST.get('email') or '').strip()
         sujet = request.POST.get('sujet') or 'autre'
@@ -2521,11 +2580,15 @@ def barometre(request):
 
 def demande_devis(request):
     """Demande de devis travaux : 3 pros du secteur rappellent."""
+    from .services.protection import trop_de_requetes, est_un_bot
     metier_choices = ProProfile.METIER_CHOICES
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
             return redirect(f"/accounts/login/?next={request.path}")
+        if est_un_bot(request) or trop_de_requetes(request, 'devis', 5, 3600):
+            messages.success(request, 'Votre demande a ete envoyee !')
+            return redirect('listings:demande_devis')
         metier = request.POST.get('metier', '')
         ville = (request.POST.get('ville') or '').strip()
         code_postal = (request.POST.get('code_postal') or '').strip()
@@ -2575,6 +2638,8 @@ def demande_devis(request):
                             )
                         except Exception:
                             pass
+                from .models import StatJour
+                StatJour.incrementer('demandes_devis')
                 messages.success(
                     request,
                     f'Votre demande a ete envoyee a {len(pros)} professionnel{"s" if len(pros) > 1 else ""} — vous serez rappele(e) rapidement !'
@@ -2678,6 +2743,9 @@ def inspiration_partage(request, photo_type, photo_id):
 def api_estimer(request):
     """Estimation instantanee (moteur maison par comparables). JSON."""
     from .services.estimation import estimer_bien
+    from .services.protection import trop_de_requetes
+    if trop_de_requetes(request, 'estimer', maximum=20, fenetre_secondes=3600):
+        return JsonResponse({'error': 'Trop de demandes — reessayez dans une heure.'}, status=429)
     try:
         data = json.loads(request.body or '{}')
     except json.JSONDecodeError:
@@ -2692,12 +2760,18 @@ def api_estimer(request):
     )
     if resultat is None:
         return JsonResponse({'error': 'Surface requise pour estimer le bien'}, status=400)
+    from .models import StatJour
+    StatJour.incrementer('estimations')
     return JsonResponse(resultat)
 
 
 def estimation(request):
     """Estimation instantanee + demande d'estimation affinee par un pro"""
     if request.method == 'POST':
+        from .services.protection import trop_de_requetes, est_un_bot
+        if est_un_bot(request) or trop_de_requetes(request, 'lead_estimation', 10, 3600):
+            messages.success(request, 'Votre demande d\'estimation a bien ete envoyee !')
+            return redirect('listings:estimation')
         est = Estimation.objects.create(
             type_bien=request.POST.get('type_bien', 'autre'),
             ville=request.POST.get('ville', ''),
@@ -3387,6 +3461,9 @@ def _creer_photo_annonce(annonce, photo_file, ordre, ameliorer=False):
 def api_suggerer_annonce(request):
     """Assistant redaction : suggestions de titres et description. JSON."""
     from .services.redaction import suggerer_titres, suggerer_description
+    from .services.protection import trop_de_requetes
+    if trop_de_requetes(request, 'suggerer', maximum=30, fenetre_secondes=3600):
+        return JsonResponse({'error': 'Trop de demandes — reessayez dans une heure.'}, status=429)
     try:
         data = json.loads(request.body or '{}')
     except json.JSONDecodeError:
@@ -3420,12 +3497,19 @@ def particulier_creer_annonce(request):
     if request.method == 'POST':
         form = ParticulierAnnonceForm(request.POST)
         if form.is_valid():
+            # Email verifie ? Sinon l'annonce attend la confirmation
+            from allauth.account.models import EmailAddress
+            email_verifie = EmailAddress.objects.filter(
+                user=request.user, verified=True
+            ).exists()
+
             annonce = form.save(commit=False)
             annonce.user = request.user
             annonce.source = 'particulier'
             annonce.reference = f"PART-{request.user.id}-{uuid.uuid4().hex[:8].upper()}"
             annonce.contact_nom = request.user.get_full_name() or request.user.username
             annonce.contact_email = request.user.email
+            annonce.is_active = email_verifie
             annonce.save()
 
             # Upload photos (max 5), avec amelioration auto en option
@@ -3434,6 +3518,20 @@ def particulier_creer_annonce(request):
             for i, photo_file in enumerate(photos[:5]):
                 _creer_photo_annonce(annonce, photo_file, i + 1, ameliorer)
 
+            from .models import StatJour
+            StatJour.incrementer('depots_annonces')
+
+            if not email_verifie:
+                # Envoi (ou renvoi) du lien de confirmation ; l'annonce
+                # s'activera automatiquement a la confirmation (signal)
+                try:
+                    from allauth.account.utils import send_email_confirmation
+                    send_email_confirmation(request, request.user)
+                except Exception:
+                    pass
+                messages.info(request,
+                              'Derniere etape : confirmez votre email (lien envoye a '
+                              f'{request.user.email}) et votre annonce passera en ligne automatiquement.')
             return redirect('listings:annonce_publiee', annonce_id=annonce.id)
     else:
         form = ParticulierAnnonceForm()

@@ -85,6 +85,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'listings.middleware.StatsMiddleware',
 ]
 
 ROOT_URLCONF = 'social_immo.urls'

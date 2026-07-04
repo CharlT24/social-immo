@@ -159,7 +159,7 @@
             </h2>
 
             {% if photos_existantes %}
-            <div class="grid grid-cols-5 gap-3 mb-6">
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
                 {% for photo in photos_existantes %}
                 <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
                     {% if photo.image %}
@@ -187,7 +187,7 @@
                 <p class="text-sm text-gray-500 font-medium">+ Ajouter des photos ({{ photos_existantes.count }}/5)</p>
                 <input type="file" id="photo-input" name="photos" multiple accept="image/*" class="hidden" onchange="previewPhotos(this, {{ photos_existantes.count }})">
             </div>
-            <div id="photo-preview" class="grid grid-cols-5 gap-3 mt-4 hidden"></div>
+            <div id="photo-preview" class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4 hidden"></div>
             {% endif %}
         </div>
 

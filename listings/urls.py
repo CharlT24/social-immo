@@ -82,6 +82,7 @@ urlpatterns = [
     path('agence/inscription/', views.agence_inscription, name='agence_inscription'),
     path('aide/', views.aide, name='aide'),
     path('mon-compte/supprimer/', views.supprimer_mon_compte, name='supprimer_mon_compte'),
+    path('mon-compte/exporter/', views.exporter_mes_donnees, name='exporter_mes_donnees'),
     # Paiements Stripe
     path('tarifs/', views.tarifs, name='tarifs'),
     path('abonnement/souscrire/<str:type_abonnement>/', views.souscrire, name='souscrire'),

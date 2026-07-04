@@ -147,10 +147,21 @@ def search_results(request):
     chambres_max = request.GET.get('chambres_max', '').strip()
     dpe_list = request.GET.getlist('dpe')
     tri = request.GET.get('tri', 'date').strip()
+    rayon = request.GET.get('rayon', '').strip()
 
     # Appliquer les filtres
+    rayon_applique = None
     if ville:
-        annonces = annonces.filter(ville__icontains=ville)
+        villes_rayon = None
+        if rayon.isdigit() and int(rayon) > 0:
+            from .models import VilleGeo
+            villes_rayon = VilleGeo.villes_dans_rayon(ville, int(rayon))
+        if villes_rayon:
+            # Recherche elargie aux communes du rayon (villes geocodees)
+            annonces = annonces.filter(ville__in=villes_rayon)
+            rayon_applique = int(rayon)
+        else:
+            annonces = annonces.filter(ville__icontains=ville)
 
     valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
     if type_transaction in valid_types:
@@ -254,6 +265,8 @@ def search_results(request):
         'seuil_nouveau': seuil_nouveau,
         # Valeurs actuelles des filtres
         'current_ville': ville,
+        'current_rayon': rayon,
+        'rayon_applique': rayon_applique,
         'current_type': type_transaction,
         'current_prix_min': prix_min,
         'current_prix_max': prix_max,
@@ -2230,6 +2243,61 @@ def supprimer_recherche(request, recherche_id):
     alerte.save(update_fields=['is_active'])
     messages.success(request, 'Alerte supprimee.')
     return redirect('/mon-compte/?tab=acquereur')
+
+
+@login_required
+def exporter_mes_donnees(request):
+    """Export RGPD : télécharge toutes les données personnelles de l'utilisateur
+    en JSON (droit à la portabilité)."""
+    from .models import (Favori, RechercheSauvegardee, DemandeContact,
+                         PhotoFavori, Abonnement, UserProfile)
+    u = request.user
+
+    def _annonce_dict(a):
+        return {
+            'reference': a.reference, 'titre': a.titre, 'ville': a.ville,
+            'code_postal': a.code_postal, 'prix': float(a.prix or 0),
+            'type_transaction': a.type_transaction, 'surface': float(a.surface or 0),
+            'is_active': a.is_active, 'nb_vues': a.nb_vues,
+            'cree_le': a.created_at.isoformat(),
+        }
+
+    profil = getattr(u, 'profile', None)
+    donnees = {
+        'export_genere_le': timezone.now().isoformat(),
+        'compte': {
+            'identifiant': u.username, 'email': u.email,
+            'prenom': u.first_name, 'nom': u.last_name,
+            'inscrit_le': u.date_joined.isoformat(),
+            'derniere_connexion': u.last_login.isoformat() if u.last_login else None,
+        },
+        'profil': {
+            'telephone': profil.telephone if profil else '',
+            'ville': profil.ville if profil else '',
+            'code_postal': profil.code_postal if profil else '',
+        },
+        'mes_annonces': [_annonce_dict(a) for a in Annonce.objects.filter(user=u)],
+        'mes_favoris': [
+            {'reference': f.annonce.reference, 'titre': f.annonce.titre, 'ajoute_le': f.created_at.isoformat()}
+            for f in Favori.objects.filter(user=u).select_related('annonce')
+        ],
+        'mes_alertes': [
+            {'criteres': a.resume(), 'creee_le': a.created_at.isoformat(), 'active': a.is_active}
+            for a in RechercheSauvegardee.objects.filter(user=u)
+        ],
+        'mes_inspirations_enregistrees': PhotoFavori.objects.filter(user=u).count(),
+        'mes_demandes_contact': [
+            {'message': d.message[:500], 'envoye_le': d.created_at.isoformat()}
+            for d in DemandeContact.objects.filter(expediteur=u)
+        ],
+        'mes_abonnements': [
+            {'type': a.get_type_abonnement_display(), 'statut': a.statut, 'depuis': a.created_at.isoformat()}
+            for a in Abonnement.objects.filter(user=u)
+        ],
+    }
+    reponse = JsonResponse(donnees, json_dumps_params={'ensure_ascii': False, 'indent': 2})
+    reponse['Content-Disposition'] = f'attachment; filename="mes-donnees-social-immo-{u.username}.json"'
+    return reponse
 
 
 @login_required

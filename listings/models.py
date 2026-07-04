@@ -948,6 +948,36 @@ class VilleGeo(models.Model):
     def __str__(self):
         return f"{self.ville} ({self.code_postal})"
 
+    @classmethod
+    def villes_dans_rayon(cls, ville, rayon_km):
+        """Retourne la liste des noms de villes situees a moins de `rayon_km`
+        du centre `ville`. Pre-filtre par boite englobante (rapide, indexe)
+        puis distance haversine exacte. Retourne None si la ville centre
+        n'est pas geocodee."""
+        import math
+        centre = cls.objects.filter(ville__iexact=(ville or '').strip()).first()
+        if not centre:
+            return None
+        # Boite englobante approximative pour pre-filtrer en SQL
+        dlat = rayon_km / 111.0
+        dlon = rayon_km / (111.0 * max(math.cos(math.radians(centre.latitude)), 0.01))
+        candidats = cls.objects.filter(
+            latitude__gte=centre.latitude - dlat, latitude__lte=centre.latitude + dlat,
+            longitude__gte=centre.longitude - dlon, longitude__lte=centre.longitude + dlon,
+        )
+        proches = []
+        for v in candidats:
+            # Haversine
+            r = 6371.0
+            p1, p2 = math.radians(centre.latitude), math.radians(v.latitude)
+            dp = math.radians(v.latitude - centre.latitude)
+            dl = math.radians(v.longitude - centre.longitude)
+            a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+            dist = r * 2 * math.asin(math.sqrt(a))
+            if dist <= rayon_km:
+                proches.append(v.ville)
+        return proches
+
 
 class CommuneDVF(models.Model):
     """Cache du geocodage INSEE + fraicheur des donnees DVF d'une commune."""

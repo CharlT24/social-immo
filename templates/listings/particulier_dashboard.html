@@ -407,6 +407,15 @@
                 </form>
             </div>
 
+            <!-- Export RGPD -->
+            <div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-800 mb-2">Mes donnees</h3>
+                <p class="text-xs text-gray-500 mb-4">Telechargez l'ensemble de vos donnees personnelles (compte, annonces, favoris, alertes) au format JSON — droit a la portabilite.</p>
+                <a href="{% url 'listings:exporter_mes_donnees' %}" class="inline-block text-sm font-semibold text-apple-blue bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-colors">
+                    Telecharger mes donnees
+                </a>
+            </div>
+
             <!-- Zone danger : suppression de compte (RGPD) -->
             <div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-red-100">
                 <h3 class="text-sm font-bold text-red-600 mb-2">Supprimer mon compte</h3>

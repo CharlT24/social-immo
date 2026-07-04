@@ -495,3 +495,50 @@ class ModelesTests(TestCase):
         stat = StatJour.objects.get(date=timezone.localdate())
         self.assertEqual(stat.estimations, 2)
         self.assertEqual(stat.visites, 1)
+
+
+class RayonRgpdTests(TestCase):
+    """Recherche par rayon geographique + export/suppression RGPD."""
+
+    def setUp(self):
+        cache.clear()
+        from .models import VilleGeo
+        VilleGeo.objects.create(ville='Caen', code_postal='14000', latitude=49.1829, longitude=-0.3707)
+        VilleGeo.objects.create(ville='Herouville', code_postal='14200', latitude=49.2050, longitude=-0.3280)
+        VilleGeo.objects.create(ville='Bayeux', code_postal='14400', latitude=49.2764, longitude=-0.7024)
+
+    def test_villes_dans_rayon(self):
+        from .models import VilleGeo
+        proches = VilleGeo.villes_dans_rayon('Caen', 10)
+        self.assertIn('Caen', proches)
+        self.assertIn('Herouville', proches)
+        self.assertNotIn('Bayeux', proches)  # ~27 km
+        self.assertIn('Bayeux', VilleGeo.villes_dans_rayon('Caen', 30))
+        self.assertIsNone(VilleGeo.villes_dans_rayon('VilleInconnue', 10))
+
+    def test_recherche_rayon_elargit(self):
+        creer_annonce('R-CAEN', ville='Caen', code_postal='14000')
+        creer_annonce('R-HERO', ville='Herouville', code_postal='14200')
+        creer_annonce('R-BAY', ville='Bayeux', code_postal='14400')
+        resp = self.client.get('/recherche/?ville=Caen&rayon=10')
+        self.assertContains(resp, 'Annonce R-CAEN')
+        self.assertContains(resp, 'Annonce R-HERO')
+        self.assertNotContains(resp, 'Annonce R-BAY')
+
+    def test_export_donnees_json(self):
+        u = User.objects.create_user('exp', 'exp@t.fr', 'x', first_name='Jean')
+        creer_annonce('EXP-A', user=u, source='particulier')
+        RechercheSauvegardee.objects.create(user=u, ville='Caen', type_transaction='V')
+        self.client.force_login(u)
+        resp = self.client.get('/mon-compte/exporter/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('attachment', resp['Content-Disposition'])
+        data = json.loads(b''.join(resp.streaming_content) if hasattr(resp, 'streaming_content') else resp.content)
+        self.assertEqual(data['compte']['email'], 'exp@t.fr')
+        self.assertEqual(len(data['mes_annonces']), 1)
+        self.assertEqual(len(data['mes_alertes']), 1)
+
+    def test_health_endpoint(self):
+        resp = self.client.get('/health/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['status'], 'ok')

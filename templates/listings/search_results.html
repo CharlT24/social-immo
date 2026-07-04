@@ -26,6 +26,19 @@
                 <ul id="serp-suggestions" role="listbox" class="hidden absolute z-50 left-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto w-64"></ul>
             </div>
 
+            <!-- Rayon pill (autour de la ville) -->
+            <div class="flex-shrink-0">
+                <select name="rayon" onchange="this.form.submit()" title="Rayon autour de la ville"
+                        class="px-3 py-2 text-sm font-medium border {% if current_rayon %}border-apple-blue bg-blue-50 text-apple-blue{% else %}border-gray-200 bg-white text-apple-text{% endif %} rounded-full focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer transition-all">
+                    <option value="">Rayon</option>
+                    <option value="5" {% if current_rayon == '5' %}selected{% endif %}>+ 5 km</option>
+                    <option value="10" {% if current_rayon == '10' %}selected{% endif %}>+ 10 km</option>
+                    <option value="20" {% if current_rayon == '20' %}selected{% endif %}>+ 20 km</option>
+                    <option value="30" {% if current_rayon == '30' %}selected{% endif %}>+ 30 km</option>
+                    <option value="50" {% if current_rayon == '50' %}selected{% endif %}>+ 50 km</option>
+                </select>
+            </div>
+
             <!-- Type pill -->
             <div class="flex-shrink-0">
                 <select name="type" onchange="this.form.submit()"
@@ -356,7 +369,7 @@
     {% if annonces_page and annonces_page.paginator.num_pages > 1 %}
     <div class="flex items-center justify-center gap-2 mt-10">
         {% if annonces_page.has_previous %}
-        <a href="?page={{ annonces_page.previous_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+        <a href="?page={{ annonces_page.previous_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}{% if current_rayon %}&rayon={{ current_rayon }}{% endif %}"
            class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">
             &larr; Precedent
         </a>
@@ -367,14 +380,14 @@
                 {% if annonces_page.number == num %}
                 <span class="w-10 h-10 flex items-center justify-center bg-apple-blue text-white text-sm font-bold rounded-xl">{{ num }}</span>
                 {% elif num > annonces_page.number|add:"-3" and num < annonces_page.number|add:"3" %}
-                <a href="?page={{ num }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+                <a href="?page={{ num }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}{% if current_rayon %}&rayon={{ current_rayon }}{% endif %}"
                    class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">{{ num }}</a>
                 {% endif %}
             {% endfor %}
         </div>
 
         {% if annonces_page.has_next %}
-        <a href="?page={{ annonces_page.next_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}"
+        <a href="?page={{ annonces_page.next_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}{% if current_rayon %}&rayon={{ current_rayon }}{% endif %}"
            class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">
             Suivant &rarr;
         </a>

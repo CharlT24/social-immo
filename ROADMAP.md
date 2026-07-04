@@ -79,6 +79,7 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/c
 | 18 | **Panneau "À VENDRE" A4** imprimable avec QR code (celebration + dashboard) + section homepage "Vendez comme un pro. Gratuitement." + kit copier-coller | ✅ Terminé |
 
 - 📋 Kit de prospection prêt à copier-coller : [LEADS-COPIER-COLLER.md](LEADS-COPIER-COLLER.md)
+- 🔨 Kit recrutement artisans (spécial Travaux.com/Houzz, 100% légal) : [RECRUTER-ARTISANS.md](RECRUTER-ARTISANS.md)
 - 💰 Plan 1 M€ : [MONETISATION.md](MONETISATION.md)
 
 ## 📋 Avancement v6 — "Full autonome" (2026-07-02)

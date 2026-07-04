@@ -11,6 +11,10 @@
 > acheteurs en alerte, panneau à imprimer avec QR code. Et pour les
 > travaux, 3 artisans du coin te rappellent avec un devis."
 
+> 🔨 **Recruter les artisans en profondeur** (ceux déjà sur Travaux.com/Houzz,
+> scripts d'appel, aimant devis, séquence 2 semaines) : voir le kit dédié
+> **[RECRUTER-ARTISANS.md](RECRUTER-ARTISANS.md)**.
+
 ## 💬 Messages LinkedIn pour recruter des ARTISANS (5/jour)
 
 **Version courte (invitation) :**

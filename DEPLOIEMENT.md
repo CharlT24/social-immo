@@ -56,6 +56,7 @@ STRIPE_PRICE_PACK=
 
 ```bash
 python manage.py migrate
+python manage.py createcachetable      # table de cache partagé (rate-limiting, verrous)
 python manage.py collectstatic --noinput
 python manage.py createsuperuser
 ```
@@ -103,8 +104,10 @@ L'autopilot fait TOUT, chaque jour :
 ## 6. Surveillance externe (5 min, gratuit)
 
 Crée un compte **uptimerobot.com** (gratuit) → "Add Monitor" →
-`https://social-immo.com/` toutes les 5 min → alerte sur ton email/téléphone
-si le site tombe. C'est le seul cas où tu interviens.
+**`https://social-immo.com/health/`** toutes les 5 min → alerte sur ton
+email/téléphone si le site tombe. Cet endpoint vérifie la base **et** le
+cache et renvoie un statut JSON (503 si la base est KO) — plus fiable que
+surveiller la page d'accueil. C'est le seul cas où tu interviens.
 
 ## 7. En cas de crash — le plan de secours
 

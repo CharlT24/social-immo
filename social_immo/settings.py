@@ -274,3 +274,16 @@ STRIPE_PRICE_PACK = os.environ.get('STRIPE_PRICE_PACK', '')
 _admin_email = os.environ.get('ADMIN_EMAIL', '')
 ADMINS = [('Admin', _admin_email)] if _admin_email else []
 SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+
+
+# ===== Cache partage entre workers (rate-limiting, verrous DVF, blocs caches) =====
+# DatabaseCache : sans dependance, compatible o2switch, partage entre process
+# (contrairement a LocMemCache qui est par-worker). Table creee par
+# `python manage.py createcachetable` (inclus dans autopilot au 1er run).
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'socialimmo_cache',
+        'TIMEOUT': 300,
+    }
+}

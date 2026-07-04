@@ -68,6 +68,9 @@ class Command(BaseCommand):
         # 4. Miniatures
         etape('Miniatures', lambda: self._capture(call_command, 'generer_miniatures'))
 
+        # 4b. Pre-chauffage DVF (communes demandees + communes des annonces)
+        etape('Pre-chauffage DVF', self._prechauffer_dvf)
+
         # 5. Expiration des annonces particuliers
         etape('Expiration annonces particuliers', lambda: self._expirer_annonces(site))
 
@@ -145,6 +148,44 @@ class Command(BaseCommand):
                 except Exception:
                     pass
         return f'{n} annonce(s) mise(s) en pause'
+
+    def _prechauffer_dvf(self):
+        """Telecharge les ventes DVF des communes les plus utiles pour que
+        l'estimation web soit instantanee (elle ne sert que le cache)."""
+        from django.core.cache import cache
+        from listings.models import Annonce
+        from listings.services.dvf import rafraichir_commune
+
+        # 1. Assurer l'existence de la table de cache (idempotent)
+        try:
+            call_command('createcachetable', verbosity=0)
+        except Exception:
+            pass
+
+        communes = []
+        # Communes explicitement demandees par des visiteurs (non cachees)
+        try:
+            for cle in cache.get('dvf:a_rechauffer', []):
+                ville, _, cp = cle.partition('|')
+                if ville:
+                    communes.append((ville, cp))
+            cache.delete('dvf:a_rechauffer')
+        except Exception:
+            pass
+        # + communes des annonces actives (vente, maison/appart)
+        for ville, cp in (Annonce.objects.filter(is_active=True, type_transaction='V')
+                          .exclude(ville='').values_list('ville', 'code_postal').distinct()[:200]):
+            if (ville, cp or '') not in communes:
+                communes.append((ville, cp or ''))
+
+        n = 0
+        for ville, cp in communes[:250]:
+            try:
+                if rafraichir_commune(ville, cp, autoriser_telechargement=True):
+                    n += 1
+            except Exception:
+                continue
+        return f'{n} commune(s) rafraichie(s)'
 
     def _expirer_boosts(self):
         """Retire la mise en avant des Pack Vendeur arrives a terme."""

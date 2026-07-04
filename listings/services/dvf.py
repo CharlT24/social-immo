@@ -90,58 +90,85 @@ def _iter_ventes_csv(code_insee, annee):
             }
 
 
-def rafraichir_commune(ville, code_postal):
-    """Retourne la CommuneDVF a jour (fetch si cache absent ou perime)."""
+def rafraichir_commune(ville, code_postal, autoriser_telechargement=True):
+    """Retourne la CommuneDVF a jour.
+
+    autoriser_telechargement=False (contexte web) : ne telecharge JAMAIS,
+    renvoie la commune si elle est deja en cache (meme perimee), sinon None.
+    Le telechargement est reserve a l'autopilot (hors requete web) et
+    protege par un verrou single-flight pour eviter le thundering herd.
+    """
+    from django.core.cache import cache
     from listings.models import CommuneDVF, VenteDVF
+
+    if not autoriser_telechargement:
+        # Web : AUCUN appel reseau. On retrouve la commune deja connue par
+        # ville + code postal (sinon None -> l'estimation retombe sur bareme).
+        qs = CommuneDVF.objects.filter(nb_ventes__gt=0)
+        if code_postal:
+            qs = qs.filter(code_postal=code_postal)
+        return qs.filter(ville__iexact=(ville or '').strip()).first()
 
     code_insee, nom = _code_insee(ville, code_postal)
     if not code_insee:
         return None
 
-    commune, _ = CommuneDVF.objects.get_or_create(
-        code_insee=code_insee,
-        defaults={'ville': nom or ville, 'code_postal': code_postal or ''},
-    )
-    if commune.derniere_maj and commune.derniere_maj > timezone.now() - timedelta(days=CACHE_JOURS):
+    commune = CommuneDVF.objects.filter(code_insee=code_insee).first()
+    frais = commune and commune.derniere_maj and \
+        commune.derniere_maj > timezone.now() - timedelta(days=CACHE_JOURS)
+    if frais:
         return commune
 
-    annee_max = date.today().year
-    ventes = []
-    for annee in range(annee_max, annee_max - 4, -1):
-        try:
-            ventes.extend(_iter_ventes_csv(code_insee, annee))
-        except Exception:
-            continue
-        # 120 ventes suffisent statistiquement : on ne telecharge pas plus
-        # de millesimes que necessaire (latence du premier appel)
-        if len(ventes) >= 120:
-            break
+    # Verrou single-flight : un seul worker telecharge une commune a la fois
+    lock = f'dvf:lock:{code_insee}'
+    if not cache.add(lock, 1, 180):
+        return commune  # un autre process s'en charge deja
 
-    if ventes:
-        ventes.sort(key=lambda v: v['date_mutation'], reverse=True)
-        ventes = ventes[:MAX_VENTES_STOCKEES]
-        VenteDVF.objects.filter(commune=commune).delete()
-        VenteDVF.objects.bulk_create([
-            VenteDVF(commune=commune, **v) for v in ventes
-        ])
-    commune.derniere_maj = timezone.now()
-    commune.nb_ventes = len(ventes)
-    commune.save(update_fields=['derniere_maj', 'nb_ventes'])
-    return commune
+    try:
+        if commune is None:
+            commune, _ = CommuneDVF.objects.get_or_create(
+                code_insee=code_insee,
+                defaults={'ville': nom or ville, 'code_postal': code_postal or ''},
+            )
+        annee_max = date.today().year
+        ventes = []
+        for annee in range(annee_max, annee_max - 4, -1):
+            try:
+                ventes.extend(_iter_ventes_csv(code_insee, annee))
+            except Exception:
+                continue
+            if len(ventes) >= 120:
+                break
+
+        if ventes:
+            ventes.sort(key=lambda v: v['date_mutation'], reverse=True)
+            ventes = ventes[:MAX_VENTES_STOCKEES]
+            VenteDVF.objects.filter(commune=commune).delete()
+            VenteDVF.objects.bulk_create([
+                VenteDVF(commune=commune, **v) for v in ventes
+            ])
+        commune.derniere_maj = timezone.now()
+        commune.nb_ventes = len(ventes)
+        commune.save(update_fields=['derniere_maj', 'nb_ventes'])
+        return commune
+    finally:
+        cache.delete(lock)
 
 
-def ventes_comparables(ville, code_postal, type_bien, surface=None):
+def ventes_comparables(ville, code_postal, type_bien, surface=None,
+                       autoriser_telechargement=True):
     """Retourne (liste de VenteDVF comparables, nb total de ventes du type).
 
     Comparables = meme commune, meme type, surface a +/-30% si fournie,
-    les plus recentes d'abord.
+    les plus recentes d'abord. En contexte web, passer
+    autoriser_telechargement=False (sert uniquement le cache).
     """
     from listings.models import VenteDVF
 
     if type_bien not in ('maison', 'appartement'):
         return [], 0
 
-    commune = rafraichir_commune(ville, code_postal)
+    commune = rafraichir_commune(ville, code_postal, autoriser_telechargement)
     if not commune:
         return [], 0
 

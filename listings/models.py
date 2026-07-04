@@ -130,6 +130,13 @@ class Annonce(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Annonce'
         verbose_name_plural = 'Annonces'
+        indexes = [
+            # Recherche/listes : filtres les plus frequents
+            models.Index(fields=['is_active', 'type_transaction']),
+            models.Index(fields=['is_active', 'mise_en_avant']),
+            models.Index(fields=['is_active', 'ville']),
+            models.Index(fields=['prix']),
+        ]
 
     def __str__(self):
         return f"{self.reference} - {self.titre[:50]}"
@@ -899,11 +906,27 @@ class RechercheSauvegardee(models.Model):
     @classmethod
     def acheteurs_pour(cls, annonce):
         """Nombre d'acheteurs (users distincts) dont une alerte active
-        correspond a cette annonce — l'effet wow du vendeur."""
+        correspond a cette annonce — l'effet wow du vendeur.
+
+        Les criteres numeriques/type sont filtres en base (ils reduisent
+        drastiquement l'ensemble) ; la regle ville (sous-chaine) est
+        verifiee en Python sur le petit ensemble restant."""
+        from django.db.models import Q
+        prix = float(annonce.prix or 0)
+        surface = float(annonce.surface or 0)
+        pieces = annonce.nb_pieces or 0
+
+        qs = (cls.objects.filter(is_active=True).exclude(user=annonce.user_id)
+              .filter(Q(type_transaction='') | Q(type_transaction=annonce.type_transaction))
+              .filter(Q(prix_min__isnull=True) | Q(prix_min__lte=prix))
+              .filter(Q(prix_max__isnull=True) | Q(prix_max__gte=prix))
+              .filter(Q(surface_min__isnull=True) | Q(surface_min__lte=surface))
+              .filter(Q(pieces_min__isnull=True) | Q(pieces_min__lte=pieces)))
+        ville_annonce = (annonce.ville or '').lower()
         users = set()
-        for alerte in cls.objects.filter(is_active=True).exclude(user=annonce.user_id):
-            if alerte.correspond_a(annonce):
-                users.add(alerte.user_id)
+        for ville_alerte, user_id in qs.values_list('ville', 'user_id'):
+            if not ville_alerte or ville_alerte.lower() in ville_annonce:
+                users.add(user_id)
         return len(users)
 
 
@@ -989,6 +1012,7 @@ class Abonnement(models.Model):
     statut = models.CharField(max_length=10, choices=STATUT_CHOICES, default='actif')
     stripe_customer_id = models.CharField(max_length=100, blank=True, default='')
     stripe_subscription_id = models.CharField(max_length=100, blank=True, default='')
+    checkout_session_id = models.CharField(max_length=120, blank=True, default='', db_index=True)
     annonce = models.ForeignKey(
         Annonce, null=True, blank=True, on_delete=models.SET_NULL,
         related_name='boosts', help_text='Annonce boostee (pack vendeur)'

@@ -399,6 +399,7 @@ class StripeWebhookTests(TestCase):
         return {
             'type': 'checkout.session.completed',
             'data': {'object': {
+                'id': 'cs_test_123',  # Stripe envoie toujours l'id de session
                 'metadata': {'type_abonnement': 'agence', 'user_id': str(self.user.id)},
                 'subscription': 'sub_test_123',
                 'customer': 'cus_test_123',
@@ -424,6 +425,12 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(abo.stripe_subscription_id, 'sub_test_123')
         options = AgenceOptions.objects.get(agence=self.agence)
         self.assertTrue(options.badge_premium)
+
+    def test_checkout_idempotent_pas_de_doublon(self):
+        # Rejouer le meme event (Stripe reessaie) ne cree pas de 2e abonnement
+        self._poster(self._event_checkout())
+        self._poster(self._event_checkout())
+        self.assertEqual(Abonnement.objects.filter(user=self.user).count(), 1)
 
     def test_subscription_deleted_resilie_et_retire_le_badge(self):
         self._poster(self._event_checkout())

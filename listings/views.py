@@ -2015,7 +2015,9 @@ def gestion_utilisateurs(request):
         role_label = 'Client'
         pro = pro_profiles.get(u.id)
         conseiller = conseiller_profiles.get(u.id)
-        agence = u.agence.first() if u.agence.exists() else None
+        # Utilise le cache prefetch_related('agence') (pas de requete par user)
+        agences_u = list(u.agence.all())
+        agence = agences_u[0] if agences_u else None
 
         if u.is_staff:
             role = 'admin'
@@ -2419,6 +2421,27 @@ def aide(request):
     return render(request, 'listings/aide.html')
 
 
+def health(request):
+    """Endpoint de sante pour le monitoring (UptimeRobot, o2switch).
+    Verifie la base et le cache. 200 si OK, 503 sinon."""
+    etat = {'status': 'ok', 'db': False, 'cache': False}
+    try:
+        from django.db import connection
+        with connection.cursor() as c:
+            c.execute('SELECT 1')
+            etat['db'] = c.fetchone()[0] == 1
+    except Exception:
+        etat['status'] = 'degraded'
+    try:
+        from django.core.cache import cache
+        cache.set('health:ping', 1, 10)
+        etat['cache'] = cache.get('health:ping') == 1
+    except Exception:
+        etat['status'] = 'degraded'
+    code = 200 if etat['db'] else 503
+    return JsonResponse(etat, status=code)
+
+
 def assetlinks(request):
     """Digital Asset Links pour l'app Android (TWA). S'active en definissant
     ANDROID_CERT_SHA256 dans le .env (empreinte de signature Play Console)."""
@@ -2528,22 +2551,24 @@ def stripe_webhook(request):
         meta = objet.get('metadata', {}) or {}
         user_id = meta.get('user_id') or objet.get('client_reference_id')
         type_abo = meta.get('type_abonnement', '')
-        if user_id and type_abo:
+        # Idempotence : la session Stripe a un id unique ; le meme event
+        # rejoue (Stripe reessaie) ne doit pas creer de doublon ni re-booster.
+        session_id = objet.get('id', '')
+        if user_id and type_abo and session_id:
             try:
                 user = User.objects.get(id=int(user_id))
             except (User.DoesNotExist, ValueError):
                 return HttpResponse(status=200)
-            abo, _ = Abonnement.objects.get_or_create(
+            if Abonnement.objects.filter(checkout_session_id=session_id).exists():
+                return HttpResponse(status=200)  # deja traite
+            abo = Abonnement.objects.create(
                 user=user, type_abonnement=type_abo,
                 stripe_subscription_id=objet.get('subscription') or '',
-                defaults={
-                    'stripe_customer_id': objet.get('customer') or '',
-                    'annonce_id': int(meta['annonce_id']) if meta.get('annonce_id') else None,
-                },
+                stripe_customer_id=objet.get('customer') or '',
+                checkout_session_id=session_id,
+                annonce_id=int(meta['annonce_id']) if meta.get('annonce_id') else None,
+                statut='actif',
             )
-            abo.statut = 'actif'
-            abo.stripe_customer_id = objet.get('customer') or abo.stripe_customer_id
-            abo.save()
             paiements.activer_avantages(abo)
 
     elif type_event in ('customer.subscription.deleted', 'customer.subscription.paused'):
@@ -2567,7 +2592,14 @@ def barometre(request):
     """Barometre public des prix : medianes par commune depuis les ventes
     reelles DVF deja en cache (alimente au fil des estimations)."""
     from statistics import median
+    from django.core.cache import cache
     from .models import CommuneDVF
+
+    # Les ventes DVF ne changent qu'au refresh (90j) : cache 1h suffit et
+    # evite de recalculer toutes les medianes a chaque visite.
+    cached = cache.get('barometre:stats')
+    if cached is not None:
+        return render(request, 'listings/barometre.html', {'communes_stats': cached})
 
     communes_stats = []
     for commune in CommuneDVF.objects.filter(nb_ventes__gt=0).order_by('ville'):
@@ -2591,6 +2623,7 @@ def barometre(request):
         if 'maison_m2' in stats or 'appart_m2' in stats:
             communes_stats.append(stats)
 
+    cache.set('barometre:stats', communes_stats, 3600)
     return render(request, 'listings/barometre.html', {
         'communes_stats': communes_stats,
     })
@@ -2769,15 +2802,34 @@ def api_estimer(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Requete invalide'}, status=400)
 
+    ville = data.get('ville') or ''
+    code_postal = data.get('code_postal') or ''
+    type_bien = data.get('type_bien') or 'autre'
+
     resultat = estimer_bien(
-        type_bien=data.get('type_bien') or 'autre',
-        ville=data.get('ville') or '',
-        code_postal=data.get('code_postal') or '',
+        type_bien=type_bien,
+        ville=ville,
+        code_postal=code_postal,
         surface=data.get('surface'),
         nb_pieces=data.get('nb_pieces') or None,
+        dvf_telechargement=False,  # web : cache seul, jamais de fetch bloquant
     )
     if resultat is None:
         return JsonResponse({'error': 'Surface requise pour estimer le bien'}, status=400)
+
+    # Si l'estimation n'a pas pu s'appuyer sur DVF (commune pas encore en
+    # cache), on la note pour rechauffage nocturne par l'autopilot.
+    if resultat.get('zone') != 'dvf' and type_bien in ('maison', 'appartement') and ville:
+        try:
+            from django.core.cache import cache
+            a_chauffer = cache.get('dvf:a_rechauffer', [])
+            cle = f'{ville}|{code_postal}'
+            if cle not in a_chauffer:
+                a_chauffer.append(cle)
+                cache.set('dvf:a_rechauffer', a_chauffer[-500:], 60 * 60 * 48)
+        except Exception:
+            pass
+
     from .models import StatJour
     StatJour.incrementer('estimations')
     return JsonResponse(resultat)
@@ -3380,7 +3432,9 @@ def particulier_dashboard(request):
             if a.type_transaction == 'V' and a.prix and a.surface:
                 type_bien = 'maison' if 'maison' in (a.libelle_type or '').lower() else (
                     'appartement' if 'appart' in (a.libelle_type or '').lower() else 'autre')
-                est = estimer_bien(type_bien, a.ville, a.code_postal, float(a.surface), a.nb_pieces)
+                # avec_dvf=False : le conseil-prix se contente des comparables/bareme
+                # (pas de telechargement DVF synchrone qui bloquerait le worker)
+                est = estimer_bien(type_bien, a.ville, a.code_postal, float(a.surface), a.nb_pieces, avec_dvf=False)
                 if est:
                     ecart = (float(a.prix) - est['prix_estime']) / est['prix_estime'] * 100
                     a.estimation_secteur = est

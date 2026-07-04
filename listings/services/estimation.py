@@ -98,7 +98,8 @@ def _prix_m2_liste(qs, limit=200):
     return valeurs
 
 
-def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None, avec_dvf=True):
+def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None,
+                 avec_dvf=True, dvf_telechargement=True):
     """Retourne un dict d'estimation, ou None si surface manquante.
 
     Cles : prix_estime, prix_min, prix_max, prix_m2, nb_comparables,
@@ -121,7 +122,9 @@ def estimer_bien(type_bien, ville, code_postal, surface, nb_pieces=None, avec_dv
     if avec_dvf and type_bien in ('maison', 'appartement') and ville:
         try:
             from .dvf import ventes_comparables
-            ventes, _total = ventes_comparables(ville, code_postal, type_bien, surface)
+            ventes, _total = ventes_comparables(
+                ville, code_postal, type_bien, surface,
+                autoriser_telechargement=dvf_telechargement)
         except Exception:
             ventes = []
         if len(ventes) >= 5:

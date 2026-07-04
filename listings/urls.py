@@ -101,6 +101,8 @@ urlpatterns = [
     path('mon-compte/annonce/<int:annonce_id>/republier/', views.particulier_republier_annonce, name='particulier_republier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/modifier/', views.particulier_modifier_annonce, name='particulier_modifier_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/supprimer/', views.particulier_supprimer_annonce, name='particulier_supprimer_annonce'),
+    # Monitoring
+    path('health/', views.health, name='health'),
     # PWA / application mobile
     path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript'), name='sw'),
     path('offline/', TemplateView.as_view(template_name='listings/offline.html'), name='offline'),

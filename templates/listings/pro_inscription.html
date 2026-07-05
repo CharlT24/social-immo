@@ -325,6 +325,29 @@
                     {% endif %}
                 </div>
 
+                <!-- Confiance : SIRET + Google -->
+                <div class="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100 space-y-4">
+                    <p class="text-sm font-semibold text-emerald-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Obtenez le badge "Verifie"
+                    </p>
+                    <p class="text-xs text-emerald-700">Votre SIRET est verifie automatiquement au registre officiel des entreprises. Les pros verifies inspirent confiance et sont prioritaires sur les demandes de devis.</p>
+                    <div>
+                        <label for="id_siret" class="block text-sm font-medium text-apple-text mb-2">SIRET <span class="text-apple-gray font-normal">(recommande)</span></label>
+                        <input type="text" name="siret" id="id_siret" value="{{ form.siret.value|default:'' }}" inputmode="numeric"
+                               class="w-full px-4 py-3.5 bg-white border border-emerald-100 rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                               placeholder="14 chiffres">
+                        {% if form.siret.errors %}<p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.siret.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="id_google_business_url" class="block text-sm font-medium text-apple-text mb-2">Lien Google <span class="text-apple-gray font-normal">(fiche / avis, optionnel)</span></label>
+                        <input type="url" name="google_business_url" id="id_google_business_url" value="{{ form.google_business_url.value|default:'' }}"
+                               class="w-full px-4 py-3.5 bg-white border border-emerald-100 rounded-xl text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                               placeholder="https://g.page/... ou votre lien Google Maps">
+                        {% if form.google_business_url.errors %}<p class="text-red-500 text-xs mt-1.5 ml-1">{{ form.google_business_url.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+
                 <!-- Submit -->
                 <button type="submit"
                         class="w-full bg-purple-600 text-white font-semibold py-4 px-6 rounded-xl hover:bg-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-purple-500/25">

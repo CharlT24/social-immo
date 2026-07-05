@@ -542,3 +542,42 @@ class RayonRgpdTests(TestCase):
         resp = self.client.get('/health/')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['status'], 'ok')
+
+
+class VerificationProTests(TestCase):
+    """Verification SIRET anti-escroquerie (API mockee, zero reseau)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_siret_valide_badge_verifie(self):
+        from unittest.mock import patch
+        faux_resultat = {'valide': True, 'actif': True, 'nom': 'PEINTURE SARL',
+                         'activite': '43.34Z', 'ville': 'CAEN', 'siret': '12345678900011'}
+        with patch('listings.services.verification.verifier_siret', return_value=faux_resultat):
+            resp = self.client.post('/pro/inscription/', {
+                'email': 'v@t.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+                'nom_entreprise': 'Peinture', 'metier': 'peintre', 'code_postal': '14000',
+                'siret': '12345678900011',
+            }, follow=True)
+        pro = ProProfile.objects.get(user__email='v@t.fr')
+        self.assertTrue(pro.siret_verifie)
+        self.assertEqual(pro.nom_officiel, 'PEINTURE SARL')
+
+    def test_siret_introuvable_pas_de_badge(self):
+        from unittest.mock import patch
+        faux_resultat = {'valide': False, 'actif': False, 'raison': 'introuvable'}
+        with patch('listings.services.verification.verifier_siret', return_value=faux_resultat):
+            self.client.post('/pro/inscription/', {
+                'email': 'f@t.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+                'nom_entreprise': 'Faux', 'metier': 'plombier', 'code_postal': '75001',
+                'siret': '00000000000000',
+            }, follow=True)
+        pro = ProProfile.objects.get(user__email='f@t.fr')
+        self.assertTrue(pro.is_active)      # le profil reste actif
+        self.assertFalse(pro.siret_verifie)  # mais sans badge
+
+    def test_nettoyer_siret(self):
+        from .services.verification import nettoyer_siret
+        self.assertEqual(nettoyer_siret('356 000 000'), '356000000')
+        self.assertEqual(nettoyer_siret('123-456/789'), '123456789')

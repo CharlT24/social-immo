@@ -71,6 +71,10 @@ class Command(BaseCommand):
         # 4b. Pre-chauffage DVF (communes demandees + communes des annonces)
         etape('Pre-chauffage DVF', self._prechauffer_dvf)
 
+        # 4c. Re-verification des SIRET pros (badges Verifie a jour)
+        etape('Verification SIRET pros', lambda: self._capture(
+            call_command, 'reverifier_siret'))
+
         # 5. Expiration des annonces particuliers
         etape('Expiration annonces particuliers', lambda: self._expirer_annonces(site))
 

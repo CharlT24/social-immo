@@ -76,6 +76,8 @@ L'autopilot fait TOUT, chaque jour :
 - géocode les nouvelles villes (carte)
 - envoie les alertes email aux acheteurs
 - génère les miniatures manquantes
+- pré-chauffe les données de prix DVF (estimation instantanée)
+- re-vérifie les SIRET des pros au registre officiel (badge "Vérifié" à jour)
 - met en pause les annonces particuliers de +60 jours (email de relance
   automatique, bouton "Republier" dans leur compte)
 - expire les boosts Pack Vendeur terminés

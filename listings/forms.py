@@ -169,6 +169,16 @@ class ProInscriptionForm(forms.Form):
         widget=forms.URLInput(attrs={'class': PRO_INPUT, 'placeholder': 'https://www.monsite.fr'}),
         label='Site web'
     )
+    siret = forms.CharField(
+        max_length=20, required=False,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT, 'placeholder': '14 chiffres — pour obtenir le badge Verifie'}),
+        label='SIRET'
+    )
+    google_business_url = forms.URLField(
+        required=False,
+        widget=forms.URLInput(attrs={'class': PRO_INPUT, 'placeholder': 'https://g.page/... ou lien Google Maps'}),
+        label='Lien Google (fiche / avis)'
+    )
 
     def clean_email(self):
         from django.contrib.auth.models import User

@@ -1514,7 +1514,7 @@ def pro_inscription(request):
             )
 
             cp = form.cleaned_data.get('code_postal', '')
-            ProProfile.objects.create(
+            pro = ProProfile.objects.create(
                 user=user,
                 nom_entreprise=form.cleaned_data['nom_entreprise'],
                 metier=form.cleaned_data['metier'],
@@ -1524,8 +1524,24 @@ def pro_inscription(request):
                 code_postal=cp,
                 departement=cp[:2] if len(cp) >= 2 else '',
                 site_web=form.cleaned_data.get('site_web', ''),
+                siret=form.cleaned_data.get('siret', ''),
+                google_business_url=form.cleaned_data.get('google_business_url', ''),
                 email=form.cleaned_data['email'],
             )
+
+            # Verification anti-escroquerie du SIRET (registre officiel)
+            if pro.siret:
+                try:
+                    from .services.verification import appliquer_verification
+                    resultat = appliquer_verification(pro)
+                    if resultat and pro.siret_verifie:
+                        messages.success(request, f'Entreprise verifiee : {pro.nom_officiel} ✓')
+                    elif resultat and resultat.get('valide') and not resultat.get('actif'):
+                        messages.warning(request, 'Ce SIRET correspond a une entreprise cessee — verifiez-le dans vos parametres.')
+                    elif resultat and not resultat.get('valide'):
+                        messages.warning(request, 'SIRET introuvable au registre : votre profil reste actif mais sans badge Verifie.')
+                except Exception:
+                    pass
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('listings:pro_dashboard')
@@ -2720,12 +2736,12 @@ def demande_devis(request):
             dept = code_postal[:2]
             pros = list(ProProfile.objects.filter(
                 is_active=True, metier=metier, departement=dept
-            ).order_by('-mise_en_avant')[:3])
+            ).order_by('-siret_verifie', '-mise_en_avant')[:3])
             if not pros:
                 # Elargir au national plutot que perdre la demande
                 pros = list(ProProfile.objects.filter(
                     is_active=True, metier=metier
-                ).order_by('-mise_en_avant')[:3])
+                ).order_by('-siret_verifie', '-mise_en_avant')[:3])
 
             if not pros:
                 messages.error(request, "Aucun professionnel de ce metier n'est encore inscrit. Reessayez bientot !")

@@ -1045,7 +1045,7 @@ class Abonnement(models.Model):
     statut = models.CharField(max_length=10, choices=STATUT_CHOICES, default='actif')
     stripe_customer_id = models.CharField(max_length=100, blank=True, default='')
     stripe_subscription_id = models.CharField(max_length=100, blank=True, default='')
-    checkout_session_id = models.CharField(max_length=120, blank=True, default='', db_index=True)
+    checkout_session_id = models.CharField(max_length=120, blank=True, null=True, default=None, unique=True)
     annonce = models.ForeignKey(
         Annonce, null=True, blank=True, on_delete=models.SET_NULL,
         related_name='boosts', help_text='Annonce boostee (pack vendeur)'

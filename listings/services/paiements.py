@@ -83,6 +83,22 @@ def portail_facturation(customer_id, return_url):
     return session.get('url')
 
 
+def annuler_abonnement(subscription_id):
+    """Annule un abonnement Stripe (best effort). Utilise notamment a la
+    suppression de compte pour ne plus prelever l'utilisateur."""
+    if not (actif() and subscription_id):
+        return False
+    try:
+        r = requests.delete(
+            f'{API}/subscriptions/{subscription_id}',
+            auth=(settings.STRIPE_SECRET_KEY, ''),
+            timeout=TIMEOUT,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def verifier_webhook(payload, sig_header, tolerance=300):
     """Verifie la signature Stripe-Signature (HMAC-SHA256). Retourne bool."""
     secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')

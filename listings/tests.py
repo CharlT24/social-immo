@@ -581,3 +581,74 @@ class VerificationProTests(TestCase):
         from .services.verification import nettoyer_siret
         self.assertEqual(nettoyer_siret('356 000 000'), '356000000')
         self.assertEqual(nettoyer_siret('123-456/789'), '123456789')
+
+
+class SecuriteTests(TestCase):
+    """Durcissements de securite (upload, SIRET, anti-bot)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_upload_rejette_non_image(self):
+        from listings.services.photos import valider_et_reencoder, ImageInvalide
+        import io
+        faux = io.BytesIO(b'<html><script>alert(1)</script></html>')
+        with self.assertRaises(ImageInvalide):
+            valider_et_reencoder(faux)
+
+    def test_upload_reencode_en_jpeg(self):
+        from listings.services.photos import valider_et_reencoder
+        from PIL import Image
+        import io
+        img = Image.new('RGB', (2400, 1800), (100, 120, 140))
+        b = io.BytesIO(); img.save(b, format='PNG'); b.seek(0)
+        result = Image.open(valider_et_reencoder(b))
+        self.assertEqual(result.format, 'JPEG')
+        self.assertLessEqual(max(result.size), 1920)
+
+    def test_siret_badge_refuse_si_nom_different(self):
+        from unittest.mock import patch
+        # SIRET valide/actif mais nom officiel != nom declare (usurpation)
+        faux = {'valide': True, 'actif': True, 'nom': 'FONCIA', 'siret': '12345678900011'}
+        with patch('listings.services.verification.verifier_siret', return_value=faux):
+            self.client.post('/pro/inscription/', {
+                'email': 'escroc@t.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+                'nom_entreprise': 'Depann Express', 'metier': 'plombier', 'code_postal': '75001',
+                'siret': '12345678900011',
+            }, follow=True)
+        pro = ProProfile.objects.get(user__email='escroc@t.fr')
+        self.assertFalse(pro.siret_verifie)  # pas de badge : noms differents
+
+    def test_pro_inscription_username_unique(self):
+        # Deux emails avec la meme partie locale ne provoquent pas de 500
+        from unittest.mock import patch
+        with patch('listings.services.verification.verifier_siret', return_value=None):
+            r1 = self.client.post('/pro/inscription/', {
+                'email': 'contact@a.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+                'nom_entreprise': 'Pro A', 'metier': 'peintre', 'code_postal': '14000',
+            }, follow=True)
+            cache.clear()
+            self.client.logout()
+            r2 = self.client.post('/pro/inscription/', {
+                'email': 'contact@b.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+                'nom_entreprise': 'Pro B', 'metier': 'macon', 'code_postal': '69001',
+            }, follow=True)
+        self.assertEqual(ProProfile.objects.filter(nom_entreprise__in=['Pro A', 'Pro B']).count(), 2)
+
+    def test_honeypot_bloque_inscription_pro(self):
+        self.client.post('/pro/inscription/', {
+            'email': 'bot@t.fr', 'password1': 'motdepasse123', 'password2': 'motdepasse123',
+            'nom_entreprise': 'Bot', 'metier': 'peintre', 'code_postal': '14000',
+            'site_web_hp': 'http://spam.com',
+        }, follow=True)
+        self.assertFalse(ProProfile.objects.filter(user__email='bot@t.fr').exists())
+
+    def test_import_sanitize_champs_trop_longs(self):
+        from listings.management.commands.import_xml import Command
+        data = Command()._sanitize({
+            'titre': 'X' * 400, 'dpe_etiquette_conso': 'N/A',
+            'code_postal': '14000 CEDEX 9',
+        })
+        self.assertEqual(len(data['titre']), 255)
+        self.assertEqual(data['dpe_etiquette_conso'], '')
+        self.assertLessEqual(len(data['code_postal']), 10)

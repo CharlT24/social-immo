@@ -55,17 +55,51 @@ def verifier_siret(siret):
     }
 
 
+def _normaliser(nom):
+    """Normalise un nom d'entreprise pour comparaison (minuscules, sans
+    accents, sans ponctuation, sans formes juridiques courantes)."""
+    import re
+    import unicodedata
+    n = unicodedata.normalize('NFKD', nom or '').encode('ascii', 'ignore').decode()
+    n = n.lower()
+    for forme in (' sarl', ' sas', ' sasu', ' eurl', ' sa ', ' ei ', ' eirl',
+                  ' sci', ' snc', 'entreprise ', 'monsieur ', 'madame ', ' m '):
+        n = n.replace(forme, ' ')
+    n = re.sub(r'[^a-z0-9]', '', n)
+    return n
+
+
+def noms_correspondent(declare, officiel):
+    """Le nom declare par le pro correspond-il au nom officiel du registre ?
+    Tolerant (l'un contient l'autre, ou egalite apres normalisation)."""
+    a, b = _normaliser(declare), _normaliser(officiel)
+    if not a or not b:
+        return False
+    return a == b or a in b or b in a
+
+
 def appliquer_verification(pro, siret=None):
     """Verifie le SIRET d'un ProProfile et met a jour ses champs de
-    confiance. Retourne le resultat de verifier_siret (ou None)."""
+    confiance. Retourne le resultat de verifier_siret (ou None).
+
+    SECURITE anti-usurpation : le badge 'Verifie' n'est accorde que si
+    l'entreprise existe, est active, ET que le nom declare correspond au
+    nom officiel du registre. Sinon on stocke le nom officiel pour revue
+    admin mais on n'accorde PAS le badge (empeche de saisir le SIRET
+    public d'une societe connue pour se faire passer pour elle)."""
     siret = siret or pro.siret
     if not siret:
         return None
     resultat = verifier_siret(siret)
     if resultat is None:
         return None  # reseau KO : on laisse en l'etat, l'autopilot reessaiera
-    pro.siret_verifie = bool(resultat.get('valide') and resultat.get('actif'))
-    if resultat.get('valide') and resultat.get('nom'):
-        pro.nom_officiel = resultat['nom'][:200]
+
+    nom_officiel = resultat.get('nom', '') if resultat.get('valide') else ''
+    correspond = noms_correspondent(pro.nom_entreprise, nom_officiel)
+    pro.siret_verifie = bool(resultat.get('valide') and resultat.get('actif')
+                             and correspond)
+    if nom_officiel:
+        pro.nom_officiel = nom_officiel[:200]
     pro.save(update_fields=['siret_verifie', 'nom_officiel'])
+    resultat['correspond'] = correspond
     return resultat

@@ -6,9 +6,15 @@ from django.core.cache import cache
 
 
 def ip_client(request):
-    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if xff:
-        return xff.split(',')[0].strip()
+    """IP reelle du client. SECURITE : on utilise REMOTE_ADDR (pose par le
+    serveur), PAS le premier X-Forwarded-For que le client peut falsifier
+    pour contourner le rate-limiting. Si un proxy de confiance est declare
+    (TRUSTED_PROXY_XFF=True en settings), on prend le dernier hop du XFF."""
+    from django.conf import settings
+    if getattr(settings, 'TRUSTED_PROXY_XFF', False):
+        xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        if xff:
+            return xff.split(',')[-1].strip()  # hop le plus proche du serveur
     return request.META.get('REMOTE_ADDR', 'inconnu')
 
 

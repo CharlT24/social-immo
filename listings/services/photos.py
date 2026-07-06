@@ -15,6 +15,44 @@ JPEG_QUALITY = 85
 THUMB_DIMENSION = 480
 THUMB_QUALITY = 78
 
+# Securite : bloque les "decompression bombs" (images minuscules qui
+# explosent en RAM une fois decodees).
+Image.MAX_IMAGE_PIXELS = 50_000_000  # ~50 Mpx
+
+
+class ImageInvalide(Exception):
+    """Le fichier fourni n'est pas une image exploitable."""
+
+
+def valider_et_reencoder(fichier, max_dimension=MAX_DIMENSION, quality=JPEG_QUALITY):
+    """SECURITE : verifie que le fichier est une vraie image, puis la
+    re-encode en JPEG propre (EXIF/scripts elimines). A utiliser sur TOUT
+    upload utilisateur avant stockage — on ne stocke jamais le fichier brut.
+
+    Retourne un io.BytesIO JPEG. Leve ImageInvalide si ce n'est pas une image.
+    """
+    try:
+        if hasattr(fichier, 'seek'):
+            fichier.seek(0)
+        # verify() detecte les fichiers corrompus / non-images
+        Image.open(fichier).verify()
+        if hasattr(fichier, 'seek'):
+            fichier.seek(0)
+        img = Image.open(fichier)
+        img = ImageOps.exif_transpose(img)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        if max(img.size) > max_dimension:
+            img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
+        sortie = io.BytesIO()
+        img.save(sortie, format='JPEG', quality=quality, optimize=True, progressive=True)
+        sortie.seek(0)
+        return sortie
+    except ImageInvalide:
+        raise
+    except Exception as e:
+        raise ImageInvalide(str(e))
+
 
 def _luminosite_moyenne(img):
     return ImageStat.Stat(img.convert('L')).mean[0]

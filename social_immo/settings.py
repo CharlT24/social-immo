@@ -287,3 +287,10 @@ CACHES = {
         'TIMEOUT': 300,
     }
 }
+
+
+# ===== Securite uploads : limite de taille (anti-DoS) =====
+# 10 Mo par fichier ; au-dela, rejet avant traitement.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000

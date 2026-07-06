@@ -523,6 +523,8 @@ class Command(BaseCommand):
             if url and url.startswith('http'):
                 photos.append((url, i))
 
+        data = self._sanitize(data)
+
         if dry_run:
             action = 'would_create' if not Annonce.objects.filter(reference=full_ref).exists() else 'would_update'
             self.stdout.write(f'  [{action.upper()}] {full_ref} - {titre[:40]}')
@@ -616,6 +618,25 @@ class Command(BaseCommand):
                 return default
         return default
 
+    def _sanitize(self, data):
+        """Nettoie les valeurs pour ne jamais faire rejeter une annonce par
+        MySQL en mode STRICT : tronque les champs texte a la longueur de leur
+        colonne, valide les etiquettes DPE (une lettre A-G sinon vide)."""
+        champs = {f.name: getattr(f, 'max_length', None)
+                  for f in Annonce._meta.get_fields()
+                  if hasattr(f, 'name')}
+        for name, value in list(data.items()):
+            if value is None:
+                continue
+            if name in ('dpe_etiquette_conso', 'dpe_etiquette_ges'):
+                v = str(value).strip().upper()
+                data[name] = v if v in ('A', 'B', 'C', 'D', 'E', 'F', 'G') else ''
+                continue
+            max_len = champs.get(name)
+            if max_len and isinstance(value, str) and len(value) > max_len:
+                data[name] = value[:max_len]
+        return data
+
     def _process_ac3_annonce(self, annonce_xml, client_ref, dry_run=False):
         """Traite une annonce XML AC3"""
         reference = self._get_text(annonce_xml, 'reference')
@@ -682,6 +703,8 @@ class Command(BaseCommand):
                 'depot_garantie': self._get_decimal(prestation, 'depot_garantie'),
                 'honoraires_location': self._get_decimal(prestation, 'honoraires_location'),
             })
+
+        data = self._sanitize(data)
 
         if dry_run:
             action = 'would_create' if not Annonce.objects.filter(reference=reference).exists() else 'would_update'

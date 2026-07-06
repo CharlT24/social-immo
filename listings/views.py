@@ -155,7 +155,8 @@ def search_results(request):
         villes_rayon = None
         if rayon.isdigit() and int(rayon) > 0:
             from .models import VilleGeo
-            villes_rayon = VilleGeo.villes_dans_rayon(ville, int(rayon))
+            rayon_km = min(int(rayon), 100)  # plafond anti-DoS
+            villes_rayon = VilleGeo.villes_dans_rayon(ville, rayon_km)
         if villes_rayon:
             # Recherche elargie aux communes du rayon (villes geocodees)
             annonces = annonces.filter(ville__in=villes_rayon)
@@ -1503,13 +1504,24 @@ def pro_inscription(request):
             pass
 
     if request.method == 'POST':
+        from .services.protection import trop_de_requetes, est_un_bot
+        if est_un_bot(request) or trop_de_requetes(request, 'inscription_pro', 5, 3600):
+            messages.error(request, 'Trop de tentatives — reessayez dans une heure.')
+            return redirect('listings:pro_inscription')
         form = ProInscriptionForm(request.POST)
         if form.is_valid():
             from django.contrib.auth.models import User
+            import uuid as _uuid
 
+            # Username unique (evite le 500 si deux emails ont la meme partie locale)
+            email = form.cleaned_data['email']
+            base_username = email.split('@')[0][:140]
+            username = base_username
+            while User.objects.filter(username=username).exists():
+                username = f'{base_username}-{_uuid.uuid4().hex[:6]}'
             user = User.objects.create_user(
-                username=form.cleaned_data['email'].split('@')[0],
-                email=form.cleaned_data['email'],
+                username=username,
+                email=email,
                 password=form.cleaned_data['password1'],
             )
 
@@ -1538,6 +1550,8 @@ def pro_inscription(request):
                         messages.success(request, f'Entreprise verifiee : {pro.nom_officiel} ✓')
                     elif resultat and resultat.get('valide') and not resultat.get('actif'):
                         messages.warning(request, 'Ce SIRET correspond a une entreprise cessee — verifiez-le dans vos parametres.')
+                    elif resultat and resultat.get('valide') and not resultat.get('correspond'):
+                        messages.warning(request, f'Le nom au registre ("{pro.nom_officiel}") ne correspond pas a "{pro.nom_entreprise}". Utilisez le nom exact de votre entreprise pour obtenir le badge Verifie.')
                     elif resultat and not resultat.get('valide'):
                         messages.warning(request, 'SIRET introuvable au registre : votre profil reste actif mais sans badge Verifie.')
                 except Exception:
@@ -1624,23 +1638,28 @@ def pro_ajouter_realisation(request):
             tags = form.cleaned_data.get('tags')
             if tags:
                 realisation.tags.set(tags)
-            # Sauvegarder les photos uploadees (+ miniatures)
+            # Sauvegarder les photos uploadees (SECURITE : re-encodage
+            # obligatoire, on ne stocke jamais le fichier brut) + miniatures
+            import io as _io
             from django.core.files.base import ContentFile
-            from .services.photos import generer_miniature
+            from .services.photos import (generer_miniature,
+                                          valider_et_reencoder, ImageInvalide)
             photos = request.FILES.getlist('photos')
-            for i, photo_file in enumerate(photos[:10], 1):
-                photo = ProRealisationPhoto(
-                    realisation=realisation,
-                    image=photo_file,
-                    ordre=i
-                )
+            ordre = 1
+            for photo_file in photos[:10]:
                 try:
-                    thumb = generer_miniature(photo_file)
-                    nom = (photo_file.name.rsplit('.', 1)[0] or 'photo') + '_thumb.jpg'
-                    photo.image_thumb.save(nom, ContentFile(thumb.read()), save=False)
+                    contenu = valider_et_reencoder(photo_file).read()
+                except (ImageInvalide, Exception):
+                    continue  # fichier non-image : ignore
+                photo = ProRealisationPhoto(realisation=realisation, ordre=ordre)
+                photo.image.save('realisation.jpg', ContentFile(contenu), save=False)
+                try:
+                    thumb = generer_miniature(_io.BytesIO(contenu))
+                    photo.image_thumb.save('realisation_thumb.jpg', ContentFile(thumb.read()), save=False)
                 except Exception:
                     pass
                 photo.save()
+                ordre += 1
             messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
             return redirect('listings:pro_dashboard')
     else:
@@ -1878,6 +1897,9 @@ def delete_photo_comment(request):
 def envoyer_contact(request):
     """Envoie une demande de contact a un agent ou pro, avec email direct"""
     from django.core.mail import send_mail
+    from .services.protection import trop_de_requetes
+    if trop_de_requetes(request, 'contact', maximum=15, fenetre_secondes=3600):
+        return JsonResponse({'error': 'Trop de demandes — reessayez plus tard.'}, status=429)
     try:
         data = json.loads(request.body)
         message_text = data.get('message', '').strip()
@@ -2326,12 +2348,21 @@ def supprimer_mon_compte(request):
         return redirect('/mon-compte/?tab=profil')
 
     user = request.user
+    # Resilie les abonnements Stripe actifs (sinon prelevements fantomes)
+    from .models import Abonnement
+    from .services import paiements
+    for abo in Abonnement.objects.filter(user=user).exclude(stripe_subscription_id=''):
+        try:
+            paiements.annuler_abonnement(abo.stripe_subscription_id)
+        except Exception:
+            pass
     # Annonces particulieres : retirees + coordonnees purgees
     Annonce.objects.filter(user=user, source='particulier').update(
         is_active=False, contact_nom='', contact_email='', contact_telephone='',
     )
-    # Agence dont il est responsable : desactivee (les annonces suivront au
-    # prochain autopilot faute de flux actif)
+    # Agence dont il est responsable : desactivee + ses annonces retirees
+    for agence in Agence.objects.filter(responsable=user):
+        Annonce.objects.filter(agence=agence).update(is_active=False)
     Agence.objects.filter(responsable=user).update(is_active=False)
     # ProProfile, favoris, alertes, demandes : supprimes par cascade
     from django.contrib.auth import logout
@@ -2632,6 +2663,10 @@ def stripe_webhook(request):
     objet = event.get('data', {}).get('object', {})
 
     if type_event == 'checkout.session.completed':
+        # N'activer que si le paiement est reellement encaisse (les moyens
+        # asynchrones type SEPA completent la session avant encaissement).
+        if objet.get('payment_status') not in ('paid', 'no_payment_required', None):
+            return HttpResponse(status=200)
         meta = objet.get('metadata', {}) or {}
         user_id = meta.get('user_id') or objet.get('client_reference_id')
         type_abo = meta.get('type_abonnement', '')
@@ -2643,17 +2678,24 @@ def stripe_webhook(request):
                 user = User.objects.get(id=int(user_id))
             except (User.DoesNotExist, ValueError):
                 return HttpResponse(status=200)
-            if Abonnement.objects.filter(checkout_session_id=session_id).exists():
-                return HttpResponse(status=200)  # deja traite
-            abo = Abonnement.objects.create(
-                user=user, type_abonnement=type_abo,
-                stripe_subscription_id=objet.get('subscription') or '',
-                stripe_customer_id=objet.get('customer') or '',
-                checkout_session_id=session_id,
-                annonce_id=int(meta['annonce_id']) if meta.get('annonce_id') else None,
-                statut='actif',
-            )
-            paiements.activer_avantages(abo)
+            # Idempotence garantie par la contrainte unique + get_or_create :
+            # deux livraisons simultanees du meme event ne creent qu'une ligne.
+            from django.db import IntegrityError
+            try:
+                abo, cree = Abonnement.objects.get_or_create(
+                    checkout_session_id=session_id,
+                    defaults={
+                        'user': user, 'type_abonnement': type_abo,
+                        'stripe_subscription_id': objet.get('subscription') or '',
+                        'stripe_customer_id': objet.get('customer') or '',
+                        'annonce_id': int(meta['annonce_id']) if meta.get('annonce_id') else None,
+                        'statut': 'actif',
+                    },
+                )
+            except IntegrityError:
+                return HttpResponse(status=200)  # deja traite (course)
+            if cree:
+                paiements.activer_avantages(abo)
 
     elif type_event in ('customer.subscription.deleted', 'customer.subscription.paused'):
         sub_id = objet.get('id', '')
@@ -3585,26 +3627,29 @@ def particulier_dashboard(request):
 
 @login_required
 def _creer_photo_annonce(annonce, photo_file, ordre, ameliorer=False):
-    """Cree une Photo (+ miniature), en l'ameliorant si demande."""
+    """Cree une Photo (+ miniature). SECURITE : l'image est TOUJOURS
+    re-encodee en JPEG propre (on ne stocke jamais le fichier brut).
+    Retourne None si le fichier n'est pas une vraie image."""
+    import io as _io
     from django.core.files.base import ContentFile
-    from .services.photos import ameliorer_photo, generer_miniature
+    from .services.photos import (ameliorer_photo, generer_miniature,
+                                   valider_et_reencoder, ImageInvalide)
 
-    photo = Photo(annonce=annonce, ordre=ordre)
-    nom = (photo_file.name.rsplit('.', 1)[0] or 'photo')
-    source_thumb = photo_file
-    if ameliorer:
-        try:
+    nom = 'photo'
+    try:
+        if ameliorer:
             buffer, _infos = ameliorer_photo(photo_file)
             contenu = buffer.read()
-            photo.image.save(nom + '.jpg', ContentFile(contenu), save=False)
-            import io as _io
-            source_thumb = _io.BytesIO(contenu)
-        except Exception:
-            photo.image = photo_file
-    else:
-        photo.image = photo_file
+        else:
+            # Pas d'amelioration, mais validation + re-encodage obligatoires
+            contenu = valider_et_reencoder(photo_file).read()
+    except (ImageInvalide, Exception):
+        return None  # fichier non-image ou corrompu : on l'ignore
+
+    photo = Photo(annonce=annonce, ordre=ordre)
+    photo.image.save(nom + '.jpg', ContentFile(contenu), save=False)
     try:
-        thumb = generer_miniature(source_thumb)
+        thumb = generer_miniature(_io.BytesIO(contenu))
         photo.image_thumb.save(nom + '_thumb.jpg', ContentFile(thumb.read()), save=False)
     except Exception:
         pass

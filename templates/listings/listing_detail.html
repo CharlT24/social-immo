@@ -176,11 +176,7 @@
                     Video
                 </h2>
                 <div class="rounded-2xl overflow-hidden shadow-apple bg-black aspect-video">
-                    {% if 'youtube.com' in annonce.video_url or 'youtu.be' in annonce.video_url %}
-                    <iframe src="{{ annonce.video_url|cut:'watch?v='|cut:'https://www.youtube.com/'|cut:'https://youtu.be/' }}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                    {% else %}
-                    <iframe src="{{ annonce.video_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-                    {% endif %}
+                    <iframe src="{{ annonce.video_embed_url }}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>
                 </div>
             </div>
             {% endif %}
@@ -338,14 +334,25 @@
                     </div>
                     {% endif %}
 
+                    <!-- Mention legale obligatoire passoire thermique (F/G) -->
+                    {% if annonce.est_passoire_thermique %}
+                    <div class="pt-4 border-t border-gray-100">
+                        <div class="flex items-center gap-3 bg-red-50 rounded-xl p-4">
+                            <svg class="w-6 h-6 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <p class="text-sm font-semibold text-red-800">Logement à consommation énergétique excessive.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Estimation facture énergétique -->
                     {% if annonce.montant_depenses_energies_min and annonce.montant_depenses_energies_max %}
                     <div class="pt-4 border-t border-gray-100">
                         <div class="flex items-center gap-3 bg-amber-50 rounded-xl p-4">
                             <svg class="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             <div>
-                                <div class="text-sm font-semibold text-amber-800">Estimation de la facture énergétique</div>
+                                <div class="text-sm font-semibold text-amber-800">Montant estimé des dépenses annuelles d'énergie</div>
                                 <div class="text-lg font-bold text-amber-900">entre {{ annonce.montant_depenses_energies_min|floatformat:0 }} et {{ annonce.montant_depenses_energies_max|floatformat:0 }} €/an</div>
+                                <div class="text-[11px] text-amber-700 mt-0.5">Prix moyens indexés sur l'année du diagnostic{% if annonce.dpe_date_realisation %} ({{ annonce.dpe_date_realisation }}){% endif %}.</div>
                             </div>
                         </div>
                     </div>
@@ -356,6 +363,14 @@
                     {% endif %}
                 </div>
             </div>
+            {% else %}
+            <!-- DPE non renseigne : mention obligatoire -->
+            <div>
+                <h2 class="text-xl font-semibold mb-6">Diagnostic de performance énergétique</h2>
+                <div class="bg-white rounded-2xl shadow-apple p-6">
+                    <p class="text-sm text-apple-gray">Diagnostic de performance énergétique non communiqué pour ce bien{% if annonce.source == 'particulier' %} ou non soumis au DPE{% endif %}.</p>
+                </div>
+            </div>
             {% endif %}
 
             <!-- Détails du prix -->
@@ -364,12 +379,18 @@
                 <h2 class="text-xl font-semibold mb-6">Détails du prix</h2>
                 <div class="bg-white rounded-2xl shadow-apple p-6 space-y-4">
                     {% if annonce.honoraires_payeurs %}
-                    <p class="text-sm text-apple-gray">Les honoraires sont à la charge de {{ annonce.honoraires_payeurs|lower }}</p>
+                    <p class="text-sm text-apple-gray">Honoraires à la charge de {{ annonce.honoraires_payeurs|lower }}.</p>
                     {% endif %}
                     <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <span class="text-sm text-apple-gray">Prix du bien honoraires inclus</span>
+                        <span class="text-sm text-apple-gray">Prix du bien {% if annonce.honoraires_charge_acquereur %}honoraires inclus{% endif %}</span>
                         <span class="text-lg font-bold">{{ annonce.prix_format }}</span>
                     </div>
+                    {% if annonce.prix_hors_honoraires %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span class="text-sm text-apple-gray">Prix hors honoraires</span>
+                        <span class="text-sm font-semibold">{{ annonce.prix_hors_honoraires }} €</span>
+                    </div>
+                    {% endif %}
                     {% if annonce.surface and annonce.prix %}
                     <div class="flex items-center justify-between py-3 border-b border-gray-100">
                         <span class="text-sm text-apple-gray">Prix au m²</span>
@@ -378,12 +399,12 @@
                     {% endif %}
                     {% if annonce.frais_agence %}
                     <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <span class="text-sm text-apple-gray">Dont honoraires d'agence</span>
+                        <span class="text-sm text-apple-gray">Honoraires d'agence TTC{% if annonce.taux_honoraires_ttc %} ({{ annonce.taux_honoraires_ttc }} %){% endif %}</span>
                         <span class="text-sm font-semibold">{{ annonce.frais_agence|floatformat:0 }} €</span>
                     </div>
                     {% endif %}
                     <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <span class="text-sm text-apple-gray">Frais de notaire estimés (8%)</span>
+                        <span class="text-sm text-apple-gray">Frais de notaire estimés (ancien, ~8 %, indicatif)</span>
                         <span class="text-sm font-semibold">{{ annonce.frais_notaire }} €</span>
                     </div>
                     <div class="flex items-center justify-between py-3 bg-apple-bg -mx-6 px-6 rounded-xl">
@@ -406,13 +427,13 @@
                     <div class="divide-y divide-gray-100">
                         {% if annonce.loyer_mensuel %}
                         <div class="flex items-center justify-between py-3">
-                            <span class="text-sm text-apple-gray">Loyer mensuel</span>
+                            <span class="text-sm text-apple-gray">Loyer mensuel {% if annonce.charges_locatives %}hors charges{% else %}charges comprises{% endif %}</span>
                             <span class="text-lg font-bold">{{ annonce.loyer_mensuel|floatformat:0 }} €/mois</span>
                         </div>
                         {% endif %}
                         {% if annonce.charges_locatives %}
                         <div class="flex items-center justify-between py-3">
-                            <span class="text-sm text-apple-gray">Charges locatives</span>
+                            <span class="text-sm text-apple-gray">Provision sur charges</span>
                             <span class="text-sm font-semibold">{{ annonce.charges_locatives|floatformat:0 }} €/mois</span>
                         </div>
                         {% endif %}

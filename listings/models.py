@@ -163,6 +163,50 @@ class Annonce(models.Model):
             return f"{self.prix * 8 / 100:,.0f}".replace(',', ' ')
         return None
 
+    # ===== Conformite legale (DPE, honoraires Loi Hoguet) =====
+
+    @property
+    def est_passoire_thermique(self):
+        """Classe F ou G : mention legale obligatoire dans l'annonce."""
+        return self.dpe_etiquette_conso in ('F', 'G')
+
+    @property
+    def video_embed_url(self):
+        """URL d'integration video en mode sans cookie (RGPD : youtube-nocookie).
+        Gere YouTube, Vimeo ; sinon renvoie l'URL telle quelle (Matterport...)."""
+        import re
+        url = self.video_url or ''
+        m = re.search(r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([\w-]{11})', url)
+        if m:
+            return f'https://www.youtube-nocookie.com/embed/{m.group(1)}'
+        m = re.search(r'vimeo\.com/(\d+)', url)
+        if m:
+            return f'https://player.vimeo.com/video/{m.group(1)}'
+        return url
+
+    @property
+    def honoraires_charge_acquereur(self):
+        return 'acqu' in (self.honoraires_payeurs or '').lower()
+
+    @property
+    def prix_hors_honoraires(self):
+        """Prix hors honoraires (obligatoire si honoraires a la charge de
+        l'acquereur — arrete du 10/01/2017)."""
+        if self.prix and self.frais_agence and self.honoraires_charge_acquereur:
+            hni = float(self.prix) - float(self.frais_agence)
+            if hni > 0:
+                return f"{hni:,.0f}".replace(',', ' ')
+        return None
+
+    @property
+    def taux_honoraires_ttc(self):
+        """Taux d'honoraires TTC en % du prix hors honoraires."""
+        if self.prix and self.frais_agence and self.honoraires_charge_acquereur:
+            hni = float(self.prix) - float(self.frais_agence)
+            if hni > 0:
+                return round(float(self.frais_agence) / hni * 100, 1)
+        return None
+
     @property
     def montant_projet(self):
         if self.prix:

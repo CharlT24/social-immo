@@ -48,6 +48,9 @@ Parametres :
             {% if annonce.bandeau_exclusif %}
             <span class="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">Exclusivite</span>
             {% endif %}
+            {% if annonce.source == 'particulier' %}
+            <span class="bg-teal-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">Particulier</span>
+            {% endif %}
         </div>
 
         <!-- Logo agence -->
@@ -90,16 +93,24 @@ Parametres :
         <div class="flex items-start justify-between gap-2 mb-1">
             <div class="text-xl font-bold tracking-tight">{{ annonce.prix_format }}</div>
             {% if annonce.dpe_etiquette_conso %}
-            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold flex-shrink-0
-                {% if annonce.dpe_etiquette_conso == 'A' %}bg-green-100 text-green-700
-                {% elif annonce.dpe_etiquette_conso == 'B' %}bg-lime-100 text-lime-700
-                {% elif annonce.dpe_etiquette_conso == 'C' %}bg-yellow-100 text-yellow-700
-                {% elif annonce.dpe_etiquette_conso == 'D' %}bg-orange-100 text-orange-700
-                {% elif annonce.dpe_etiquette_conso == 'E' %}bg-red-100 text-red-600
-                {% elif annonce.dpe_etiquette_conso == 'F' %}bg-red-200 text-red-700
-                {% else %}bg-red-300 text-red-800{% endif %}">{{ annonce.dpe_etiquette_conso }}</span>
+            <div class="flex items-center gap-1 flex-shrink-0" title="DPE energie / GES">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold
+                    {% if annonce.dpe_etiquette_conso == 'A' %}bg-green-100 text-green-700
+                    {% elif annonce.dpe_etiquette_conso == 'B' %}bg-lime-100 text-lime-700
+                    {% elif annonce.dpe_etiquette_conso == 'C' %}bg-yellow-100 text-yellow-700
+                    {% elif annonce.dpe_etiquette_conso == 'D' %}bg-orange-100 text-orange-700
+                    {% elif annonce.dpe_etiquette_conso == 'E' %}bg-red-100 text-red-600
+                    {% elif annonce.dpe_etiquette_conso == 'F' %}bg-red-200 text-red-700
+                    {% else %}bg-red-300 text-red-800{% endif %}">{{ annonce.dpe_etiquette_conso }}</span>
+                {% if annonce.dpe_etiquette_ges %}
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold bg-gray-100 text-gray-600" title="GES">{{ annonce.dpe_etiquette_ges }}</span>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
+        {% if annonce.est_passoire_thermique %}
+        <p class="text-[11px] font-semibold text-red-600 mb-1">Consommation énergétique excessive</p>
+        {% endif %}
 
         {% if annonce.prix_m2 %}
         <p class="text-xs text-apple-gray mb-2">{{ annonce.prix_m2 }} €/m²</p>

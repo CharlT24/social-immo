@@ -5,6 +5,35 @@
 {% block og_title %}Immobilier {{ ville }} - annonces et prix au m2{% endblock %}
 {% block canonical %}https://social-immo.com/immobilier/{{ ville_slug }}/{% endblock %}
 
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://social-immo.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Immobilier {{ ville|escapejs }}", "item": "https://social-immo.com/immobilier/{{ ville_slug }}/"}
+  ]
+}
+</script>
+{% if prix_m2_median %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "Quel est le prix au m2 a {{ ville|escapejs }} ?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Le prix median a {{ ville|escapejs }} est de {{ prix_m2_median }} EUR/m2, calcule sur {{ nb_comparables }} ventes reelles enregistrees chez les notaires (donnees DVF)."
+    }
+  }]
+}
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 

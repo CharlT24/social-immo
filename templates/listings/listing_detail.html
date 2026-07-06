@@ -782,18 +782,18 @@
             id: {{ annonce.id }},
             titre: "{{ annonce.titre|escapejs }}",
             ville: "{{ annonce.ville|escapejs }}",
-            prix: {{ annonce.prix|default:"null" }},
+            prix: "{{ annonce.prix_format|escapejs }}",
             surface: {{ annonce.surface|default:"null" }},
-            photo: {% if annonce.photos.first %}"{{ annonce.photos.first.url }}"{% else %}null{% endif %},
+            photo: {% if annonce.photos.first %}"{{ annonce.photos.first.src }}"{% else %}null{% endif %},
             url: "{% url 'listings:detail' annonce.reference %}",
             type_transaction: "{{ annonce.type_transaction }}",
             ts: Date.now()
         };
-        let recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        let recent = JSON.parse(localStorage.getItem('recently_viewed') || '[]');
         recent = recent.filter(r => r.id !== item.id);
         recent.unshift(item);
         if (recent.length > 10) recent = recent.slice(0, 10);
-        localStorage.setItem('recentlyViewed', JSON.stringify(recent));
+        localStorage.setItem('recently_viewed', JSON.stringify(recent));
     } catch(e) {}
 })();
 

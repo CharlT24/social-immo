@@ -65,6 +65,10 @@ class Command(BaseCommand):
         etape('Alertes email', lambda: self._capture(
             call_command, 'envoyer_alertes', '--site-url', site))
 
+        # 3b. Alertes baisse de prix sur les favoris
+        etape('Alertes favoris (baisse de prix)', lambda: self._capture(
+            call_command, 'alertes_favoris', '--site-url', site))
+
         # 4. Miniatures
         etape('Miniatures', lambda: self._capture(call_command, 'generer_miniatures'))
 

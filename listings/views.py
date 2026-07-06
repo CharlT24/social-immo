@@ -519,7 +519,8 @@ def toggle_favorite(request):
     # Toggle: si existe -> supprimer, sinon -> créer
     favori, created = Favori.objects.get_or_create(
         user=request.user,
-        annonce=annonce
+        annonce=annonce,
+        defaults={'prix_reference': annonce.prix},
     )
 
     if not created:

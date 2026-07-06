@@ -344,6 +344,8 @@ class Favori(models.Model):
         on_delete=models.CASCADE,
         related_name='favoris'
     )
+    # Prix au moment de l'ajout : sert a detecter les baisses de prix
+    prix_reference = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

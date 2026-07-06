@@ -72,8 +72,9 @@ urlpatterns = [
     # Alertes de recherche
     path('alertes/creer/', views.sauvegarder_recherche, name='sauvegarder_recherche'),
     path('alertes/<int:recherche_id>/supprimer/', views.supprimer_recherche, name='supprimer_recherche'),
-    # SEO villes
+    # SEO villes + longue traine (ville x type x transaction)
     path('immobilier/<slug:ville_slug>/', views.ville_page, name='ville_page'),
+    path('immobilier/<slug:ville_slug>/<slug:segment>/', views.ville_segment_page, name='ville_segment_page'),
     # Devis travaux
     path('devis/', views.demande_devis, name='demande_devis'),
     # Barometre des prix

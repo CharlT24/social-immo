@@ -606,6 +606,21 @@
     </div>
     {% endif %}
 
+    <!-- Biens similaires -->
+    {% if similaires %}
+    <div class="mt-16">
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 class="text-xl font-semibold">Biens similaires</h2>
+            <a href="{% url 'listings:search_results' %}?ville={{ annonce.ville|urlencode }}&type={{ annonce.type_transaction }}" class="text-sm font-semibold text-apple-blue hover:underline">Voir plus a {{ annonce.ville }}</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 reveal-stagger">
+            {% for annonce in similaires %}
+            {% include 'listings/includes/carte_annonce.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Discussion Section - iMessage Style -->
     <div class="mt-16">
         <!-- Header -->

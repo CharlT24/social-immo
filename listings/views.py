@@ -359,12 +359,38 @@ def listing_detail(request, reference):
             .order_by('-mise_en_avant', '?')[:4]
         )
 
+    # Biens similaires : meme ville + meme type de transaction, prix proche
+    similaires = Annonce.objects.filter(
+        is_active=True, type_transaction=annonce.type_transaction,
+    ).exclude(id=annonce.id).select_related('agence').prefetch_related('photos')
+    if annonce.ville:
+        similaires = similaires.filter(ville__iexact=annonce.ville)
+    if annonce.prix and annonce.prix > 0:
+        similaires = similaires.filter(
+            prix__gte=float(annonce.prix) * 0.6, prix__lte=float(annonce.prix) * 1.4)
+    similaires = list(similaires.order_by('-mise_en_avant', '-created_at')[:3])
+    # Repli : meme departement si pas assez de biens dans la ville
+    if len(similaires) < 3 and dept:
+        deja = {a.id for a in similaires} | {annonce.id}
+        complement = (Annonce.objects.filter(
+            is_active=True, type_transaction=annonce.type_transaction,
+            code_postal__startswith=dept,
+        ).exclude(id__in=deja).select_related('agence')
+         .prefetch_related('photos').order_by('-mise_en_avant', '-created_at')[:3 - len(similaires)])
+        similaires += list(complement)
+
+    user_favorites = []
+    if request.user.is_authenticated:
+        user_favorites = list(Favori.objects.filter(user=request.user).values_list('annonce_id', flat=True))
+
     context = {
         'annonce': annonce,
         'commentaires': annonce.commentaires.all(),
         'form': form,
         'agence_opts': agence_opts,
         'pros_secteur': pros_secteur,
+        'similaires': similaires,
+        'user_favorites': user_favorites,
     }
     return render(request, 'listings/listing_detail.html', context)
 
@@ -2900,6 +2926,75 @@ def ville_page(request, ville_slug):
         'user_favorites': user_favorites,
     }
     return render(request, 'listings/ville_page.html', context)
+
+
+# Segments SEO longue traine : slug -> (transaction, mots-cles type, libelle H1)
+SEGMENTS_SEO = {
+    'appartement-a-vendre': ('V', ['appart', 'studio', 'duplex', 'loft', 't1', 't2', 't3', 't4', 't5'], 'Appartements à vendre'),
+    'maison-a-vendre': ('V', ['maison', 'villa', 'pavillon', 'propriete', 'longere', 'mas', 'ferme'], 'Maisons à vendre'),
+    'appartement-a-louer': ('L', ['appart', 'studio', 'duplex', 'loft', 't1', 't2', 't3', 't4', 't5'], 'Appartements à louer'),
+    'maison-a-louer': ('L', ['maison', 'villa', 'pavillon'], 'Maisons à louer'),
+    'a-vendre': ('V', None, 'Biens à vendre'),
+    'a-louer': ('L', None, 'Biens à louer'),
+    'terrain-a-vendre': ('V', ['terrain'], 'Terrains à vendre'),
+}
+
+
+def ville_segment_page(request, ville_slug, segment):
+    """Page SEO longue traine : ex. /immobilier/lyon/appartement-a-vendre/"""
+    from django.utils.text import slugify
+    from django.http import Http404
+
+    if segment not in SEGMENTS_SEO:
+        raise Http404("Segment inconnu")
+    transaction, mots_cles, libelle = SEGMENTS_SEO[segment]
+
+    villes = Annonce.objects.filter(is_active=True).exclude(ville='') \
+        .values_list('ville', 'code_postal').distinct()
+    ville_nom, code_postal = None, ''
+    for v, cp in villes:
+        if slugify(v) == ville_slug:
+            ville_nom, code_postal = v, cp or ''
+            break
+    if not ville_nom:
+        raise Http404("Ville inconnue")
+
+    qs = Annonce.objects.filter(
+        is_active=True, ville__iexact=ville_nom, type_transaction=transaction
+    ).prefetch_related(Prefetch('photos', queryset=Photo.objects.order_by('ordre')))
+    if mots_cles:
+        cond = models.Q()
+        for mot in mots_cles:
+            cond |= models.Q(libelle_type__icontains=mot) | models.Q(titre__icontains=mot)
+        qs = qs.filter(cond)
+
+    from django.core.paginator import Paginator, EmptyPage
+    paginator = Paginator(qs.order_by('-mise_en_avant', '-created_at'), 24)
+    try:
+        page_obj = paginator.page(int(request.GET.get('page') or 1))
+    except (EmptyPage, ValueError):
+        page_obj = paginator.page(1)
+
+    user_favorites = []
+    if request.user.is_authenticated:
+        user_favorites = list(Favori.objects.filter(user=request.user).values_list('annonce_id', flat=True))
+
+    # Autres segments de la meme ville pour le maillage interne
+    autres_segments = [(s, lib) for s, (t, m, lib) in SEGMENTS_SEO.items() if s != segment]
+
+    context = {
+        'ville': ville_nom,
+        'ville_slug': ville_slug,
+        'code_postal': code_postal,
+        'segment': segment,
+        'libelle': libelle,
+        'annonces_page': page_obj,
+        'annonces': page_obj.object_list,
+        'total': paginator.count,
+        'user_favorites': user_favorites,
+        'autres_segments': autres_segments,
+    }
+    return render(request, 'listings/ville_segment.html', context)
 
 
 def inspiration_partage(request, photo_type, photo_id):

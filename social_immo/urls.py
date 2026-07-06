@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
-from listings.sitemaps import StaticSitemap, AnnonceSitemap, AgenceSitemap, ProSitemap, VilleSitemap
+from listings.sitemaps import StaticSitemap, AnnonceSitemap, AgenceSitemap, ProSitemap, VilleSitemap, VilleSegmentSitemap
 
 sitemaps = {
     'static': StaticSitemap,
@@ -29,6 +29,7 @@ sitemaps = {
     'agences': AgenceSitemap,
     'pros': ProSitemap,
     'villes': VilleSitemap,
+    'villes_segments': VilleSegmentSitemap,
 }
 
 urlpatterns = [

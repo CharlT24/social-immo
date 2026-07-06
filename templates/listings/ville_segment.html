@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ libelle }} a {{ ville }}{% if code_postal %} ({{ code_postal }}){% endif %} : {{ total }} annonce{{ total|pluralize }} | Social Immo{% endblock %}
+{% block meta_description %}{{ libelle }} a {{ ville }}{% if code_postal %} ({{ code_postal }}){% endif %} : {{ total }} annonce{{ total|pluralize }} a decouvrir sur Social Immo. Photos, prix, contact direct et estimation.{% endblock %}
+{% block og_title %}{{ libelle }} a {{ ville }} - Social Immo{% endblock %}
+{% block canonical %}https://social-immo.com/immobilier/{{ ville_slug }}/{{ segment }}/{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://social-immo.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Immobilier {{ ville|escapejs }}", "item": "https://social-immo.com/immobilier/{{ ville_slug }}/"},
+    {"@type": "ListItem", "position": 3, "name": "{{ libelle|escapejs }}", "item": "https://social-immo.com/immobilier/{{ ville_slug }}/{{ segment }}/"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Fil d'ariane -->
+    <nav class="text-sm text-apple-gray mb-6 flex flex-wrap items-center gap-2">
+        <a href="{% url 'listings:homepage' %}" class="hover:text-apple-text transition-colors">Accueil</a>
+        <span>/</span>
+        <a href="{% url 'listings:ville_page' ville_slug %}" class="hover:text-apple-text transition-colors">Immobilier {{ ville }}</a>
+        <span>/</span>
+        <span class="text-apple-text font-medium">{{ libelle }}</span>
+    </nav>
+
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">{{ libelle }} a {{ ville }}</h1>
+        <p class="text-apple-gray"><span class="font-semibold text-apple-text">{{ total }}</span> annonce{{ total|pluralize }} disponible{{ total|pluralize }}{% if code_postal %} — {{ ville }} ({{ code_postal }}){% endif %}</p>
+    </div>
+
+    {% if annonces %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
+        {% for annonce in annonces %}
+        {% include 'listings/includes/carte_annonce.html' %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if annonces_page.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-10">
+        {% if annonces_page.has_previous %}
+        <a href="?page={{ annonces_page.previous_page_number }}" class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium hover:bg-gray-50 transition-colors">&larr; Precedent</a>
+        {% endif %}
+        <span class="px-4 py-2 text-sm text-apple-gray">Page {{ annonces_page.number }} / {{ annonces_page.paginator.num_pages }}</span>
+        {% if annonces_page.has_next %}
+        <a href="?page={{ annonces_page.next_page_number }}" class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium hover:bg-gray-50 transition-colors">Suivant &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="bg-white rounded-3xl shadow-apple p-10 text-center">
+        <p class="text-lg font-medium text-apple-text mb-2">Aucune annonce pour cette recherche a {{ ville }}</p>
+        <p class="text-apple-gray mb-6">Creez une alerte pour etre prevenu des nouvelles annonces.</p>
+        <a href="{% url 'listings:search_results' %}?ville={{ ville|urlencode }}" class="inline-block bg-apple-blue text-white font-semibold px-6 py-3 rounded-2xl hover:bg-blue-600 transition-colors">Voir toutes les annonces a {{ ville }}</a>
+    </div>
+    {% endif %}
+
+    <!-- Maillage interne : autres recherches a la meme ville -->
+    <section class="mt-14 bg-white rounded-3xl shadow-apple p-8">
+        <h2 class="text-lg font-bold text-apple-text mb-4">Autres recherches a {{ ville }}</h2>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'listings:ville_page' ville_slug %}" class="text-sm text-apple-gray hover:text-apple-blue hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors">Immobilier {{ ville }}</a>
+            {% for s, lib in autres_segments %}
+            <a href="{% url 'listings:ville_segment_page' ville_slug s %}" class="text-sm text-apple-gray hover:text-apple-blue hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors">{{ lib }} {{ ville }}</a>
+            {% endfor %}
+            <a href="{% url 'listings:estimation' %}" class="text-sm text-orange-600 hover:bg-orange-50 px-3 py-2 rounded-lg transition-colors font-medium">Estimer un bien a {{ ville }}</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

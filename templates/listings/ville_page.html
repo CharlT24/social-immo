@@ -146,6 +146,16 @@
     </section>
     {% endif %}
 
+    <!-- Recherches ciblees (maillage SEO longue traine) -->
+    <section class="mb-10">
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'listings:ville_segment_page' ville_slug 'appartement-a-vendre' %}" class="text-sm font-medium bg-white text-apple-gray shadow-apple hover:text-apple-blue hover:-translate-y-0.5 px-4 py-2 rounded-full transition-all">Appartements a vendre {{ ville }}</a>
+            <a href="{% url 'listings:ville_segment_page' ville_slug 'maison-a-vendre' %}" class="text-sm font-medium bg-white text-apple-gray shadow-apple hover:text-apple-blue hover:-translate-y-0.5 px-4 py-2 rounded-full transition-all">Maisons a vendre {{ ville }}</a>
+            <a href="{% url 'listings:ville_segment_page' ville_slug 'appartement-a-louer' %}" class="text-sm font-medium bg-white text-apple-gray shadow-apple hover:text-apple-blue hover:-translate-y-0.5 px-4 py-2 rounded-full transition-all">Appartements a louer {{ ville }}</a>
+            <a href="{% url 'listings:ville_segment_page' ville_slug 'maison-a-louer' %}" class="text-sm font-medium bg-white text-apple-gray shadow-apple hover:text-apple-blue hover:-translate-y-0.5 px-4 py-2 rounded-full transition-all">Maisons a louer {{ ville }}</a>
+        </div>
+    </section>
+
     <!-- Texte SEO -->
     <section class="bg-white rounded-3xl shadow-apple p-8 text-sm text-apple-gray leading-relaxed">
         <h2 class="text-lg font-bold text-apple-text mb-3">Le marche immobilier a {{ ville }}</h2>

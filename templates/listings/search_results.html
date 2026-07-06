@@ -257,7 +257,7 @@
 
     <!-- Result count + tabs -->
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <p class="text-sm text-apple-gray">
                 <span class="font-bold text-apple-text text-lg">{{ result_count }}</span> bien{{ result_count|pluralize:"s" }}
                 {% if current_ville %} a <span class="font-semibold text-apple-text">{{ current_ville }}</span>{% endif %}
@@ -286,7 +286,7 @@
         </div>
 
         <!-- View tabs -->
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             {% if nb_points_carte %}
             <button type="button" onclick="toggleCarte()" id="btn-carte" class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-500 text-xs font-semibold rounded-full border border-gray-200 hover:bg-gray-50 transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
@@ -367,7 +367,7 @@
 
     <!-- Pagination -->
     {% if annonces_page and annonces_page.paginator.num_pages > 1 %}
-    <div class="flex items-center justify-center gap-2 mt-10">
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-10">
         {% if annonces_page.has_previous %}
         <a href="?page={{ annonces_page.previous_page_number }}{% if current_ville %}&ville={{ current_ville }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_prix_min %}&prix_min={{ current_prix_min }}{% endif %}{% if current_prix_max %}&prix_max={{ current_prix_max }}{% endif %}{% if current_surface_min %}&surface_min={{ current_surface_min }}{% endif %}{% if current_surface_max %}&surface_max={{ current_surface_max }}{% endif %}{% if current_pieces_min %}&pieces_min={{ current_pieces_min }}{% endif %}{% if current_pieces_max %}&pieces_max={{ current_pieces_max }}{% endif %}{% if current_tri %}&tri={{ current_tri }}{% endif %}{% if current_rayon %}&rayon={{ current_rayon }}{% endif %}"
            class="px-4 py-2 bg-white rounded-xl shadow-apple text-sm font-medium text-apple-text hover:bg-gray-50 transition-colors">

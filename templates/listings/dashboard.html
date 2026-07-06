@@ -6,7 +6,7 @@
 <div class="max-w-7xl mx-auto px-6 py-8">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-10">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div>
             <h1 class="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p class="text-apple-gray mt-1">Vue d'ensemble de votre portefeuille</p>
@@ -216,8 +216,8 @@
                                 </span>
                                 {% endif %}
                             </div>
-                            <div class="flex items-center gap-3 text-xs text-apple-gray">
-                                <a href="mailto:{{ est.email }}" class="text-apple-blue hover:underline">{{ est.email }}</a>
+                            <div class="flex flex-wrap items-center gap-3 text-xs text-apple-gray">
+                                <a href="mailto:{{ est.email }}" class="text-apple-blue hover:underline break-all">{{ est.email }}</a>
                                 {% if est.telephone %}
                                 <span>{{ est.telephone }}</span>
                                 {% endif %}

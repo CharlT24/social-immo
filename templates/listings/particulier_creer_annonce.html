@@ -352,7 +352,7 @@ function rendrePhotos() {
         div.innerHTML = `
             <img src="${url}" class="w-full h-full object-cover">
             ${i === 0 ? '<span class="absolute top-1.5 left-1.5 bg-teal-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">Principale</span>' : ''}
-            <div class="absolute inset-x-0 bottom-0 bg-black/50 flex items-center justify-center gap-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="absolute inset-x-0 bottom-0 bg-black/50 flex items-center justify-center gap-1 py-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 ${i > 0 ? `<button type="button" onclick="deplacerPhoto(${i}, -1)" class="text-white text-xs px-1.5" title="Avancer">&larr;</button>` : ''}
                 <button type="button" onclick="supprimerPhoto(${i})" class="text-white text-xs px-1.5" title="Supprimer">&#10005;</button>
                 ${i < photosArr.length - 1 ? `<button type="button" onclick="deplacerPhoto(${i}, 1)" class="text-white text-xs px-1.5" title="Reculer">&rarr;</button>` : ''}

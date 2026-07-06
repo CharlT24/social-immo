@@ -12,10 +12,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-6 flex items-start gap-6">
+<div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row items-stretch lg:items-start gap-6">
 
     <!-- ==================== SIDEBAR ==================== -->
-    <aside class="w-[280px] bg-slate-900 rounded-2xl shadow-apple flex-shrink-0 flex flex-col sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto sidebar-scroll">
+    <aside class="w-full lg:w-[280px] bg-slate-900 rounded-2xl shadow-apple flex-shrink-0 flex flex-col lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] overflow-y-auto sidebar-scroll">
 
         <!-- Nav items -->
         <nav class="flex-1 px-3 py-6 space-y-1">
@@ -109,7 +109,7 @@
     <div class="flex-1 min-w-0">
 
         <!-- Agency Header -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div class="flex items-center gap-4">
                 {% if agence.logo_url %}
                 <img src="{{ agence.logo_url }}" alt="{{ agence.nom }}" class="w-14 h-14 rounded-xl object-cover border border-gray-200">
@@ -131,7 +131,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-right">
+            <div class="sm:text-right">
                 <p class="text-sm text-gray-500">Dernier import</p>
                 <p class="text-sm font-bold text-apple-text">
                     {% if agence.last_import %}{{ agence.last_import|date:"d/m/Y H:i" }}{% else %}Aucun{% endif %}
@@ -140,7 +140,7 @@
         </div>
 
         <!-- Tab Navigation -->
-        <div class="flex items-center gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-apple w-fit">
+        <div class="flex flex-wrap items-center gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-apple w-fit max-w-full">
             <a href="?tab=biens"
                class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all {% if current_tab == 'biens' %}bg-apple-blue text-white shadow-sm{% else %}text-gray-500 hover:text-apple-text hover:bg-gray-100{% endif %}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -158,7 +158,7 @@
         {% if current_tab == 'biens' %}
         <!-- ==================== ONGLET BIENS ==================== -->
         <!-- 2 Columns Layout -->
-        <div class="flex gap-8">
+        <div class="flex flex-col xl:flex-row gap-8">
 
             <!-- ===== LEFT COLUMN (60%) ===== -->
             <div class="flex-1 min-w-0 space-y-6">
@@ -225,7 +225,7 @@
 
                 <!-- Annonces en ligne -->
                 <div id="annonces-section" class="bg-white rounded-2xl p-6 shadow-apple">
-                    <div class="flex items-center justify-between mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
                         <h2 class="text-lg font-bold text-apple-text">{{ total_annonces }} annonce{{ total_annonces|pluralize }} en ligne</h2>
                         <a href="#liste-annonces" class="text-sm font-bold text-blue-800 hover:underline flex items-center gap-1">
                             Voir toutes vos annonces
@@ -234,7 +234,7 @@
                     </div>
 
                     <!-- Donut charts -->
-                    <div class="flex items-center gap-6">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
 
                         <!-- A modifier -->
                         <div class="flex-1 flex flex-col items-center p-4 rounded-2xl border-2 border-transparent hover:border-red-500/30 transition-colors cursor-pointer group">
@@ -309,7 +309,7 @@
                         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         Stats avancees
                     </h2>
-                    <div class="flex items-center gap-6 mb-4">
+                    <div class="flex flex-wrap items-center gap-6 mb-4">
                         <div class="text-center">
                             <div class="text-3xl font-bold text-blue-600">{{ total_vues }}</div>
                             <div class="text-xs text-gray-500">Vues totales</div>
@@ -377,7 +377,7 @@
                 <!-- Liste des annonces -->
                 <div id="liste-annonces" class="bg-white rounded-2xl overflow-hidden shadow-apple">
                     <div class="px-6 py-4 border-b border-gray-100">
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                             <h2 class="text-lg font-bold text-apple-text">Mes biens</h2>
                             <span class="text-sm text-gray-500">{{ total_annonces }} actif{{ total_annonces|pluralize:"s" }} / {{ total_inactives }} inactif{{ total_inactives|pluralize:"s" }}</span>
                         </div>
@@ -492,7 +492,7 @@
 
                     <!-- Pagination -->
                     {% if annonces_page.has_other_pages %}
-                    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <div class="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-xs text-gray-500">
                             Page {{ annonces_page.number }} sur {{ annonces_page.paginator.num_pages }}
                             ({{ annonces_page.paginator.count }} bien{{ annonces_page.paginator.count|pluralize }})
@@ -533,7 +533,7 @@
             </div>
 
             <!-- ===== RIGHT COLUMN (40%) ===== -->
-            <div class="w-[380px] flex-shrink-0 space-y-6">
+            <div class="w-full xl:w-[380px] flex-shrink-0 space-y-6">
 
                 <!-- Suivi du flux -->
                 <div id="flux-section" class="bg-white rounded-2xl p-6 shadow-apple">
@@ -685,7 +685,7 @@
                         {% if agence.contact_email %}
                         <div class="flex items-center gap-3 text-sm">
                             <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <a href="mailto:{{ agence.contact_email }}" class="text-blue-800 hover:underline">{{ agence.contact_email }}</a>
+                            <a href="mailto:{{ agence.contact_email }}" class="text-blue-800 hover:underline break-all">{{ agence.contact_email }}</a>
                         </div>
                         {% endif %}
                         {% if agence.contact_telephone %}
@@ -713,7 +713,7 @@
 
                 <div id="inspirations-section" class="bg-white rounded-2xl overflow-hidden shadow-apple">
                     <div class="px-6 py-5 border-b border-gray-100">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
                                     <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -849,7 +849,7 @@
 
                         <!-- Pagination photos -->
                         {% if inspi_page.has_other_pages %}
-                        <div class="mt-6 flex items-center justify-between">
+                        <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
                             <p class="text-xs text-gray-500">
                                 Page {{ inspi_page.number }} / {{ inspi_page.paginator.num_pages }}
                                 ({{ inspi_page.paginator.count }} photo{{ inspi_page.paginator.count|pluralize }})

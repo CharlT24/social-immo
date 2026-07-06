@@ -59,7 +59,7 @@
         {% if current_tab == 'vendeur' %}
         <div>
             <!-- CTA Deposer -->
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h2 class="text-xl font-bold">Mes annonces</h2>
                 <a href="{% url 'listings:particulier_creer_annonce' %}"
                    class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm">

@@ -552,7 +552,7 @@
     <!-- Pros du secteur -->
     {% if pros_secteur %}
     <div class="mt-16 reveal">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
                 <h2 class="text-xl font-semibold flex items-center gap-3">
                     <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -920,7 +920,7 @@ document.addEventListener('keydown', function(e) {
     </button>
 
     <!-- Infos bien -->
-    <div style="position:absolute; top:34px; left:20px; z-index:12; color:white;">
+    <div style="position:absolute; top:34px; left:20px; z-index:12; color:white; max-width:calc(100vw - 100px);">
         <p style="font-size:15px; font-weight:700; text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ annonce.prix_format }}</p>
         <p style="font-size:12px; color:rgba(255,255,255,0.75);">{{ annonce.titre|truncatechars:60 }} — {{ annonce.ville }}</p>
     </div>

@@ -19,7 +19,7 @@
     </div>
     {% endif %}
 
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-semibold tracking-tight">Conseillers de {{ agence.nom }}</h1>
             <p class="text-apple-gray mt-1">{{ conseillers_data|length }} conseiller{{ conseillers_data|length|pluralize }} enregistre{{ conseillers_data|length|pluralize }}</p>

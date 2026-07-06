@@ -11,10 +11,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex min-h-[calc(100vh-61px)]">
+<div class="flex flex-col lg:flex-row min-h-[calc(100vh-61px)]">
 
     <!-- SIDEBAR -->
-    <aside class="w-[260px] bg-slate-900 flex-shrink-0 flex flex-col sticky top-[61px] h-[calc(100vh-61px)] overflow-y-auto sidebar-scroll">
+    <aside class="w-full lg:w-[260px] bg-slate-900 flex-shrink-0 flex flex-col lg:sticky lg:top-[61px] lg:h-[calc(100vh-61px)] overflow-y-auto sidebar-scroll">
         <nav class="flex-1 px-3 py-6 space-y-1">
             <a href="?tab=biens" class="flex items-center gap-3 px-4 py-2.5 {% if current_tab == 'biens' %}bg-emerald-600 text-white{% else %}text-white/80 hover:text-white hover:bg-white/5{% endif %} rounded-full text-sm font-bold transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -56,13 +56,13 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <div class="flex-1 p-8 overflow-y-auto">
+    <div class="flex-1 min-w-0 p-4 sm:p-8 overflow-y-auto">
 
         <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-apple-text">Bonjour {{ conseiller.nom }}</h1>
-                <p class="text-sm text-apple-gray mt-1">{{ agence.nom }} &mdash; {{ conseiller.email }}</p>
+                <p class="text-sm text-apple-gray mt-1 break-words">{{ agence.nom }} &mdash; {{ conseiller.email }}</p>
             </div>
             <div class="flex items-center gap-3">
                 {% if conseiller.telephone %}
@@ -123,7 +123,7 @@
         <!-- ==================== ONGLET BIENS ==================== -->
         <div class="bg-white rounded-2xl overflow-hidden shadow-apple">
             <div class="px-6 py-4 border-b border-gray-100">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h2 class="text-lg font-bold text-apple-text">Mes biens</h2>
                     <span class="text-sm text-apple-gray">{{ total_annonces }} actif{{ total_annonces|pluralize:"s" }} / {{ total_inactives }} inactif{{ total_inactives|pluralize:"s" }}</span>
                 </div>
@@ -213,7 +213,7 @@
             </div>
 
             {% if annonces_page.has_other_pages %}
-            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <div class="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
                 <p class="text-xs text-apple-gray">Page {{ annonces_page.number }} / {{ annonces_page.paginator.num_pages }}</p>
                 <div class="flex items-center gap-1">
                     {% if annonces_page.has_previous %}
@@ -245,7 +245,7 @@
         <!-- ==================== ONGLET INSPIRATIONS ==================== -->
         <div class="bg-white rounded-2xl overflow-hidden shadow-apple">
             <div class="px-6 py-5 border-b border-gray-100">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
                             <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -317,7 +317,7 @@
                 </div>
 
                 {% if inspi_page.has_other_pages %}
-                <div class="mt-6 flex items-center justify-between">
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
                     <p class="text-xs text-apple-gray">Page {{ inspi_page.number }} / {{ inspi_page.paginator.num_pages }}</p>
                     <div class="flex items-center gap-1">
                         {% if inspi_page.has_previous %}
@@ -417,10 +417,10 @@
                             </a>
                             {% endif %}
                             <p class="text-sm text-apple-gray">{{ demande.message }}</p>
-                            <div class="flex items-center gap-4 mt-3">
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
                                 {% if demande.expediteur.email %}
                                 <a href="mailto:{{ demande.expediteur.email }}?subject=Re: {{ demande.annonce.reference|default:'Votre demande' }} - SocialImmo"
-                                   class="inline-flex items-center gap-1.5 text-xs font-bold text-apple-blue hover:underline">
+                                   class="inline-flex items-center gap-1.5 text-xs font-bold text-apple-blue hover:underline break-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                     {{ demande.expediteur.email }}
                                 </a>

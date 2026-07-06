@@ -326,7 +326,7 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-gray-900">{{ msg.expediteur.get_full_name|default:msg.expediteur.username }}</span>
+                                <span class="font-semibold text-gray-900">{{ msg.nom_expediteur }}</span>
                                 {% if not msg.is_read %}
                                 <span class="bg-teal-100 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Nouveau</span>
                                 {% endif %}

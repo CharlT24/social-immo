@@ -615,9 +615,16 @@ class PhotoCommentaire(models.Model):
 
 
 class DemandeContact(models.Model):
-    """Demande de contact envoyee a un agent immo ou un pro"""
+    """Demande de contact envoyee a un agent immo ou un pro.
+    L'expediteur peut etre un visiteur anonyme (nom + email captures)."""
 
-    expediteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demandes_envoyees')
+    expediteur = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='demandes_envoyees',
+        null=True, blank=True,
+    )
+    # Coordonnees du visiteur anonyme (si expediteur non connecte)
+    nom = models.CharField(max_length=100, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
     annonce = models.ForeignKey(
         Annonce, on_delete=models.CASCADE,
         null=True, blank=True, related_name='demandes_contact'
@@ -637,9 +644,19 @@ class DemandeContact(models.Model):
         verbose_name = 'Demande de contact'
         verbose_name_plural = 'Demandes de contact'
 
+    @property
+    def nom_expediteur(self):
+        if self.expediteur:
+            return self.expediteur.get_full_name() or self.expediteur.username
+        return self.nom or 'Visiteur'
+
+    @property
+    def email_expediteur(self):
+        return self.expediteur.email if self.expediteur else self.email
+
     def __str__(self):
-        target = self.annonce.reference if self.annonce else self.pro.nom_entreprise
-        return f"{self.expediteur.username} -> {target}"
+        target = self.annonce.reference if self.annonce else (self.pro.nom_entreprise if self.pro else '?')
+        return f"{self.nom_expediteur} -> {target}"
 
 
 class AgenceOptions(models.Model):

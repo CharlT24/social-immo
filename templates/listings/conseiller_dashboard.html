@@ -401,11 +401,11 @@
                 <div class="px-6 py-5 hover:bg-apple-bg/30 transition-colors {% if not demande.is_read %}bg-blue-50/30{% endif %}" id="demande-{{ demande.id }}">
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 bg-apple-blue rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-xs font-bold text-white">{{ demande.expediteur.username|slice:":2"|upper }}</span>
+                            <span class="text-xs font-bold text-white">{{ demande.nom_expediteur|slice:":2"|upper }}</span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-3 mb-1">
-                                <span class="text-sm font-bold text-apple-text">{{ demande.expediteur.get_full_name|default:demande.expediteur.username }}</span>
+                                <span class="text-sm font-bold text-apple-text">{{ demande.nom_expediteur }}</span>
                                 <span class="text-[11px] text-apple-gray">{{ demande.created_at|timesince }}</span>
                                 {% if not demande.is_read %}
                                 <span class="w-2 h-2 bg-apple-blue rounded-full"></span>
@@ -418,11 +418,11 @@
                             {% endif %}
                             <p class="text-sm text-apple-gray">{{ demande.message }}</p>
                             <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
-                                {% if demande.expediteur.email %}
-                                <a href="mailto:{{ demande.expediteur.email }}?subject=Re: {{ demande.annonce.reference|default:'Votre demande' }} - SocialImmo"
+                                {% if demande.email_expediteur %}
+                                <a href="mailto:{{ demande.email_expediteur }}?subject=Re: {{ demande.annonce.reference|default:'Votre demande' }} - SocialImmo"
                                    class="inline-flex items-center gap-1.5 text-xs font-bold text-apple-blue hover:underline break-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                    {{ demande.expediteur.email }}
+                                    {{ demande.email_expediteur }}
                                 </a>
                                 {% endif %}
                                 {% if demande.telephone %}

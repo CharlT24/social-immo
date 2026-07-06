@@ -645,7 +645,7 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 mb-0.5">
-                                        <span class="text-sm font-bold text-apple-text">{{ demande.expediteur.get_full_name|default:demande.expediteur.username }}</span>
+                                        <span class="text-sm font-bold text-apple-text">{{ demande.nom_expediteur }}</span>
                                         {% if not demande.is_read %}<span class="w-2 h-2 bg-orange-500 rounded-full"></span>{% endif %}
                                         <span class="text-[11px] text-gray-500">{{ demande.created_at|timesince }}</span>
                                     </div>

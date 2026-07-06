@@ -486,28 +486,24 @@
                     </a>
                     {% endif %}
 
-                    {% if annonce.contact_email %}
-                    <a href="mailto:{{ annonce.contact_email }}?subject=Demande d'information - {{ annonce.reference }}"
-                       class="flex items-center justify-center gap-2 w-full bg-apple-text text-white font-medium py-4 px-6 rounded-2xl hover:bg-gray-800 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        Envoyer un email
-                    </a>
-                    {% endif %}
-
-                    <!-- Contact Form (tracked) -->
-                    {% if user.is_authenticated %}
+                    <!-- Contact Form (ouvert a tous, tracke) -->
                     <div class="border-t border-gray-100 pt-4 mt-4">
-                        <p class="text-xs text-apple-gray mb-3 text-center">ou envoyez un message directement</p>
+                        <p class="text-sm font-semibold text-apple-text mb-3 text-center">Interesse ? Contactez directement</p>
                         <div id="contact-form-container">
+                            {% if not user.is_authenticated %}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                <input type="text" id="contact-nom" placeholder="Votre nom *"
+                                    class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                                <input type="email" id="contact-email" placeholder="Votre email *"
+                                    class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
+                            </div>
+                            {% endif %}
                             <textarea id="contact-message" rows="3"
-                                placeholder="Bonjour, je suis interesse par ce bien..."
-                                class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2"></textarea>
-                            <input type="tel" id="contact-tel" placeholder="Votre telephone (optionnel)"
+                                placeholder="Bonjour, je suis interesse par ce bien, pourriez-vous me recontacter ?"
+                                class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2">{% if not user.is_authenticated %}Bonjour, je suis interesse par ce bien ({{ annonce.reference }}). Pourriez-vous me recontacter ? Merci.{% endif %}</textarea>
+                            <input type="tel" id="contact-tel" placeholder="Votre telephone (recommande pour un rappel)"
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-2">
                             {% if agence_opts.contact_prioritaire %}
-                            <!-- Contact prioritaire : creneau de rappel -->
                             <select id="contact-creneau"
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-3">
                                 <option value="">Creneau de rappel souhaite (optionnel)</option>
@@ -520,24 +516,22 @@
                             <div class="mb-3"></div>
                             {% endif %}
                             <button onclick="envoyerContact({{ annonce.id }}, 'annonce')"
-                                class="w-full bg-green-600 text-white font-medium py-3 px-6 rounded-xl hover:bg-green-700 transition-colors text-sm">
+                                class="w-full bg-green-600 text-white font-semibold py-3.5 px-6 rounded-xl hover:bg-green-700 transition-colors text-sm">
                                 Envoyer ma demande
                             </button>
+                            <p class="text-[11px] text-apple-gray text-center mt-2">
+                                Vos coordonnees sont transmises au professionnel pour vous recontacter, conformement a notre
+                                <a href="{% url 'listings:confidentialite' %}" class="text-apple-blue hover:underline">politique de confidentialite</a>.
+                            </p>
                         </div>
                         <div id="contact-success" class="hidden text-center py-4">
                             <svg class="w-10 h-10 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <p class="text-sm font-medium text-apple-text">Message envoye !</p>
-                            <p class="text-xs text-apple-gray mt-1">L'agent vous recontactera bientot.</p>
+                            <p class="text-xs text-apple-gray mt-1">Le professionnel vous recontactera bientot.</p>
                         </div>
                     </div>
-                    {% else %}
-                    <a href="{% url 'account_login' %}?next={{ request.path }}"
-                       class="flex items-center justify-center gap-2 w-full border-2 border-gray-200 text-apple-text font-medium py-3 px-6 rounded-2xl hover:bg-gray-50 transition-colors text-sm mt-2">
-                        Connectez-vous pour contacter l'agent
-                    </a>
-                    {% endif %}
                 </div>
 
                 <!-- Reference -->
@@ -807,12 +801,23 @@ function envoyerContact(targetId, targetType) {
     const tel = document.getElementById('contact-tel').value.trim();
     const creneauEl = document.getElementById('contact-creneau');
     const creneau = creneauEl ? creneauEl.value : '';
-    if (!msg) { alert('Veuillez ecrire un message.'); return; }
+    const nomEl = document.getElementById('contact-nom');
+    const emailEl = document.getElementById('contact-email');
+    if (!msg) { showToast('Veuillez ecrire un message.', 'error'); return; }
 
     const body = { message: msg, telephone: tel };
     if (creneau) body.creneau_rappel = creneau;
     if (targetType === 'annonce') body.annonce_id = targetId;
     else body.pro_id = targetId;
+
+    // Visiteur non connecte : nom + email requis
+    if (nomEl && emailEl) {
+        const nom = nomEl.value.trim();
+        const email = emailEl.value.trim();
+        if (!nom || !email) { showToast('Indiquez votre nom et votre email pour etre recontacte.', 'error'); return; }
+        body.nom = nom;
+        body.email = email;
+    }
 
     fetch('{% url "listings:envoyer_contact" %}', {
         method: 'POST',
@@ -824,8 +829,11 @@ function envoyerContact(targetId, targetType) {
         if (data.success) {
             document.getElementById('contact-form-container').classList.add('hidden');
             document.getElementById('contact-success').classList.remove('hidden');
+        } else {
+            showToast(data.error || 'Une erreur est survenue.', 'error');
         }
-    });
+    })
+    .catch(() => showToast('Une erreur est survenue.', 'error'));
 }
 
 }

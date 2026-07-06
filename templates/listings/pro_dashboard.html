@@ -204,7 +204,7 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="text-sm font-semibold text-gray-900 {% if not demande.is_read %}text-purple-700{% endif %}">{{ demande.expediteur.username }}</span>
+                                        <span class="text-sm font-semibold text-gray-900 {% if not demande.is_read %}text-purple-700{% endif %}">{{ demande.nom_expediteur }}</span>
                                         <span class="text-xs text-gray-400 flex-shrink-0">{{ demande.created_at|timesince }}</span>
                                     </div>
                                     <p class="text-sm text-gray-500 mt-0.5 line-clamp-2">{{ demande.message|truncatewords:15 }}</p>

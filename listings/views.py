@@ -1892,13 +1892,16 @@ def delete_photo_comment(request):
     return JsonResponse({'status': 'deleted'})
 
 
-@login_required
 @require_POST
 def envoyer_contact(request):
-    """Envoie une demande de contact a un agent ou pro, avec email direct"""
+    """Envoie une demande de contact a un agent ou pro, avec email direct.
+    Ouvert aux visiteurs anonymes (nom + email requis) pour ne pas perdre
+    le lead derriere une inscription."""
     from django.core.mail import send_mail
-    from .services.protection import trop_de_requetes
-    if trop_de_requetes(request, 'contact', maximum=15, fenetre_secondes=3600):
+    from django.core.validators import validate_email
+    from django.core.exceptions import ValidationError
+    from .services.protection import trop_de_requetes, est_un_bot
+    if est_un_bot(request) or trop_de_requetes(request, 'contact', maximum=15, fenetre_secondes=3600):
         return JsonResponse({'error': 'Trop de demandes — reessayez plus tard.'}, status=429)
     try:
         data = json.loads(request.body)
@@ -1907,14 +1910,27 @@ def envoyer_contact(request):
         creneau_rappel = data.get('creneau_rappel', '').strip()
         annonce_id = data.get('annonce_id')
         pro_id = data.get('pro_id')
+        nom_visiteur = (data.get('nom') or '').strip()[:100]
+        email_visiteur = (data.get('email') or '').strip()[:254]
     except (json.JSONDecodeError, KeyError):
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
     if not message_text:
         return JsonResponse({'error': 'Message requis'}, status=400)
 
+    # Visiteur anonyme : nom + email valides obligatoires
+    if not request.user.is_authenticated:
+        if not nom_visiteur or not email_visiteur:
+            return JsonResponse({'error': 'Nom et email requis pour vous recontacter'}, status=400)
+        try:
+            validate_email(email_visiteur)
+        except ValidationError:
+            return JsonResponse({'error': 'Email invalide'}, status=400)
+
     demande = DemandeContact(
-        expediteur=request.user,
+        expediteur=request.user if request.user.is_authenticated else None,
+        nom='' if request.user.is_authenticated else nom_visiteur,
+        email='' if request.user.is_authenticated else email_visiteur,
         message=message_text,
         telephone=telephone,
         creneau_rappel=creneau_rappel,
@@ -1953,8 +1969,8 @@ def envoyer_contact(request):
 Vous avez recu une nouvelle demande sur SocialImmo.
 
 {'Bien : ' + demande.annonce.titre + ' (' + demande.annonce.reference + ')' if demande.annonce else ''}
-De : {request.user.get_full_name() or request.user.username}
-Email : {request.user.email}
+De : {demande.nom_expediteur}
+Email : {demande.email_expediteur}
 {('Telephone : ' + telephone) if telephone else ''}
 {('Creneau de rappel souhaite : ' + creneau_rappel) if creneau_rappel else ''}
 

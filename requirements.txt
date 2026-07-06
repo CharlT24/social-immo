@@ -4,7 +4,7 @@ Django==5.2
 django-allauth==65.15.0
 gunicorn==23.0.0
 lxml==6.0.2
-mysqlclient==2.2.7
+PyMySQL==1.1.1
 packaging==25.0
 pillow==12.1.0
 psycopg2-binary==2.9.11

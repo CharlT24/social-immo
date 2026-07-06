@@ -20,6 +20,7 @@
         <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-transparent hover:border-apple-blue transition-colors">
             <p class="text-sm font-bold text-apple-blue uppercase tracking-wide mb-2">Agences</p>
             <p class="text-3xl font-bold mb-1">Premium</p>
+            <p class="text-2xl font-bold text-apple-blue mb-1">149 €<span class="text-sm font-normal text-apple-gray"> /mois TTC</span></p>
             <p class="text-sm text-apple-gray mb-6">Visibilite maximale + leads vendeurs</p>
             <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
                 <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Flux XML illimite (inclus aussi en gratuit)</li>
@@ -40,6 +41,7 @@
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">Le plus populaire</span>
             <p class="text-sm font-bold text-purple-600 uppercase tracking-wide mb-2">Artisans & pros</p>
             <p class="text-3xl font-bold mb-1">Artisan Pro</p>
+            <p class="text-2xl font-bold text-purple-600 mb-1">29 €<span class="text-sm font-normal text-apple-gray"> /mois TTC</span></p>
             <p class="text-sm text-apple-gray mb-6">Des chantiers pres de chez vous</p>
             <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
                 <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Fiche + realisations illimitees (inclus en gratuit)</li>
@@ -58,6 +60,7 @@
         <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-transparent hover:border-teal-500 transition-colors">
             <p class="text-sm font-bold text-teal-600 uppercase tracking-wide mb-2">Particuliers</p>
             <p class="text-3xl font-bold mb-1">Pack Vendeur</p>
+            <p class="text-2xl font-bold text-teal-600 mb-1">39 €<span class="text-sm font-normal text-apple-gray"> TTC</span></p>
             <p class="text-sm text-apple-gray mb-6">Paiement unique, boost 30 jours</p>
             <ul class="space-y-2.5 text-sm text-apple-gray mb-8 flex-1">
                 <li class="flex gap-2"><span class="text-emerald-500 font-bold">✓</span> Depot, estimation, panneau QR (inclus en gratuit)</li>
@@ -77,5 +80,12 @@
         Deja abonne ? <a href="{% url 'listings:portail_facturation' %}" class="text-apple-blue font-semibold hover:underline">Gerer mon abonnement et mes factures</a>
         <span class="text-gray-300 mx-2">·</span> Resiliable a tout moment, factures automatiques par email.
     </div>
+    <p class="text-center text-xs text-apple-gray mt-4 max-w-2xl mx-auto">
+        Prix TTC. En souscrivant, vous acceptez les
+        <a href="{% url 'listings:cgu' %}" class="text-apple-blue hover:underline">conditions generales</a>.
+        Pour les services executes immediatement, vous demandez leur execution avant la fin du delai de
+        retractation de 14 jours et renoncez expressement a ce droit conformement a l'article L.221-28 du
+        Code de la consommation.
+    </p>
 </div>
 {% endblock %}

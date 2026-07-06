@@ -62,6 +62,11 @@
                 class="w-full bg-purple-600 text-white font-semibold py-4 px-6 rounded-2xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20">
             Recevoir mes devis gratuits
         </button>
+        <p class="text-[11px] text-apple-gray text-center mt-3">
+            Vos coordonnees (nom, email, telephone) seront transmises a jusqu'a 3 professionnels de votre
+            departement afin qu'ils vous recontactent. Traitement conforme a notre
+            <a href="{% url 'listings:confidentialite' %}" class="text-apple-blue hover:underline">politique de confidentialite</a>.
+        </p>
         {% else %}
         <a href="{% url 'account_login' %}?next={% url 'listings:demande_devis' %}"
            class="block text-center w-full bg-purple-600 text-white font-semibold py-4 px-6 rounded-2xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20">

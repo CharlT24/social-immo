@@ -3810,6 +3810,19 @@ def particulier_creer_annonce(request):
     if request.method == 'POST':
         form = ParticulierAnnonceForm(request.POST)
         if form.is_valid():
+            # Anti-doublon : un double-clic (ou soumission repetee) ne doit pas
+            # creer plusieurs fois la meme annonce. On detecte un depot identique
+            # (meme titre + ville) du meme user dans les 2 dernieres minutes.
+            recent = timezone.now() - timedelta(minutes=2)
+            doublon = Annonce.objects.filter(
+                user=request.user, source='particulier',
+                titre=form.cleaned_data.get('titre', ''),
+                ville=form.cleaned_data.get('ville', ''),
+                created_at__gte=recent,
+            ).first()
+            if doublon:
+                return redirect('listings:annonce_publiee', annonce_id=doublon.id)
+
             # Email verifie ? Sinon l'annonce attend la confirmation
             from allauth.account.models import EmailAddress
             email_verifie = EmailAddress.objects.filter(

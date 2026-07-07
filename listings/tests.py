@@ -652,3 +652,34 @@ class SecuriteTests(TestCase):
         self.assertEqual(len(data['titre']), 255)
         self.assertEqual(data['dpe_etiquette_conso'], '')
         self.assertLessEqual(len(data['code_postal']), 10)
+
+
+class DepotAntiDoublonTests(TestCase):
+    """Un double-clic ne cree pas plusieurs fois la meme annonce."""
+
+    def setUp(self):
+        cache.clear()
+        from allauth.account.models import EmailAddress
+        self.u = User.objects.create_user('dep', 'dep@t.fr', 'x')
+        EmailAddress.objects.create(user=self.u, email='dep@t.fr', verified=True, primary=True)
+        self.client.force_login(self.u)
+
+    def test_double_clic_pas_de_doublon(self):
+        data = {'titre': 'Maison unique', 'texte': 'x', 'libelle_type': 'Maison',
+                'type_transaction': 'V', 'prix': '250000', 'ville': 'Caen', 'code_postal': '14000',
+                'surface': '90', 'dpe_etiquette_conso': 'D', 'dpe_etiquette_ges': 'E'}
+        for _ in range(4):
+            self.client.post('/mon-compte/deposer/', data, follow=True)
+        self.assertEqual(Annonce.objects.filter(titre='Maison unique', user=self.u).count(), 1)
+
+    def test_ges_enregistre_et_affiche(self):
+        data = {'titre': 'Maison GES', 'texte': 'x', 'libelle_type': 'Maison',
+                'type_transaction': 'V', 'prix': '250000', 'ville': 'Caen', 'code_postal': '14000',
+                'surface': '90', 'dpe_etiquette_conso': 'D', 'dpe_valeur_conso': '180',
+                'dpe_etiquette_ges': 'E', 'dpe_valeur_ges': '35'}
+        self.client.post('/mon-compte/deposer/', data, follow=True)
+        a = Annonce.objects.get(titre='Maison GES', user=self.u)
+        self.assertEqual(a.dpe_etiquette_ges, 'E')
+        self.assertEqual(a.dpe_valeur_ges, 35)
+        resp = self.client.get(f'/annonce/{a.reference}/')
+        self.assertContains(resp, 'gaz à effet de serre')

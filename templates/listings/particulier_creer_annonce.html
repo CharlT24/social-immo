@@ -319,6 +319,7 @@ function etapeSuivante() { if (validerEtape(etapeCourante)) afficherEtape(Math.m
 function etapePrecedente() { afficherEtape(Math.max(etapeCourante - 1, 1)); }
 
 // Validation finale avant POST
+let dejaSoumis = false;
 document.getElementById('wizard-form').addEventListener('submit', function(e) {
     if (!champ('id_titre').trim()) {
         e.preventDefault();
@@ -326,6 +327,11 @@ document.getElementById('wizard-form').addEventListener('submit', function(e) {
         document.getElementById('id_titre').focus();
         return;
     }
+    // Anti double-clic : on ne soumet qu'une fois
+    if (dejaSoumis) { e.preventDefault(); return; }
+    dejaSoumis = true;
+    const btn = document.getElementById('btn-publier');
+    if (btn) { btn.disabled = true; btn.textContent = 'Publication en cours...'; btn.classList.add('opacity-70'); }
     reconstruireInputPhotos();
 });
 

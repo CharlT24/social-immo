@@ -14,17 +14,20 @@ from django.views.decorators.http import require_POST
 from datetime import timedelta
 import json
 import csv
+import logging
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Q
 
 from .decorators import staff_required
+
+logger = logging.getLogger(__name__)
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence,
     ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, PhotoCommentaire, DemandeContact, Conseiller,
-    Estimation, AgenceOptions, InspirationTag, UserProfile
+    Estimation, AgenceOptions, InspirationTag, UserProfile, DemandeAgence
 )
 from .forms import (
     CommentaireForm, AgenceCreateForm, ProInscriptionForm, ProRealisationForm,
@@ -3600,6 +3603,13 @@ def agence_immo(request):
         message_text = request.POST.get('message', '').strip()
 
         if nom_agence and email:
+            # 1. Persister la demande en base AVANT tout : aucun lead perdu,
+            #    meme si l'envoi d'email echoue.
+            demande = DemandeAgence.objects.create(
+                nom_agence=nom_agence, ville=ville, email=email,
+                telephone=telephone, nb_biens=nb_biens, message=message_text,
+            )
+            # 2. Notifier l'admin par email (best-effort).
             body = (
                 f"Nouvelle demande de diffusion sur Social Immo\n\n"
                 f"Agence : {nom_agence}\n"
@@ -3609,16 +3619,20 @@ def agence_immo(request):
                 f"Nombre de biens : {nb_biens}\n\n"
                 f"Message :\n{message_text}\n"
             )
+            destinataire = (settings.ADMINS[0][1] if settings.ADMINS
+                            else 'ctudela@groupe-ass.com')
             try:
                 send_mail(
                     subject=f'[Social Immo] Demande agence : {nom_agence}',
                     message=body,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=['ctudela@groupe-ass.com'],
+                    recipient_list=[destinataire],
                     fail_silently=False,
                 )
+                demande.email_envoye = True
+                demande.save(update_fields=['email_envoye'])
             except Exception:
-                pass
+                logger.exception('Echec envoi email demande agence #%s', demande.pk)
             contact_sent = True
 
     return render(request, 'listings/agence_immo.html', {

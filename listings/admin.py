@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Annonce, Photo, Commentaire, Favori, Agence,
     ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
-    PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation
+    PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation,
+    DemandeAgence,
 )
 
 
@@ -98,6 +99,16 @@ class DemandeContactAdmin(admin.ModelAdmin):
     list_display = ['expediteur', 'annonce', 'pro', 'is_read', 'created_at']
     list_filter = ['is_read', 'created_at']
     search_fields = ['expediteur__username', 'message']
+
+
+@admin.register(DemandeAgence)
+class DemandeAgenceAdmin(admin.ModelAdmin):
+    list_display = ['nom_agence', 'ville', 'email', 'telephone', 'nb_biens',
+                    'email_envoye', 'is_traitee', 'created_at']
+    list_filter = ['is_traitee', 'email_envoye', 'created_at']
+    search_fields = ['nom_agence', 'email', 'ville', 'telephone']
+    list_editable = ['is_traitee']
+    readonly_fields = ['created_at']
 
 
 @admin.register(Estimation)

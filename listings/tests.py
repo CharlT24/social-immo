@@ -19,8 +19,8 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from .models import (
-    Abonnement, Agence, AgenceOptions, Annonce, DemandeContact, Photo,
-    ProProfile, RechercheSauvegardee, StatJour, TicketSupport,
+    Abonnement, Agence, AgenceOptions, Annonce, DemandeAgence, DemandeContact,
+    Photo, ProProfile, RechercheSauvegardee, StatJour, TicketSupport,
 )
 from .services.estimation import estimer_bien
 
@@ -683,3 +683,43 @@ class DepotAntiDoublonTests(TestCase):
         self.assertEqual(a.dpe_valeur_ges, 35)
         resp = self.client.get(f'/annonce/{a.reference}/')
         self.assertContains(resp, 'gaz à effet de serre')
+
+
+class DemandeAgenceTests(TestCase):
+    """La demande d'une agence (page vitrine) est toujours enregistree en base,
+    meme si l'email admin echoue — aucun lead perdu."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _post(self):
+        return self.client.post('/agence-immobiliere/', {
+            'nom_agence': 'Agence Test Diffusion', 'ville': 'Bordeaux',
+            'email': 'contact@agence-test.fr', 'telephone': '0611223344',
+            'nb_biens': '25', 'message': 'On veut diffuser nos biens.',
+        })
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_demande_persistee_et_email_envoye(self):
+        resp = self._post()
+        self.assertEqual(resp.status_code, 200)
+        d = DemandeAgence.objects.get(nom_agence='Agence Test Diffusion')
+        self.assertEqual(d.email, 'contact@agence-test.fr')
+        self.assertTrue(d.email_envoye)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_demande_persistee_meme_si_email_echoue(self):
+        # Backend qui plante a l'envoi : la demande doit quand meme etre en base.
+        with override_settings(EMAIL_BACKEND='listings.tests.BrokenEmailBackend'):
+            resp = self._post()
+        self.assertEqual(resp.status_code, 200)
+        d = DemandeAgence.objects.get(nom_agence='Agence Test Diffusion')
+        self.assertFalse(d.email_envoye)
+
+
+from django.core.mail.backends.base import BaseEmailBackend
+
+
+class BrokenEmailBackend(BaseEmailBackend):
+    def send_messages(self, email_messages):
+        raise OSError('SMTP indisponible (test)')

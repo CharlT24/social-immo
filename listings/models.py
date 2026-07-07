@@ -700,6 +700,29 @@ class DemandeContact(models.Model):
     def email_expediteur(self):
         return self.expediteur.email if self.expediteur else self.email
 
+
+class DemandeAgence(models.Model):
+    """Demande d'une agence immo souhaitant diffuser ses biens (page vitrine).
+    Persistee en base pour ne jamais perdre un lead, meme si l'email echoue."""
+
+    nom_agence = models.CharField(max_length=200, verbose_name="Nom de l'agence")
+    ville = models.CharField(max_length=120, blank=True, default='')
+    email = models.EmailField()
+    telephone = models.CharField(max_length=30, blank=True, default='')
+    nb_biens = models.CharField(max_length=50, blank=True, default='', verbose_name='Nombre de biens')
+    message = models.TextField(blank=True, default='')
+    email_envoye = models.BooleanField(default=False, verbose_name='Email admin envoye')
+    is_traitee = models.BooleanField(default=False, verbose_name='Traitee')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Demande d'agence"
+        verbose_name_plural = "Demandes d'agences"
+
+    def __str__(self):
+        return f'{self.nom_agence} ({self.email})'
+
     def __str__(self):
         target = self.annonce.reference if self.annonce else (self.pro.nom_entreprise if self.pro else '?')
         return f"{self.nom_expediteur} -> {target}"

@@ -943,3 +943,98 @@ class RealisationPhotosFeedbackTests(TestCase):
             'titre': 'Chantier iPhone', 'categorie': '', 'description': 'x', 'photos': heic})
         r = ProRealisation.objects.get(titre='Chantier iPhone')
         self.assertEqual(r.photos.count(), 1)  # HEIC accepte et converti
+
+
+class InteractionsSocialesTests(TestCase):
+    """Feed Pinterest : favoris (mettre de cote), etoiles, commentaires.
+    Tout est ouvert du moment qu'on a un compte ; lecture des commentaires publique."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('social', 'social@test.fr', 'motdepasse-123')
+        self.annonce = creer_annonce('SOC-1', is_active=True)
+        self.photo = Photo.objects.create(annonce=self.annonce, url='http://x/p.jpg', ordre=1,
+                                          is_inspiration=True, inspiration_categorie='cuisine')
+
+    def _post(self, url, payload):
+        return self.client.post(url, data=json.dumps(payload), content_type='application/json')
+
+    # --- Favoris (mettre de cote) ---
+    def test_favori_necessite_compte(self):
+        resp = self._post('/api/photo-favori/', {'photo_id': self.photo.id, 'type': 'annonce'})
+        self.assertEqual(resp.status_code, 302)  # redirige vers login
+
+    def test_favori_toggle_avec_compte(self):
+        from listings.models import PhotoFavori
+        self.client.force_login(self.user)
+        r1 = self._post('/api/photo-favori/', {'photo_id': self.photo.id, 'type': 'annonce'})
+        self.assertTrue(r1.json()['liked'])
+        self.assertEqual(PhotoFavori.objects.filter(user=self.user, photo=self.photo).count(), 1)
+        r2 = self._post('/api/photo-favori/', {'photo_id': self.photo.id, 'type': 'annonce'})
+        self.assertFalse(r2.json()['liked'])  # retire des favoris
+        self.assertEqual(PhotoFavori.objects.filter(user=self.user, photo=self.photo).count(), 0)
+
+    # --- Etoiles (notation) ---
+    def test_note_etoiles(self):
+        self.client.force_login(self.user)
+        r = self._post('/api/photo-note/', {'photo_id': self.photo.id, 'note': 4, 'type': 'annonce'})
+        data = r.json()
+        self.assertEqual(data['note'], 4)
+        self.assertEqual(data['average'], 4.0)
+        self.assertEqual(data['count'], 1)
+        # re-noter met a jour (pas de doublon)
+        r2 = self._post('/api/photo-note/', {'photo_id': self.photo.id, 'note': 2, 'type': 'annonce'})
+        self.assertEqual(r2.json()['count'], 1)
+        self.assertEqual(r2.json()['average'], 2.0)
+
+    def test_note_invalide_rejetee(self):
+        self.client.force_login(self.user)
+        r = self._post('/api/photo-note/', {'photo_id': self.photo.id, 'note': 9, 'type': 'annonce'})
+        self.assertEqual(r.status_code, 400)
+
+    def test_note_necessite_compte(self):
+        r = self._post('/api/photo-note/', {'photo_id': self.photo.id, 'note': 4, 'type': 'annonce'})
+        self.assertEqual(r.status_code, 302)
+
+    # --- Commentaires ---
+    def test_commentaire_avec_compte(self):
+        from listings.models import PhotoCommentaire
+        self.client.force_login(self.user)
+        r = self._post('/api/photo-comment/', {'photo_id': self.photo.id, 'type': 'annonce',
+                                               'texte': 'Superbe cuisine !'})
+        self.assertEqual(r.json()['texte'], 'Superbe cuisine !')
+        self.assertEqual(PhotoCommentaire.objects.filter(photo=self.photo).count(), 1)
+
+    def test_commentaire_trop_long_rejete(self):
+        self.client.force_login(self.user)
+        r = self._post('/api/photo-comment/', {'photo_id': self.photo.id, 'type': 'annonce',
+                                               'texte': 'x' * 501})
+        self.assertEqual(r.status_code, 400)
+
+    def test_commentaire_necessite_compte(self):
+        r = self._post('/api/photo-comment/', {'photo_id': self.photo.id, 'type': 'annonce',
+                                               'texte': 'coucou'})
+        self.assertEqual(r.status_code, 302)
+
+    def test_lecture_commentaires_publique(self):
+        from listings.models import PhotoCommentaire
+        PhotoCommentaire.objects.create(auteur=self.user, photo=self.photo, texte='Joli')
+        resp = self.client.get(f'/api/photo-comments/?photo_id={self.photo.id}&type=annonce')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data['count'], 1)
+        self.assertEqual(data['comments'][0]['texte'], 'Joli')
+
+    def test_suppression_commentaire_admin_uniquement(self):
+        from listings.models import PhotoCommentaire
+        c = PhotoCommentaire.objects.create(auteur=self.user, photo=self.photo, texte='a virer')
+        # utilisateur normal : interdit
+        self.client.force_login(self.user)
+        r = self._post('/api/photo-comment/delete/', {'comment_id': c.id})
+        self.assertEqual(r.status_code, 403)
+        # admin : OK
+        staff = User.objects.create_user('modo', 'modo@test.fr', 'x', is_staff=True)
+        self.client.force_login(staff)
+        r2 = self._post('/api/photo-comment/delete/', {'comment_id': c.id})
+        self.assertEqual(r2.status_code, 200)
+        self.assertFalse(PhotoCommentaire.objects.filter(id=c.id).exists())

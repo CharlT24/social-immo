@@ -55,6 +55,7 @@ class PagesPubliquesTests(TestCase):
         '/aide/',
         '/agence/inscription/',
         '/cgu/',
+        '/cgv/',
         '/sitemap.xml',
     ]
 
@@ -798,3 +799,48 @@ class SitemapSegmentsTests(TestCase):
         # Lyon n'a ni terrain ni location -> exclus
         self.assertNotIn(('lyon', 'terrain-a-vendre'), combos)
         self.assertNotIn(('lyon', 'maison-a-louer'), combos)
+
+
+class UrlsSlugSeoTests(TestCase):
+    """Les URLs riches (slug SEO) fonctionnent ET les anciennes URLs restent valides."""
+
+    def setUp(self):
+        cache.clear()
+        self.a = creer_annonce('CT-777', libelle_type='Appartement', ville='Perigueux',
+                               code_postal='24000', is_active=True)
+
+    def test_get_absolute_url_riche(self):
+        self.assertEqual(self.a.get_absolute_url(),
+                         '/annonce/CT-777/appartement-perigueux/')
+
+    def test_ancienne_url_toujours_valide(self):
+        resp = self.client.get('/annonce/CT-777/')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_nouvelle_url_slug_valide(self):
+        resp = self.client.get('/annonce/CT-777/appartement-perigueux/')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_slug_errone_resout_quand_meme(self):
+        # Le slug est purement decoratif : n'importe quel slug resout par reference
+        resp = self.client.get('/annonce/CT-777/nimporte-quoi/')
+        self.assertEqual(resp.status_code, 200)
+
+
+class EncadrementLoyersTests(TestCase):
+    """La mention d'encadrement des loyers s'affiche dans les zones concernees."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_paris_location_encadree(self):
+        a = creer_annonce('LOC-PARIS', type_transaction='L', ville='Paris',
+                          code_postal='75011', loyer_mensuel=1200, prix=0, is_active=True)
+        self.assertTrue(a.est_zone_encadree_loyers)
+        resp = self.client.get(a.get_absolute_url())
+        self.assertContains(resp, "encadrement des loyers")
+
+    def test_vente_hors_zone_pas_de_mention(self):
+        a = creer_annonce('V-CAEN', type_transaction='V', ville='Caen',
+                          code_postal='14000', is_active=True)
+        self.assertFalse(a.est_zone_encadree_loyers)

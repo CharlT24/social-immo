@@ -324,7 +324,7 @@ def autocomplete(request):
     return JsonResponse({'results': results})
 
 
-def listing_detail(request, reference):
+def listing_detail(request, reference, slug=None):
     """Vue détail : affiche une annonce spécifique avec commentaires"""
     annonce = get_object_or_404(
         Annonce.objects.select_related('agence__options')
@@ -1743,7 +1743,7 @@ def pro_supprimer_realisation(request, realisation_id):
     return redirect('listings:pro_dashboard')
 
 
-def pro_profil(request, pro_id):
+def pro_profil(request, pro_id, slug=None):
     """Page publique d'un professionnel"""
     pro = get_object_or_404(ProProfile, id=pro_id, is_active=True)
     realisations = pro.realisations.filter(is_active=True).prefetch_related('photos')
@@ -2286,7 +2286,7 @@ def export_utilisateurs_csv(request):
     return response
 
 
-def agence_profil(request, agence_id):
+def agence_profil(request, agence_id, slug=None):
     """Page publique d'une agence immobiliere"""
     agence = get_object_or_404(Agence, id=agence_id, is_active=True)
     biens = Annonce.objects.filter(
@@ -3455,6 +3455,10 @@ def gestion_options_agence(request, agence_id):
 
 def cgu(request):
     return render(request, 'listings/cgu.html')
+
+
+def cgv(request):
+    return render(request, 'listings/cgv.html')
 
 
 def mentions_legales(request):

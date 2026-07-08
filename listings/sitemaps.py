@@ -3,6 +3,18 @@ from django.urls import reverse
 from .models import Annonce, Agence, ProProfile
 
 
+def _derniere_maj_annonces():
+    """Date de derniere mise a jour globale des annonces (fraicheur du catalogue),
+    utilisee comme lastmod pour les pages villes/segments. Cachee 1h."""
+    from django.core.cache import cache
+    d = cache.get('sitemap:derniere_maj')
+    if d is None:
+        obj = Annonce.objects.filter(is_active=True).order_by('-updated_at').first()
+        d = obj.updated_at if obj else None
+        cache.set('sitemap:derniere_maj', d, 3600)
+    return d
+
+
 class StaticSitemap(Sitemap):
     changefreq = 'weekly'
     priority = 0.8
@@ -45,6 +57,9 @@ class VilleSitemap(Sitemap):
 
     def location(self, slug):
         return reverse('listings:ville_page', args=[slug])
+
+    def lastmod(self, slug):
+        return _derniere_maj_annonces()
 
 
 class VilleSegmentSitemap(Sitemap):
@@ -96,6 +111,9 @@ class VilleSegmentSitemap(Sitemap):
     def location(self, combo):
         return reverse('listings:ville_segment_page', args=[combo[0], combo[1]])
 
+    def lastmod(self, combo):
+        return _derniere_maj_annonces()
+
 
 class AnnonceSitemap(Sitemap):
     changefreq = 'daily'
@@ -108,7 +126,7 @@ class AnnonceSitemap(Sitemap):
         return obj.updated_at
 
     def location(self, obj):
-        return reverse('listings:detail', args=[obj.reference])
+        return obj.get_absolute_url()
 
 
 class AgenceSitemap(Sitemap):
@@ -119,7 +137,7 @@ class AgenceSitemap(Sitemap):
         return Agence.objects.filter(is_active=True)
 
     def location(self, obj):
-        return reverse('listings:agence_profil', args=[obj.id])
+        return obj.get_absolute_url()
 
 
 class ProSitemap(Sitemap):
@@ -130,4 +148,4 @@ class ProSitemap(Sitemap):
         return ProProfile.objects.filter(is_active=True).order_by('-id')
 
     def location(self, obj):
-        return reverse('listings:pro_profil', args=[obj.id])
+        return obj.get_absolute_url()

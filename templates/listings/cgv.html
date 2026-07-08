@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Conditions Generales de Vente - Social Immo{% endblock %}
+{% block meta_description %}Conditions Generales de Vente des abonnements et services payants de Social Immo (Open I).{% endblock %}
+
+{# ---------------------------------------------------------------------------
+   MODELE DE CGV — a FAIRE VALIDER par un professionnel du droit avant de s'y
+   fier. Points a verifier : prix/TVA reels, duree d'engagement, mediateur
+   conso designe, application du droit de retractation selon le statut du
+   client (consommateur / professionnel). Ne pas oublier de renseigner le
+   mediateur dans les mentions legales.
+---------------------------------------------------------------------------- #}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-16">
+
+    <div class="mb-12">
+        <h1 class="text-4xl font-semibold tracking-tight mb-3">Conditions Generales de Vente</h1>
+        <p class="text-apple-gray">Applicables aux abonnements et services payants proposes sur Social Immo.</p>
+        <p class="text-sm text-apple-gray mt-2">Derniere mise a jour : juillet 2026.</p>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-apple p-8 sm:p-12 space-y-10 text-[15px] leading-relaxed text-apple-text">
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">1. Objet et champ d'application</h2>
+            <p class="text-apple-gray">
+                Les presentes Conditions Generales de Vente (CGV) regissent la vente des services
+                payants proposes par la societe OPEN I via le site social-immo.com (ci-apres « le Site ») :
+                abonnements agences, abonnements professionnels du batiment, options de mise en avant
+                et packs vendeur. Toute souscription a un service payant implique l'acceptation pleine
+                et entiere des presentes CGV, en vigueur au jour de la commande.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">2. Identite du vendeur</h2>
+            <div class="space-y-2 text-apple-gray">
+                <p><strong class="text-apple-text">OPEN I</strong>, SAS au capital de 1 000 €</p>
+                <p>Siege social : 113 rue Alphee Mazieras, 24000 Perigueux, France</p>
+                <p>RCS Perigueux 978 550 507 — SIRET 978 550 507 00013 — TVA FR77 978 550 507</p>
+                <p>Email : contact@social-immo.com</p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">3. Services et tarifs</h2>
+            <p class="text-apple-gray">
+                Les caracteristiques et les prix des services sont detailles sur la page
+                <a href="{% url 'listings:tarifs' %}" class="text-apple-blue hover:underline">Nos offres</a>.
+                Les prix sont indiques en euros. Sauf mention contraire, ils s'entendent toutes taxes
+                comprises (TTC), la TVA applicable etant celle en vigueur au jour de la commande.
+                OPEN I se reserve le droit de modifier ses tarifs a tout moment ; les services sont
+                factures sur la base des tarifs en vigueur au moment de la souscription.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">4. Commande et formation du contrat</h2>
+            <p class="text-apple-gray">
+                La souscription s'effectue en ligne depuis le Site. Le client selectionne l'offre,
+                verifie le detail de sa commande et procede au paiement. La vente est reputee conclue
+                a compter de la confirmation du paiement. Un email de confirmation recapitulant la
+                commande est adresse au client.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">5. Paiement</h2>
+            <p class="text-apple-gray">
+                Le paiement s'effectue par carte bancaire via notre prestataire de paiement securise
+                <strong class="text-apple-text">Stripe</strong>. OPEN I n'a jamais acces aux donnees
+                bancaires du client, qui sont traitees directement par Stripe dans un environnement
+                securise. Les abonnements sont preleves selon la periodicite choisie (mensuelle ou
+                annuelle) et reconduits automatiquement, sauf resiliation dans les conditions de
+                l'article 7.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">6. Duree, reconduction et resiliation</h2>
+            <p class="text-apple-gray">
+                Les abonnements sont souscrits pour la periode choisie et reconduits tacitement pour
+                des periodes successives de meme duree. Le client peut resilier a tout moment depuis
+                son espace de facturation ; la resiliation prend effet a la fin de la periode en cours,
+                deja reglee, sans remboursement du prorata. Aucune periode d'engagement minimale n'est
+                imposee au-dela de la periode en cours, sauf indication contraire sur l'offre.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">7. Droit de retractation</h2>
+            <p class="text-apple-gray">
+                <strong class="text-apple-text">Client consommateur</strong> (non professionnel) :
+                conformement aux articles L.221-18 et suivants du Code de la consommation, vous
+                disposez d'un delai de 14 jours pour vous retracter. Toutefois, pour les services
+                pleinement executes avant la fin de ce delai avec votre accord prealable et renoncement
+                expres, le droit de retractation ne peut plus etre exerce (art. L.221-28).
+            </p>
+            <p class="text-apple-gray mt-3">
+                <strong class="text-apple-text">Client professionnel</strong> (agence, artisan agissant
+                dans le cadre de son activite) : le droit de retractation ne s'applique pas aux contrats
+                conclus pour les besoins de l'activite professionnelle.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">8. Obligations du client</h2>
+            <p class="text-apple-gray">
+                Le client s'engage a fournir des informations exactes et a utiliser les services
+                conformement a leur destination et a la reglementation applicable (notamment, pour les
+                professionnels de l'immobilier, la loi Hoguet, et pour les annonces, les mentions
+                obligatoires telles que le DPE). Tout contenu manifestement illicite, trompeur ou
+                frauduleux pourra etre retire et le compte suspendu sans remboursement.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">9. Responsabilite</h2>
+            <p class="text-apple-gray">
+                OPEN I fournit ses services avec diligence mais est tenue d'une obligation de moyens.
+                OPEN I ne saurait etre tenue responsable des interruptions imputables a la maintenance,
+                au reseau, a l'hebergeur ou a un cas de force majeure, ni du contenu des annonces publiees
+                par les utilisateurs, ni de l'aboutissement des mises en relation.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">10. Donnees personnelles</h2>
+            <p class="text-apple-gray">
+                Le traitement des donnees personnelles est decrit dans notre
+                <a href="{% url 'listings:confidentialite' %}" class="text-apple-blue hover:underline">Politique de confidentialite</a>,
+                conforme au RGPD.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">11. Mediation et litiges</h2>
+            <p class="text-apple-gray">
+                Conformement a l'article L.612-1 du Code de la consommation, le client consommateur
+                peut recourir gratuitement a un mediateur de la consommation en vue de la resolution
+                amiable d'un litige (mediateur designe : voir les
+                <a href="{% url 'listings:mentions_legales' %}" class="text-apple-blue hover:underline">mentions legales</a>).
+                Une plateforme europeenne de reglement en ligne des litiges est disponible sur
+                ec.europa.eu/consumers/odr. A defaut d'accord amiable, les litiges relevent des
+                tribunaux competents. Les presentes CGV sont soumises au droit francais.
+            </p>
+        </section>
+
+    </div>
+
+</div>
+{% endblock %}

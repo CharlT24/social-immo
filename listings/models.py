@@ -141,6 +141,18 @@ class Annonce(models.Model):
     def __str__(self):
         return f"{self.reference} - {self.titre[:50]}"
 
+    def get_absolute_url(self):
+        """URL canonique riche en mots-cles SEO (ville/type). La reference
+        reste la cle de resolution ; le slug final est purement descriptif
+        et ignore par la vue -> aucune ancienne URL ne casse."""
+        from django.urls import reverse
+        from django.utils.text import slugify
+        morceaux = [self.libelle_type or '', self.ville or '']
+        slug = slugify(' '.join(m for m in morceaux if m))
+        if slug:
+            return reverse('listings:detail_slug', args=[self.reference, slug])
+        return reverse('listings:detail', args=[self.reference])
+
     @property
     def prix_format(self):
         """Retourne le prix formaté avec espaces (ex: 500 000 €)"""
@@ -169,6 +181,37 @@ class Annonce(models.Model):
     def est_passoire_thermique(self):
         """Classe F ou G : mention legale obligatoire dans l'annonce."""
         return self.dpe_etiquette_conso in ('F', 'G')
+
+    # Communes appliquant l'encadrement des loyers (loyer de reference majore).
+    # Liste des principales zones concernees — a completer/ajuster selon les
+    # arretes en vigueur. Cle : prefixe de code postal ou nom de commune (slug).
+    ZONES_ENCADREMENT_LOYERS = {
+        'paris': [str(d).zfill(2) for d in range(75001, 75021)],  # tout Paris (750xx)
+        'lyon': ['6900', '6910'], 'villeurbanne': ['69100'],
+        'lille': ['59000', '59260', '59160', '59800'],
+        'montpellier': ['34000', '34070', '34080', '34090'],
+        'bordeaux': ['33000', '33100', '33200', '33300', '33800'],
+        'plaine-commune': [], 'est-ensemble': [],
+    }
+
+    @property
+    def est_zone_encadree_loyers(self):
+        """True si la location est dans une commune ou l'encadrement des loyers
+        s'applique -> mention legale a afficher (loyer de reference majore)."""
+        if self.type_transaction not in ('L', 'S'):
+            return False
+        cp = (self.code_postal or '').strip()
+        ville = (self.ville or '').strip().lower()
+        for cle, cps in self.ZONES_ENCADREMENT_LOYERS.items():
+            if cle in ville:
+                return True
+            for prefixe in cps:
+                if cp.startswith(prefixe):
+                    return True
+        # Paris : tous les codes postaux 75xxx
+        if cp.startswith('75') and len(cp) == 5:
+            return True
+        return False
 
     @property
     def video_embed_url(self):
@@ -413,6 +456,14 @@ class Agence(models.Model):
     def __str__(self):
         return self.nom
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        from django.utils.text import slugify
+        slug = slugify(self.nom)
+        if slug:
+            return reverse('listings:agence_profil_slug', args=[self.id, slug])
+        return reverse('listings:agence_profil', args=[self.id])
+
 
 class Conseiller(models.Model):
     """Conseiller/agent individuel rattaché à une agence (IAD, Capifrance, etc.)"""
@@ -514,6 +565,14 @@ class ProProfile(models.Model):
 
     def __str__(self):
         return f"{self.nom_entreprise} ({self.get_metier_display()})"
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        from django.utils.text import slugify
+        slug = slugify(f'{self.nom_entreprise} {self.get_metier_display()}')
+        if slug:
+            return reverse('listings:pro_profil_slug', args=[self.id, slug])
+        return reverse('listings:pro_profil', args=[self.id])
 
     @property
     def note_moyenne(self):

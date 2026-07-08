@@ -10,6 +10,8 @@ urlpatterns = [
     path('recherche/', views.search_results, name='search_results'),
     path('api/search/autocomplete/', views.autocomplete, name='autocomplete'),
     path('annonce/<str:reference>/', views.listing_detail, name='detail'),
+    # URL riche en mots-cles (slug descriptif ignore) : /annonce/CT-123/appartement-perigueux/
+    path('annonce/<str:reference>/<slug:slug>/', views.listing_detail, name='detail_slug'),
     path('signup/', views.signup, name='signup'),
     path('inspirations/', views.decoration_list, name='decoration_list'),
     path('pros/', views.partenaire_list, name='partenaire_list'),
@@ -37,6 +39,7 @@ urlpatterns = [
     path('pro/realisation/ajouter/', views.pro_ajouter_realisation, name='pro_ajouter_realisation'),
     path('pro/realisation/<int:realisation_id>/supprimer/', views.pro_supprimer_realisation, name='pro_supprimer_realisation'),
     path('pro/<int:pro_id>/', views.pro_profil, name='pro_profil'),
+    path('pro/<int:pro_id>/<slug:slug>/', views.pro_profil, name='pro_profil_slug'),
     # APIs sociales
     path('api/photo-favori/', views.toggle_photo_favori, name='toggle_photo_favori'),
     path('api/photo-note/', views.rate_photo, name='rate_photo'),
@@ -56,6 +59,7 @@ urlpatterns = [
     path('mon-espace/mot-de-passe/', views.conseiller_set_password, name='conseiller_set_password'),
     # Annuaire
     path('agence/<int:agence_id>/', views.agence_profil, name='agence_profil'),
+    path('agence/<int:agence_id>/<slug:slug>/', views.agence_profil, name='agence_profil_slug'),
     # Locaux pro
     path('locaux-professionnels/', views.locaux_pro, name='locaux_pro'),
     # Mise en avant
@@ -111,6 +115,7 @@ urlpatterns = [
     path('.well-known/assetlinks.json', views.assetlinks, name='assetlinks'),
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
+    path('cgv/', views.cgv, name='cgv'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),
     path('confidentialite/', views.confidentialite, name='confidentialite'),
 ]

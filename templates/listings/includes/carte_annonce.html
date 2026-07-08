@@ -11,7 +11,7 @@ Parametres :
 
     <!-- Image -->
     <div class="aspect-[4/3] overflow-hidden relative">
-        <a href="{% url 'listings:detail' annonce.reference %}">
+        <a href="{{ annonce.get_absolute_url }}">
             {% if annonce.photo_principale %}
             <img src="{{ annonce.photo_principale.src_thumb }}" alt="{{ annonce.titre }}"
                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
@@ -89,7 +89,7 @@ Parametres :
     </div>
 
     <!-- Contenu -->
-    <a href="{% url 'listings:detail' annonce.reference %}" class="block p-5">
+    <a href="{{ annonce.get_absolute_url }}" class="block p-5">
         <div class="flex items-start justify-between gap-2 mb-1">
             <div class="text-xl font-bold tracking-tight">{{ annonce.prix_format }}</div>
             {% if annonce.dpe_etiquette_conso %}

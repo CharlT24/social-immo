@@ -18,9 +18,35 @@
     {% block og_image %}<meta property="og:image" content="https://social-immo.com/static/og-default.png">{% endblock %}
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
     <meta name="twitter:title" content="{% block twitter_title %}Social Immo{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Trouvez votre bien immobilier ideal sur Social Immo.{% endblock %}">
+    <meta property="og:image:alt" content="Social Immo">
+
+    <!-- Donnees structurees globales : identite du site + barre de recherche Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Social Immo",
+      "url": "https://social-immo.com",
+      "logo": "https://social-immo.com/static/og-default.png",
+      "description": "Portail immobilier reunissant particuliers, agences et artisans : annonces, estimation gratuite et mise en relation."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Social Immo",
+      "url": "https://social-immo.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://social-immo.com/recherche/?ville={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
     {% block extra_head %}{% endblock %}
 
@@ -308,6 +334,7 @@
                     <a href="{% url 'listings:mentions_legales' %}" class="hover:text-apple-text transition-colors">Mentions legales</a>
                     <a href="{% url 'listings:confidentialite' %}" class="hover:text-apple-text transition-colors">Confidentialite</a>
                     <a href="{% url 'listings:cgu' %}" class="hover:text-apple-text transition-colors">CGU</a>
+                    <a href="{% url 'listings:cgv' %}" class="hover:text-apple-text transition-colors">CGV</a>
                 </div>
             </div>
         </div>

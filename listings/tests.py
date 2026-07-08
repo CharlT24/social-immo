@@ -890,3 +890,56 @@ class ProInscriptionUtilisateurConnecteTests(TestCase):
             'titre': 'Renovation complete maison', 'categorie': '', 'description': 'Test',
         })
         self.assertTrue(ProRealisation.objects.filter(titre='Renovation complete maison').exists())
+
+
+class PhotoHeicTests(TestCase):
+    """Les photos iPhone (HEIC) sont bien lues et re-encodees en JPEG."""
+
+    def test_heic_reencode_en_jpeg(self):
+        import io
+        from PIL import Image
+        from listings.services.photos import valider_et_reencoder
+        b = io.BytesIO()
+        Image.new('RGB', (320, 240), (10, 20, 30)).save(b, format='HEIF')
+        b.seek(0)
+        out = valider_et_reencoder(b)
+        im = Image.open(out)
+        self.assertEqual(im.format, 'JPEG')
+
+
+class RealisationPhotosFeedbackTests(TestCase):
+    """L'ajout de realisation : photo valide OK, et feedback honnete si echec."""
+
+    def setUp(self):
+        cache.clear()
+        from listings.models import ProProfile
+        self.user = User.objects.create_user('pro_feed', 'pro@feed.fr', 'motdepasse-123')
+        ProProfile.objects.create(user=self.user, nom_entreprise='Feed Pro',
+                                  metier='tous_corps_etat', is_active=True)
+        self.client.force_login(self.user)
+
+    def _jpeg(self):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        b = io.BytesIO(); Image.new('RGB', (400, 300), (80, 80, 80)).save(b, 'JPEG'); b.seek(0)
+        return SimpleUploadedFile('c.jpg', b.read(), content_type='image/jpeg')
+
+    def test_realisation_avec_photo_valide(self):
+        from listings.models import ProRealisation
+        self.client.post('/pro/realisation/ajouter/', {
+            'titre': 'Chantier OK', 'categorie': '', 'description': 'x', 'photos': self._jpeg()})
+        r = ProRealisation.objects.get(titre='Chantier OK')
+        self.assertEqual(r.photos.count(), 1)
+
+    def test_heic_via_formulaire(self):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from listings.models import ProRealisation
+        b = io.BytesIO(); Image.new('RGB', (400, 300), (60, 60, 60)).save(b, 'HEIF'); b.seek(0)
+        heic = SimpleUploadedFile('photo.heic', b.read(), content_type='image/heic')
+        self.client.post('/pro/realisation/ajouter/', {
+            'titre': 'Chantier iPhone', 'categorie': '', 'description': 'x', 'photos': heic})
+        r = ProRealisation.objects.get(titre='Chantier iPhone')
+        self.assertEqual(r.photos.count(), 1)  # HEIC accepte et converti

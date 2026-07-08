@@ -10,6 +10,15 @@ import io
 
 from PIL import Image, ImageEnhance, ImageOps, ImageStat
 
+# Support des photos iPhone (HEIC/HEIF) : sans ceci, Pillow ne sait pas les
+# lire et TOUT upload depuis un iPhone echoue silencieusement. On enregistre
+# le decodeur si la lib est presente ; sinon l'app fonctionne sans (degrade).
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except Exception:
+    pass
+
 MAX_DIMENSION = 1920
 JPEG_QUALITY = 85
 THUMB_DIMENSION = 480

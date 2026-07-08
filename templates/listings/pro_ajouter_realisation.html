@@ -128,13 +128,13 @@
                      class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-all"
                      onclick="document.getElementById('photo-input').click()">
                     <input type="file" name="photos" id="photo-input" multiple
-                           accept="image/jpeg,image/png,image/webp" class="hidden"
+                           accept="image/*,.heic,.heif" class="hidden"
                            onchange="handleFiles(this.files)">
                     <svg class="w-10 h-10 mx-auto text-apple-gray mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                     <p class="text-sm text-apple-gray font-medium">Cliquez ou glissez vos photos ici</p>
-                    <p class="text-xs text-apple-gray mt-1">JPG, PNG, WebP — max 10 photos</p>
+                    <p class="text-xs text-apple-gray mt-1">JPG, PNG, WebP, HEIC (iPhone) — max 10 photos</p>
                 </div>
                 <!-- Preview -->
                 <div id="photo-preview" class="mt-4 grid grid-cols-3 gap-3 hidden"></div>
@@ -181,7 +181,12 @@ dropZone.addEventListener('drop', e => { handleFiles(e.dataTransfer.files); });
 function handleFiles(files) {
     for (const file of files) {
         if (selectedFiles.files.length >= 10) break;
-        if (!file.type.match(/^image\/(jpeg|png|webp)$/)) continue;
+        // Accepte toute image ; les HEIC iPhone ont parfois un type vide -> on
+        // les laisse passer (validation + conversion cote serveur).
+        const t = file.type || '';
+        const nom = (file.name || '').toLowerCase();
+        const okHeic = nom.endsWith('.heic') || nom.endsWith('.heif');
+        if (t && !t.startsWith('image/') && !okHeic) continue;
         selectedFiles.items.add(file);
     }
     photoInput.files = selectedFiles.files;
@@ -212,6 +217,16 @@ function renderPreview() {
         const img = document.createElement('img');
         img.className = 'w-full h-full object-cover';
         img.src = URL.createObjectURL(file);
+        // HEIC : pas d'apercu navigateur -> repli propre (la photo sera bien
+        // convertie a l'envoi cote serveur).
+        img.onerror = () => {
+            div.classList.add('flex', 'items-center', 'justify-center');
+            img.remove();
+            const span = document.createElement('span');
+            span.className = 'text-[10px] text-apple-gray text-center px-1 leading-tight';
+            span.textContent = '✓ Photo prête (iPhone)';
+            div.appendChild(span);
+        };
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'absolute top-1 right-1 w-7 h-7 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity';

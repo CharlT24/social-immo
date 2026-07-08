@@ -1718,11 +1718,17 @@ def pro_ajouter_realisation(request):
                                           valider_et_reencoder, ImageInvalide)
             photos = request.FILES.getlist('photos')
             ordre = 1
+            echecs = 0
             for photo_file in photos[:10]:
                 try:
                     contenu = valider_et_reencoder(photo_file).read()
-                except (ImageInvalide, Exception):
-                    continue  # fichier non-image : ignore
+                except ImageInvalide:
+                    echecs += 1
+                    continue  # fichier non-image / format illisible
+                except Exception:
+                    logger.exception('Erreur photo realisation pro %s', pro.id)
+                    echecs += 1
+                    continue
                 photo = ProRealisationPhoto(realisation=realisation, ordre=ordre)
                 photo.image.save('realisation.jpg', ContentFile(contenu), save=False)
                 try:
@@ -1732,7 +1738,14 @@ def pro_ajouter_realisation(request):
                     pass
                 photo.save()
                 ordre += 1
-            messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
+            nb_ajoutees = ordre - 1
+            # Feedback honnete : ne pas afficher "succes" si les photos ont echoue.
+            if photos and nb_ajoutees == 0:
+                messages.warning(request, f'Realisation "{realisation.titre}" creee, mais aucune photo n\'a pu etre ajoutee (format non lu). Reessayez — les photos iPhone (HEIC), JPG, PNG et WebP sont acceptees.')
+            elif echecs:
+                messages.warning(request, f'Realisation ajoutee ({nb_ajoutees} photo(s)), mais {echecs} photo(s) n\'ont pas pu etre traitees.')
+            else:
+                messages.success(request, f'Realisation "{realisation.titre}" ajoutee !')
             return redirect('listings:pro_dashboard')
     else:
         form = ProRealisationForm()

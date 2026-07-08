@@ -7,6 +7,7 @@ lxml==6.0.2
 PyMySQL==1.1.1
 packaging==25.0
 pillow==12.1.0
+pillow-heif==1.4.0
 psycopg2-binary==2.9.11
 PyJWT==2.12.1
 cryptography==46.0.5

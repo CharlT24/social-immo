@@ -142,7 +142,14 @@ class ProInscriptionForm(forms.Form):
     metier = forms.ChoiceField(
         choices=[('', 'Choisissez votre metier...')] + list(ProProfile.METIER_CHOICES),
         widget=forms.Select(attrs={'class': PRO_SELECT}),
-        label='Votre metier'
+        label='Votre metier principal'
+    )
+    autres_metiers = forms.CharField(
+        max_length=200, required=False,
+        widget=forms.TextInput(attrs={'class': PRO_INPUT,
+                                      'placeholder': 'Ex: Plomberie, Electricite, Peinture'}),
+        label='Autres corps de metier (optionnel)',
+        help_text="Pour les entreprises tous corps d'etat : listez vos specialites, separees par des virgules."
     )
     telephone = forms.CharField(
         max_length=20, required=False,
@@ -180,19 +187,35 @@ class ProInscriptionForm(forms.Form):
         label='Lien Google (fiche / avis)'
     )
 
+    def __init__(self, *args, existing_user=None, **kwargs):
+        """existing_user : si un utilisateur DEJA connecte devient pro, on
+        rattache le profil a son compte (pas de nouveau compte, pas de mot de
+        passe a redonner)."""
+        super().__init__(*args, **kwargs)
+        self.existing_user = existing_user
+        if existing_user:
+            for champ in ('email', 'password1', 'password2'):
+                self.fields[champ].required = False
+            self.fields['email'].initial = existing_user.email
+
     def clean_email(self):
         from django.contrib.auth.models import User
-        email = self.cleaned_data['email']
+        email = self.cleaned_data.get('email', '')
+        # Utilisateur deja connecte : on garde son email, aucun conflit.
+        if self.existing_user:
+            return email or self.existing_user.email
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('Un compte avec cet email existe deja.')
+            raise forms.ValidationError('Un compte avec cet email existe deja — connectez-vous, puis creez votre profil pro.')
         return email
 
     def clean(self):
         cleaned = super().clean()
-        p1 = cleaned.get('password1')
-        p2 = cleaned.get('password2')
-        if p1 and p2 and p1 != p2:
-            self.add_error('password2', 'Les mots de passe ne correspondent pas.')
+        # Verification du mot de passe uniquement pour un NOUVEAU compte.
+        if not getattr(self, 'existing_user', None):
+            p1 = cleaned.get('password1')
+            p2 = cleaned.get('password2')
+            if p1 and p2 and p1 != p2:
+                self.add_error('password2', 'Les mots de passe ne correspondent pas.')
         return cleaned
 
 

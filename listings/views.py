@@ -1567,28 +1567,37 @@ def pro_inscription(request):
         if est_un_bot(request) or trop_de_requetes(request, 'inscription_pro', 5, 3600):
             messages.error(request, 'Trop de tentatives — reessayez dans une heure.')
             return redirect('listings:pro_inscription')
-        form = ProInscriptionForm(request.POST)
+        existing_user = request.user if request.user.is_authenticated else None
+        form = ProInscriptionForm(request.POST, existing_user=existing_user)
         if form.is_valid():
             from django.contrib.auth.models import User
             import uuid as _uuid
 
-            # Username unique (evite le 500 si deux emails ont la meme partie locale)
-            email = form.cleaned_data['email']
-            base_username = email.split('@')[0][:140]
-            username = base_username
-            while User.objects.filter(username=username).exists():
-                username = f'{base_username}-{_uuid.uuid4().hex[:6]}'
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=form.cleaned_data['password1'],
-            )
+            if existing_user:
+                # Utilisateur deja connecte : on lui attache un profil pro,
+                # on ne cree PAS de nouveau compte.
+                user = existing_user
+                email = existing_user.email
+            else:
+                # Nouveau compte. Username unique (evite le 500 si deux emails
+                # ont la meme partie locale).
+                email = form.cleaned_data['email']
+                base_username = email.split('@')[0][:140]
+                username = base_username
+                while User.objects.filter(username=username).exists():
+                    username = f'{base_username}-{_uuid.uuid4().hex[:6]}'
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=form.cleaned_data['password1'],
+                )
 
             cp = form.cleaned_data.get('code_postal', '')
             pro = ProProfile.objects.create(
                 user=user,
                 nom_entreprise=form.cleaned_data['nom_entreprise'],
                 metier=form.cleaned_data['metier'],
+                autres_metiers=form.cleaned_data.get('autres_metiers', ''),
                 description=form.cleaned_data.get('description', ''),
                 telephone=form.cleaned_data.get('telephone', ''),
                 ville=form.cleaned_data.get('ville', ''),
@@ -1597,7 +1606,7 @@ def pro_inscription(request):
                 site_web=form.cleaned_data.get('site_web', ''),
                 siret=form.cleaned_data.get('siret', ''),
                 google_business_url=form.cleaned_data.get('google_business_url', ''),
-                email=form.cleaned_data['email'],
+                email=email,
             )
 
             # Verification anti-escroquerie du SIRET (registre officiel)
@@ -1616,10 +1625,14 @@ def pro_inscription(request):
                 except Exception:
                     pass
 
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            # On ne (re)connecte que si on vient de creer le compte.
+            if not existing_user:
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f'Votre profil pro "{pro.nom_entreprise}" est cree ! Ajoutez vos realisations.')
             return redirect('listings:pro_dashboard')
     else:
-        form = ProInscriptionForm()
+        existing_user = request.user if request.user.is_authenticated else None
+        form = ProInscriptionForm(existing_user=existing_user)
 
     return render(request, 'listings/pro_inscription.html', {'form': form})
 

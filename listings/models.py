@@ -532,6 +532,7 @@ class ProProfile(models.Model):
         ('demenageur', 'Demenageur'),
         ('nettoyage', 'Nettoyage / Conciergerie'),
         # General
+        ('tous_corps_etat', "Tous corps d'etat"),
         ('renovation', 'Renovation generale'),
         ('autre', 'Autre'),
     ]
@@ -539,6 +540,11 @@ class ProProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pro_profile')
     nom_entreprise = models.CharField(max_length=200)
     metier = models.CharField(max_length=50, choices=METIER_CHOICES)
+    autres_metiers = models.CharField(
+        max_length=200, blank=True, default='',
+        verbose_name='Autres corps de metier',
+        help_text="Specialites supplementaires, separees par des virgules (entreprises tous corps d'etat)."
+    )
     description = models.TextField(blank=True)
     photo_url = models.URLField(max_length=500, blank=True)
     telephone = models.CharField(max_length=20, blank=True)

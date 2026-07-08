@@ -844,3 +844,49 @@ class EncadrementLoyersTests(TestCase):
         a = creer_annonce('V-CAEN', type_transaction='V', ville='Caen',
                           code_postal='14000', is_active=True)
         self.assertFalse(a.est_zone_encadree_loyers)
+
+
+class ProInscriptionUtilisateurConnecteTests(TestCase):
+    """Un utilisateur DEJA connecte (sans profil pro) peut devenir pro sans
+    recreer de compte, puis ajouter des realisations. (Bug corrige.)"""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('villageacb', 'contact@village-acb.fr', 'motdepasse-123')
+        self.client.force_login(self.user)
+
+    def _donnees(self, **extra):
+        d = {
+            'nom_entreprise': 'Village ACB',
+            'metier': 'tous_corps_etat',
+            'autres_metiers': 'Plomberie, Electricite, Peinture',
+            'ville': 'Perigueux', 'code_postal': '24000',
+            'site_web_hp': '',  # honeypot vide
+        }
+        d.update(extra)
+        return d
+
+    def test_utilisateur_connecte_devient_pro(self):
+        from listings.models import ProProfile
+        n_users_avant = User.objects.count()
+        resp = self.client.post('/pro/inscription/', self._donnees())
+        self.assertEqual(resp.status_code, 302)
+        # AUCUN nouveau compte cree
+        self.assertEqual(User.objects.count(), n_users_avant)
+        # Le profil pro est rattache a l'utilisateur connecte
+        pro = ProProfile.objects.get(user=self.user)
+        self.assertEqual(pro.nom_entreprise, 'Village ACB')
+        self.assertEqual(pro.metier, 'tous_corps_etat')
+        self.assertEqual(pro.autres_metiers, 'Plomberie, Electricite, Peinture')
+
+    def test_apres_inscription_peut_ajouter_realisation(self):
+        from listings.models import ProRealisation
+        self.client.post('/pro/inscription/', self._donnees())
+        # La page d'ajout de realisation est desormais accessible (plus de boucle)
+        resp = self.client.get('/pro/realisation/ajouter/')
+        self.assertEqual(resp.status_code, 200)
+        # Et l'ajout fonctionne
+        self.client.post('/pro/realisation/ajouter/', {
+            'titre': 'Renovation complete maison', 'categorie': '', 'description': 'Test',
+        })
+        self.assertTrue(ProRealisation.objects.filter(titre='Renovation complete maison').exists())

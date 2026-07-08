@@ -35,7 +35,7 @@
                     </span>
                     {% endif %}
                 </div>
-                <p class="text-purple-600 font-medium mb-1">{{ pro.get_metier_display }}</p>
+                <p class="text-purple-600 font-medium mb-1">{{ pro.get_metier_display }}{% if pro.autres_metiers %} · {{ pro.autres_metiers }}{% endif %}</p>
                 {% if pro.ville %}
                 <p class="text-apple-gray text-sm mb-4">{{ pro.ville }}{% if pro.google_business_url %} · <a href="{{ pro.google_business_url }}" target="_blank" rel="noopener nofollow" class="text-apple-blue hover:underline">Voir les avis Google</a>{% endif %}</p>
                 {% endif %}

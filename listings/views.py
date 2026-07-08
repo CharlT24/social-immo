@@ -15,6 +15,7 @@ from datetime import timedelta
 import json
 import csv
 import logging
+import random
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -37,37 +38,49 @@ from .forms import (
 
 def homepage(request):
     """Page d'accueil avec hero, recherche, dernieres arrivees"""
-    total_annonces = Annonce.objects.filter(is_active=True).count()
-    count_vente = Annonce.objects.filter(is_active=True, type_transaction='V').count()
-    count_location = Annonce.objects.filter(is_active=True, type_transaction='L').count()
+    from django.core.cache import cache
+
+    # Compteurs : caches 10 min (evite 3 COUNT + 1 GROUP BY a chaque visite anonyme)
+    stats = cache.get_or_set('home:stats', lambda: {
+        'total': Annonce.objects.filter(is_active=True).count(),
+        'vente': Annonce.objects.filter(is_active=True, type_transaction='V').count(),
+        'location': Annonce.objects.filter(is_active=True, type_transaction='L').count(),
+        'villes': list(Annonce.objects.filter(is_active=True).exclude(ville='')
+                       .values('ville').annotate(count=Count('id'))
+                       .order_by('-count')[:12]),
+    }, 600)
+    total_annonces = stats['total']
+    count_vente = stats['vente']
+    count_location = stats['location']
+    villes_populaires = stats['villes']
+
+    def _tirage_aleatoire(qs_ids, n=3):
+        """Tire n IDs au hasard cote Python (evite ORDER BY RAND() = full scan).
+        Garde l'aleatoire a chaque refresh sans trier toute la table."""
+        ids = list(qs_ids[:300])  # fenetre bornee
+        return random.sample(ids, min(n, len(ids)))
+
+    def _charger_biens(ids):
+        biens = Annonce.objects.filter(id__in=ids).prefetch_related(
+            Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
+        ).order_by('-mise_en_avant')
+        return list(biens)
 
     # 3 biens Prestige (> 500 000 €, hors pro) - aleatoire a chaque refresh
-    biens_prestige = Annonce.objects.filter(
-        is_active=True, prix__gt=500000
-    ).exclude(
-        type_transaction__in=['F', 'B']
-    ).prefetch_related(
-        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).order_by('-mise_en_avant', '?')[:3]
+    biens_prestige = _charger_biens(_tirage_aleatoire(
+        Annonce.objects.filter(is_active=True, prix__gt=500000)
+        .exclude(type_transaction__in=['F', 'B']).values_list('id', flat=True)))
 
     # 3 biens accessibles (<= 500 000 €, hors pro) - aleatoire a chaque refresh
-    biens_accessibles = Annonce.objects.filter(
-        is_active=True, prix__gt=0, prix__lte=500000
-    ).exclude(
-        type_transaction__in=['F', 'B']
-    ).prefetch_related(
-        Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
-    ).order_by('-mise_en_avant', '?')[:3]
+    biens_accessibles = _charger_biens(_tirage_aleatoire(
+        Annonce.objects.filter(is_active=True, prix__gt=0, prix__lte=500000)
+        .exclude(type_transaction__in=['F', 'B']).values_list('id', flat=True)))
 
-    # Villes populaires (top 12 par nombre d'annonces)
-    villes_populaires = Annonce.objects.filter(
-        is_active=True
-    ).exclude(ville='').values('ville').annotate(
-        count=Count('id')
-    ).order_by('-count')[:12]
-
-    # Annoter les biens prestige/accessibles avec options agence (logo, badge, exclusif)
-    agences_with_options = Agence.objects.filter(is_active=True).select_related('options')
+    # Annoter les biens prestige/accessibles avec options agence (logo, badge, exclusif) —
+    # uniquement les agences reellement affichees sur la page (ensemble borne).
+    agence_ids_page = {ann.agence_id for ann in biens_prestige + biens_accessibles if ann.agence_id}
+    agences_with_options = Agence.objects.filter(
+        id__in=agence_ids_page, is_active=True).select_related('options')
     agence_data = {}
     for a in agences_with_options:
         opts = getattr(a, 'options', None)
@@ -1079,9 +1092,17 @@ def agence_settings(request):
         agence.contact_nom = request.POST.get('contact_nom', '').strip()
         agence.contact_email = request.POST.get('contact_email', '').strip()
         agence.contact_telephone = request.POST.get('contact_telephone', '').strip()
-        # Upload logo
+        # Upload logo — re-encode (securite : jamais le fichier brut en storage)
         if 'logo' in request.FILES:
-            agence.logo = request.FILES['logo']
+            from django.core.files.base import ContentFile
+            from .services.photos import valider_et_reencoder_logo, ImageInvalide
+            try:
+                buf = valider_et_reencoder_logo(request.FILES['logo'])
+                agence.logo.save(f'logo_{agence.reference}.png',
+                                 ContentFile(buf.read()), save=False)
+            except ImageInvalide:
+                messages.error(request, "Le logo n'est pas une image valide (JPEG/PNG attendu).")
+                return redirect('listings:agence_settings')
         # Auto-set departement from code_postal
         if agence.code_postal and len(agence.code_postal) >= 2:
             agence.departement = agence.code_postal[:2]
@@ -1120,7 +1141,15 @@ def admin_agence_settings(request, agence_id):
         agence.ftp_path = request.POST.get('ftp_path', '/').strip()
         agence.reference = request.POST.get('reference', agence.reference).strip()
         if 'logo' in request.FILES:
-            agence.logo = request.FILES['logo']
+            from django.core.files.base import ContentFile
+            from .services.photos import valider_et_reencoder_logo, ImageInvalide
+            try:
+                buf = valider_et_reencoder_logo(request.FILES['logo'])
+                agence.logo.save(f'logo_{agence.reference}.png',
+                                 ContentFile(buf.read()), save=False)
+            except ImageInvalide:
+                messages.error(request, "Le logo n'est pas une image valide (JPEG/PNG attendu).")
+                return redirect('listings:admin_agence_settings', agence_id=agence.id)
         if agence.code_postal and len(agence.code_postal) >= 2:
             agence.departement = agence.code_postal[:2]
         agence.save()
@@ -2997,6 +3026,8 @@ def ville_segment_page(request, ville_slug, segment):
         'total': paginator.count,
         'user_favorites': user_favorites,
         'autres_segments': autres_segments,
+        # Page sans aucun bien : noindex pour ne pas polluer l'index (soft 404).
+        'noindex': paginator.count == 0,
     }
     return render(request, 'listings/ville_segment.html', context)
 
@@ -3687,7 +3718,7 @@ def particulier_dashboard(request):
                 # avec_dvf=False : le conseil-prix se contente des comparables/bareme
                 # (pas de telechargement DVF synchrone qui bloquerait le worker)
                 est = estimer_bien(type_bien, a.ville, a.code_postal, float(a.surface), a.nb_pieces, avec_dvf=False)
-                if est:
+                if est and est.get('prix_estime'):
                     ecart = (float(a.prix) - est['prix_estime']) / est['prix_estime'] * 100
                     a.estimation_secteur = est
                     if ecart > 12:

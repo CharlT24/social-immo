@@ -293,9 +293,17 @@ class Command(BaseCommand):
         self.stdout.write(f'Client: {client_ref} - {len(annonces_xml)} annonce(s) trouvee(s)')
 
         for annonce_xml in annonces_xml:
+            # La reference AC3 EST la cle de l'annonce (Annonce.reference). On
+            # l'enregistre AVANT le traitement : ainsi un bien present dans le
+            # flux mais dont le traitement echoue ponctuellement n'est jamais
+            # desactive a tort par _deactivate_missing.
+            ref_flux = self._get_text(annonce_xml, 'reference', '')
+            if ref_flux:
+                references_recues.add(ref_flux)
             try:
                 ref, result = self._process_ac3_annonce(annonce_xml, client_ref, dry_run)
-                references_recues.add(ref)
+                if ref:
+                    references_recues.add(ref)
                 if result == 'created':
                     created += 1
                 elif result == 'updated':
@@ -304,8 +312,8 @@ class Command(BaseCommand):
                     unchanged += 1
             except Exception as e:
                 errors += 1
-                ref = self._get_text(annonce_xml, 'reference', 'INCONNU')
-                self.stderr.write(self.style.ERROR(f'Erreur annonce {ref}: {e}'))
+                self.stderr.write(self.style.ERROR(
+                    f'Erreur annonce {ref_flux or "INCONNU"}: {e}'))
 
         deleted = self._deactivate_missing(client_ref, references_recues, dry_run)
         self._auto_set_departement(client_ref, dry_run)
@@ -345,6 +353,13 @@ class Command(BaseCommand):
         self.stdout.write(f'Client: {client_ref} - {len(rows)} annonce(s) trouvee(s) (Poliris CSV)')
 
         for row in rows:
+            # Meme protection qu'en AC3 : la cle stockee est prefixee par
+            # l'agence (full_ref = "<client_ref>-<reference>"). On l'enregistre
+            # avant traitement pour ne jamais desactiver un bien present au flux.
+            ref_brute = self._csv_get(row, [
+                'REFERENCE', 'REF', 'REFERENCE_ANNONCE', 'ID_ANNONCE', 'NUMERO'])
+            if ref_brute:
+                references_recues.add(f'{client_ref}-{ref_brute}')
             try:
                 ref, result = self._process_poliris_row(row, client_ref, dry_run)
                 if ref:
@@ -357,8 +372,8 @@ class Command(BaseCommand):
                         unchanged += 1
             except Exception as e:
                 errors += 1
-                ref = self._csv_get(row, ['REFERENCE', 'REF', 'ID', 'NUMERO'], 'INCONNU')
-                self.stderr.write(self.style.ERROR(f'Erreur annonce {ref}: {e}'))
+                self.stderr.write(self.style.ERROR(
+                    f'Erreur annonce {ref_brute or "INCONNU"}: {e}'))
 
         deleted = self._deactivate_missing(client_ref, references_recues, dry_run)
         self._auto_set_departement(client_ref, dry_run)

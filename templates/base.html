@@ -6,6 +6,7 @@
     <title>{% block title %}Social Immo - Immobilier entre particuliers et agences{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Social Immo : trouvez votre bien immobilier ideal parmi des centaines d'annonces. Vente, location, estimation. Agences et particuliers.{% endblock %}">
     <link rel="canonical" href="{% block canonical %}https://social-immo.com{{ request.path }}{% endblock %}">
+    {% if noindex %}<meta name="robots" content="noindex, follow">{% endif %}
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="Social Immo">

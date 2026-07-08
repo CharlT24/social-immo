@@ -54,6 +54,36 @@ def valider_et_reencoder(fichier, max_dimension=MAX_DIMENSION, quality=JPEG_QUAL
         raise ImageInvalide(str(e))
 
 
+def valider_et_reencoder_logo(fichier, max_dimension=512):
+    """SECURITE : comme valider_et_reencoder mais pour un LOGO — re-encode en
+    PNG (conserve la transparence). Elimine tout contenu actif (SVG/HTML/JS
+    deguise en image) en ne gardant que les pixels decodes par Pillow.
+
+    Retourne un io.BytesIO PNG. Leve ImageInvalide si ce n'est pas une image.
+    """
+    try:
+        if hasattr(fichier, 'seek'):
+            fichier.seek(0)
+        Image.open(fichier).verify()
+        if hasattr(fichier, 'seek'):
+            fichier.seek(0)
+        img = Image.open(fichier)
+        img = ImageOps.exif_transpose(img)
+        # Conserve l'alpha (logos souvent transparents) ; sinon RGB.
+        if img.mode not in ('RGBA', 'RGB'):
+            img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
+        if max(img.size) > max_dimension:
+            img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
+        sortie = io.BytesIO()
+        img.save(sortie, format='PNG', optimize=True)
+        sortie.seek(0)
+        return sortie
+    except ImageInvalide:
+        raise
+    except Exception as e:
+        raise ImageInvalide(str(e))
+
+
 def _luminosite_moyenne(img):
     return ImageStat.Stat(img.convert('L')).mean[0]
 

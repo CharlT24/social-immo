@@ -26,7 +26,9 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+# Defaut = False (securise) : si le .env n'est pas charge en prod, on ne
+# tombe jamais en DEBUG. Le developpement local active DEBUG=True dans son .env.
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # En production (DEBUG=False), SECRET_KEY DOIT venir de l'environnement.
@@ -47,12 +49,21 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,192
 # CSRF trusted origins for Railway/production
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 
-# SSL / HTTPS en production
-# o2switch gere le SSL au niveau Apache, pas besoin de SECURE_SSL_REDIRECT
+# SSL / HTTPS en production (o2switch : SSL termine par Apache, on est derriere un proxy)
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # Force la redirection HTTP -> HTTPS
+    SECURE_SSL_REDIRECT = True
+    # HSTS : demarrage prudent a 1h. Passer a 31536000 (1 an) + preload une
+    # fois confirme que TOUT le site (sous-domaines inclus) est en HTTPS.
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Durcissements explicites (defauts surs, poses noir sur blanc)
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
 
 
 # Application definition
@@ -134,6 +145,11 @@ elif os.environ.get('MYSQL_HOST'):
             'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
             'HOST': os.environ.get('MYSQL_HOST', ''),
             'PORT': os.environ.get('MYSQL_PORT', '3306'),
+            # Connexions persistantes : evite un handshake MySQL a chaque requete.
+            # 60s (court) car o2switch coupe vite les connexions idle ; le health
+            # check evite les "MySQL server has gone away".
+            'CONN_MAX_AGE': 60,
+            'CONN_HEALTH_CHECKS': True,
             'OPTIONS': {
                 'charset': 'utf8mb4',
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -235,18 +251,34 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@social-immo.com')
 
-# Logging - errors to file in production
+# Logging - erreurs dans un fichier (avec rotation) + email a l'admin sur les 500
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
+            # RotatingFileHandler : evite que django_errors.log sature le quota
+            # disque o2switch (5 fichiers de 2 Mo max).
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': BASE_DIR / 'django_errors.log',
+            'maxBytes': 2 * 1024 * 1024,
+            'backupCount': 5,
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
         },
     },
     'loggers': {
+        # Les exceptions 500 passent par 'django.request' : on les envoie par
+        # email aux ADMINS (en plus du fichier). propagate=False pour ne pas
+        # doublonner via le logger 'django' parent.
+        'django.request': {
+            'handlers': ['file', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
         'django': {
             'handlers': ['file'],
             'level': 'ERROR',

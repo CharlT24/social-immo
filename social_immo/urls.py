@@ -16,10 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.views.static import serve as media_serve
 
 from listings.sitemaps import StaticSitemap, AnnonceSitemap, AgenceSitemap, ProSitemap, VilleSitemap, VilleSegmentSitemap
 
@@ -40,5 +40,11 @@ urlpatterns = [
     path('', include('listings.urls')),
 ]
 
-# Servir les fichiers media (dev + prod o2switch)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Servir les fichiers media (photos uploadees : annonces particuliers, realisations pros).
+# IMPORTANT : le helper static() de Django est un no-op quand DEBUG=False. On sert
+# donc /media/ explicitement, y compris en prod, sinon toutes les photos uploadees
+# renvoient 404 sur o2switch. Django.views.static.serve convient a ce volume ; pour
+# monter en charge, ajouter un alias Apache /media/ -> MEDIA_ROOT (voir DEPLOIEMENT.md).
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', media_serve, {'document_root': settings.MEDIA_ROOT}),
+]

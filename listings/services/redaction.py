@@ -12,6 +12,17 @@ ACCROCHES_VENTE = {
 }
 
 
+def _int(valeur):
+    """Convertit en entier sans jamais lever (entrees JSON malformees).
+    Retourne None si la valeur n'est pas un nombre exploitable."""
+    if valeur is None or valeur == '':
+        return None
+    try:
+        return int(float(str(valeur).replace(',', '.')))
+    except (ValueError, TypeError):
+        return None
+
+
 def _type_lisible(type_bien, nb_pieces=None):
     t = (type_bien or '').lower()
     if 'appart' in t or t == 'appartement':
@@ -37,15 +48,19 @@ def suggerer_titres(type_bien, ville, surface=None, nb_pieces=None,
     verbe = "a louer" if transaction == 'L' else "a vendre"
     titres = []
 
-    if surface:
-        titres.append(f"{tl} de {int(float(surface))} m2 {verbe} a {ville}")
+    surf = _int(surface)
+    chambres = _int(nb_chambres)
+    terrain = _int(surface_terrain)
+
+    if surf:
+        titres.append(f"{tl} de {surf} m2 {verbe} a {ville}")
     titres.append(f"{tl} {verbe} - {ville}")
-    if nb_chambres and int(nb_chambres) >= 2:
-        titres.append(f"{tl} avec {nb_chambres} chambres a {ville}")
-    if surface_terrain and float(surface_terrain) > 100:
-        titres.append(f"{tl} sur terrain de {int(float(surface_terrain))} m2 - {ville}")
-    if surface and nb_pieces:
-        titres.append(f"A {ville} : {tl.lower()} de {int(float(surface))} m2")
+    if chambres and chambres >= 2:
+        titres.append(f"{tl} avec {chambres} chambres a {ville}")
+    if terrain and terrain > 100:
+        titres.append(f"{tl} sur terrain de {terrain} m2 - {ville}")
+    if surf and nb_pieces:
+        titres.append(f"A {ville} : {tl.lower()} de {surf} m2")
 
     # Dedoublonne en gardant l'ordre
     vus, uniques = set(), []
@@ -67,9 +82,12 @@ def suggerer_description(type_bien, ville, surface=None, nb_pieces=None,
     situe = 'situee' if feminin else 'situe'
     lignes = []
 
+    surf = _int(surface)
+    terrain = _int(surface_terrain)
+
     intro = f"Venez decouvrir {ce} {tl} {situe} a {ville}"
-    if surface:
-        intro += f", offrant une surface de {int(float(surface))} m2"
+    if surf:
+        intro += f", offrant une surface de {surf} m2"
     intro += "."
     lignes.append(intro)
 
@@ -83,8 +101,8 @@ def suggerer_description(type_bien, ville, surface=None, nb_pieces=None,
         lignes.append(f"{pronom} se compose de {' dont '.join(detail)}, "
                       "avec de beaux volumes et une distribution fonctionnelle.")
 
-    if surface_terrain and float(surface_terrain) > 0:
-        lignes.append(f"Le tout sur un terrain de {int(float(surface_terrain))} m2, "
+    if terrain and terrain > 0:
+        lignes.append(f"Le tout sur un terrain de {terrain} m2, "
                       "parfait pour profiter de l'exterieur.")
 
     if annee_construction:

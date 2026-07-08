@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import time
+from unittest import mock
 
 from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed
@@ -723,3 +724,77 @@ from django.core.mail.backends.base import BaseEmailBackend
 class BrokenEmailBackend(BaseEmailBackend):
     def send_messages(self, email_messages):
         raise OSError('SMTP indisponible (test)')
+
+
+class ImportXmlDeactivationTests(TestCase):
+    """Bug corrige : un bien present dans le flux mais dont le traitement
+    echoue ne doit PAS etre desactive (annule/remplace robuste)."""
+
+    def setUp(self):
+        cache.clear()
+        self.client_ref = 'TESTAG'
+        self.a = creer_annonce('REF-A', client_reference=self.client_ref, is_active=True)
+        self.b = creer_annonce('REF-B', client_reference=self.client_ref, is_active=True)
+        # REF-C est actif mais ABSENT du flux -> doit etre desactive (temoin)
+        self.c = creer_annonce('REF-C', client_reference=self.client_ref, is_active=True)
+
+    def _xml(self, refs):
+        annonces = ''.join(
+            f'<annonce><reference>{r}</reference></annonce>' for r in refs)
+        return f'<client reference="{self.client_ref}">{annonces}</client>'.encode('utf-8')
+
+    def test_bien_en_erreur_reste_actif(self):
+        from listings.management.commands.import_xml import Command
+        cmd = Command()
+        # Le traitement de CHAQUE annonce echoue (erreur transitoire simulee)
+        with mock.patch.object(Command, '_process_ac3_annonce',
+                               side_effect=Exception('erreur transitoire')), \
+             mock.patch.object(Command, '_auto_set_departement'):
+            cmd._import_ac3(self._xml(['REF-A', 'REF-B']), self.client_ref, dry_run=False)
+        self.a.refresh_from_db(); self.b.refresh_from_db(); self.c.refresh_from_db()
+        # A et B sont dans le flux -> restent actifs malgre l'erreur
+        self.assertTrue(self.a.is_active, "REF-A desactive a tort")
+        self.assertTrue(self.b.is_active, "REF-B desactive a tort")
+        # C est absent du flux -> bien desactive
+        self.assertFalse(self.c.is_active, "REF-C aurait du etre desactive")
+
+
+class RedactionRobustesseTests(TestCase):
+    """L'assistant de redaction ne plante jamais sur des entrees non numeriques."""
+
+    def test_suggestions_entrees_non_numeriques(self):
+        from listings.services.redaction import suggerer_titres, suggerer_description
+        # surface / chambres / terrain non numeriques : aucune exception
+        titres = suggerer_titres('appartement', 'Lyon', surface='abc',
+                                 nb_pieces='trois', nb_chambres='deux',
+                                 surface_terrain='n/a')
+        self.assertTrue(len(titres) >= 1)
+        desc = suggerer_description('maison', 'Lyon', surface='', nb_pieces=None,
+                                    surface_terrain='xxx')
+        self.assertIn('Lyon', desc)
+
+    def test_api_suggerer_annonce_entree_malformee(self):
+        u = User.objects.create_user('sugg', 'sugg@test.fr', 'motdepasse-123')
+        self.client.force_login(u)
+        resp = self.client.post('/api/suggerer-annonce/',
+                                data=json.dumps({'type_bien': 'maison', 'ville': 'Lyon',
+                                                 'surface': 'beaucoup', 'nb_chambres': 'plein'}),
+                                content_type='application/json')
+        self.assertNotEqual(resp.status_code, 500)  # ne plante jamais
+
+
+class SitemapSegmentsTests(TestCase):
+    """Le sitemap des segments n'inclut que les combinaisons non vides."""
+
+    def setUp(self):
+        cache.clear()
+        creer_annonce('S-1', ville='Lyon', code_postal='69001',
+                      type_transaction='V', libelle_type='Appartement T3', is_active=True)
+
+    def test_segments_vides_exclus(self):
+        from listings.sitemaps import VilleSegmentSitemap
+        combos = VilleSegmentSitemap().items()
+        self.assertIn(('lyon', 'appartement-a-vendre'), combos)
+        # Lyon n'a ni terrain ni location -> exclus
+        self.assertNotIn(('lyon', 'terrain-a-vendre'), combos)
+        self.assertNotIn(('lyon', 'maison-a-louer'), combos)

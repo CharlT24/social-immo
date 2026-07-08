@@ -48,22 +48,49 @@ class VilleSitemap(Sitemap):
 
 
 class VilleSegmentSitemap(Sitemap):
-    """Pages SEO longue traine /immobilier/<ville>/<segment>/ — seulement
-    les combinaisons qui ont au moins une annonce (pas de pages vides)."""
+    """Pages SEO longue traine /immobilier/<ville>/<segment>/ — UNIQUEMENT
+    les combinaisons qui ont au moins une annonce, pour ne pas soumettre a
+    Google des pages vides (soft 404 qui diluent le crawl)."""
     changefreq = 'daily'
     priority = 0.8
 
     def items(self):
+        from django.core.cache import cache
+        cached = cache.get('sitemap:ville_segments')
+        if cached is not None:
+            return cached
+
+        from django.db import models as dj_models
         from django.utils.text import slugify
         from listings.views import SEGMENTS_SEO
-        import re
-        combos = []
+
+        # Map slug -> nom de ville (une seule requete)
         villes = Annonce.objects.filter(is_active=True).exclude(ville='') \
             .values_list('ville', flat=True).distinct()
-        slugs = sorted({slugify(v) for v in villes if slugify(v)})
-        for ville_slug in slugs:
+        slug_to_ville = {}
+        for v in villes:
+            s = slugify(v)
+            if s:
+                slug_to_ville.setdefault(s, v)
+
+        combos = []
+        for ville_slug in sorted(slug_to_ville):
+            ville_nom = slug_to_ville[ville_slug]
             for segment, (transaction, mots, lib) in SEGMENTS_SEO.items():
-                combos.append((ville_slug, segment))
+                qs = Annonce.objects.filter(
+                    is_active=True, ville__iexact=ville_nom,
+                    type_transaction=transaction,
+                )
+                if mots:
+                    cond = dj_models.Q()
+                    for mot in mots:
+                        cond |= (dj_models.Q(libelle_type__icontains=mot)
+                                 | dj_models.Q(titre__icontains=mot))
+                    qs = qs.filter(cond)
+                if qs.exists():
+                    combos.append((ville_slug, segment))
+
+        cache.set('sitemap:ville_segments', combos, 3600)  # 1h
         return combos
 
     def location(self, combo):

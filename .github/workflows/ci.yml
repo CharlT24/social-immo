@@ -26,10 +26,13 @@ jobs:
       - name: Dependances Python
         run: pip install -r requirements.txt
 
-      # SQLite par defaut (pas de DATABASE_URL/MYSQL_HOST) et DEBUG=True
-      # par defaut, donc aucune SECRET_KEY requise.
+      # SQLite par defaut (pas de DATABASE_URL/MYSQL_HOST). DEBUG=True est
+      # fixe explicitement ci-dessous (le defaut du projet est desormais
+      # False, securise pour la prod), donc aucune SECRET_KEY requise.
       # Cible 'listings' : les scripts de debug test_error.py / test_logo.py
       # a la racine interrogent la BDD de dev a l'import et casseraient la
       # decouverte de tests en CI (pas de db.sqlite3 sur le runner).
       - name: Tests Django
+        env:
+          DEBUG: 'True'
         run: python manage.py test listings --verbosity 2

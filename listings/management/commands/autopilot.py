@@ -90,6 +90,11 @@ class Command(BaseCommand):
             etape('Rapport hebdo vendeurs', lambda: self._capture(
                 call_command, 'rapport_vendeurs', '--site-url', site))
 
+        # 7a. Rapport mensuel de performance aux partenaires (le 1er du mois) :
+        # retention agences & artisans -> ils restent et recommandent.
+        if date.today().day == 1:
+            etape('Rapport mensuel partenaires', lambda: self._rapport_partenaires(site))
+
         # 6b. Machine a leads : relance des estimations sans suite
         etape('Relance estimations', lambda: self._relancer_estimations(site))
 
@@ -257,6 +262,74 @@ class Command(BaseCommand):
             except Exception:
                 continue
         return f'{n} relance(s) envoyee(s)'
+
+    def _rapport_partenaires(self, site):
+        """Rapport mensuel de performance aux pros et agences (retention).
+        On n'envoie que s'il y a quelque chose a dire (jamais un email vide)."""
+        from listings.models import (ProProfile, Agence, DemandeContact,
+                                     PhotoFavori, Annonce)
+        depuis = timezone.now() - timedelta(days=30)
+        n = 0
+
+        # Artisans / pros
+        for pro in ProProfile.objects.filter(is_active=True).select_related('user'):
+            email = pro.email or (pro.user.email if pro.user_id else '')
+            if not email:
+                continue
+            nb_real = pro.realisations.filter(is_active=True).count()
+            favoris = PhotoFavori.objects.filter(
+                photo_pro__realisation__pro=pro, created_at__gte=depuis).count()
+            contacts = pro.demandes_contact.filter(created_at__gte=depuis).count()
+            if nb_real == 0 and favoris == 0 and contacts == 0:
+                continue
+            try:
+                send_mail(
+                    subject='[Social Immo] Votre bilan du mois',
+                    message=(
+                        f"Bonjour {pro.nom_entreprise},\n\n"
+                        f"Votre activite sur Social Immo ces 30 derniers jours :\n"
+                        f"  - Realisations en ligne : {nb_real}\n"
+                        f"  - Photos mises en favori : {favoris}\n"
+                        f"  - Demandes de contact recues : {contacts}\n\n"
+                        f"Ajoutez des realisations pour gagner en visibilite :\n{site}/pro/dashboard/\n\n"
+                        f"L'equipe Social Immo"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email], fail_silently=False,
+                )
+                n += 1
+            except Exception:
+                continue
+
+        # Agences
+        for agence in Agence.objects.filter(is_active=True).select_related('responsable'):
+            email = (agence.responsable.email if agence.responsable_id else '') or agence.contact_email
+            if not email:
+                continue
+            nb_annonces = Annonce.objects.filter(agence=agence, is_active=True).count()
+            contacts = DemandeContact.objects.filter(
+                annonce__agence=agence, created_at__gte=depuis).count()
+            if nb_annonces == 0 and contacts == 0:
+                continue
+            try:
+                send_mail(
+                    subject='[Social Immo] Le bilan mensuel de votre agence',
+                    message=(
+                        f"Bonjour {agence.nom},\n\n"
+                        f"Votre activite sur Social Immo ces 30 derniers jours :\n"
+                        f"  - Annonces en ligne : {nb_annonces}\n"
+                        f"  - Demandes de contact recues : {contacts}\n\n"
+                        f"Gerez vos annonces et votre vitrine :\n{site}/mon-agence/\n\n"
+                        f"L'equipe Social Immo"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email], fail_silently=False,
+                )
+                n += 1
+            except Exception:
+                continue
+
+        return f'{n} rapport(s) partenaire envoye(s)'
 
     def _resume_leads(self):
         """Compte les leads des dernieres 24h (visible dans le rapport admin)."""

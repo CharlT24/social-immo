@@ -1136,3 +1136,33 @@ class MachineALeadsTests(TestCase):
         Command()._relancer_estimations('https://social-immo.com')
         Command()._relancer_estimations('https://social-immo.com')  # 2e passage
         self.assertEqual(len(mail.outbox), 1)  # pas de doublon
+
+
+class RapportPartenairesTests(TestCase):
+    """Rapport mensuel de performance aux pros et agences (retention)."""
+
+    def setUp(self):
+        cache.clear()
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_rapport_pro_avec_activite(self):
+        from listings.models import ProProfile, ProRealisation, DemandeContact
+        from listings.management.commands.autopilot import Command
+        u = User.objects.create_user('proR', 'pror@test.fr', 'x')
+        pro = ProProfile.objects.create(user=u, nom_entreprise='ACB', metier='tous_corps_etat',
+                                        is_active=True, email='pror@test.fr')
+        ProRealisation.objects.create(pro=pro, titre='Chantier', is_active=True)
+        DemandeContact.objects.create(pro=pro, message='Bonjour', nom='X', email='x@y.fr')
+        Command()._rapport_partenaires('https://social-immo.com')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('bilan', mail.outbox[0].subject.lower())
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_pas_de_rapport_si_aucune_activite(self):
+        from listings.models import ProProfile
+        from listings.management.commands.autopilot import Command
+        u = User.objects.create_user('proV', 'prov@test.fr', 'x')
+        ProProfile.objects.create(user=u, nom_entreprise='Vide', metier='peintre',
+                                  is_active=True, email='prov@test.fr')
+        Command()._rapport_partenaires('https://social-immo.com')
+        self.assertEqual(len(mail.outbox), 0)  # rien a dire -> pas d'email

@@ -47,10 +47,17 @@
             <div class="text-3xl font-bold text-apple-blue mb-1">{{ nb_agences }}</div>
             <div class="text-sm text-apple-gray">Agences partenaires</div>
         </div>
+        {% if visiteurs_mois > 50 %}
+        <div class="bg-white rounded-2xl p-6 shadow-apple text-center">
+            <div class="text-3xl font-bold text-apple-blue mb-1">{{ visiteurs_mois }}</div>
+            <div class="text-sm text-apple-gray">Visiteurs le mois dernier</div>
+        </div>
+        {% else %}
         <div class="bg-white rounded-2xl p-6 shadow-apple text-center">
             <div class="text-3xl font-bold text-apple-blue mb-1">100%</div>
             <div class="text-sm text-apple-gray">Automatise via votre CRM</div>
         </div>
+        {% endif %}
     </div>
 </section>
 

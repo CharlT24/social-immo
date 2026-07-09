@@ -3733,6 +3733,12 @@ def agence_immo(request):
     """Page vitrine pour inviter les agences immo a rejoindre Social Immo"""
     nb_agences = Agence.objects.filter(is_active=True).count()
     nb_annonces = Annonce.objects.filter(is_active=True).count()
+    # Preuve sociale : audience reelle du dernier mois (argument de recrutement)
+    from datetime import timedelta
+    from .models import PageVue
+    visiteurs_mois = PageVue.objects.filter(
+        created_at__gte=timezone.now() - timedelta(days=30)
+    ).values('visiteur_hash').distinct().count()
     contact_sent = False
 
     if request.method == 'POST':
@@ -3779,6 +3785,7 @@ def agence_immo(request):
     return render(request, 'listings/agence_immo.html', {
         'nb_agences': nb_agences,
         'nb_annonces': nb_annonces,
+        'visiteurs_mois': visiteurs_mois,
         'contact_sent': contact_sent,
     })
 

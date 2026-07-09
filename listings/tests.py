@@ -1269,3 +1269,47 @@ class GuideAcheteurTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get('/guide-acheteur/')
         self.assertContains(resp, 'Mon espace acquereur')
+
+
+class Visite3DTests(TestCase):
+    """Visite virtuelle 3D (Matterport) : embed normalise, affichage, depot."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_matterport_embed_normalise(self):
+        a = Annonce(reference='M-1', titre='x', ville='Caen', code_postal='14000',
+                    prix=200000, type_transaction='V',
+                    visite_virtuelle_url='https://my.matterport.com/show/?m=abc123XYZ')
+        self.assertEqual(a.visite_virtuelle_embed_url,
+                         'https://my.matterport.com/show/?m=abc123XYZ&play=1')
+        self.assertTrue(a.a_visite_3d)
+        b = Annonce(reference='M-2', titre='x', ville='Caen', code_postal='14000',
+                    prix=200000, type_transaction='V',
+                    visite_virtuelle_url='https://my.matterport.com/models/abc123XYZ')
+        self.assertEqual(b.visite_virtuelle_embed_url,
+                         'https://my.matterport.com/show/?m=abc123XYZ&play=1')
+
+    def test_pas_de_visite_3d_par_defaut(self):
+        a = creer_annonce('M-3')
+        self.assertFalse(a.a_visite_3d)
+        self.assertEqual(a.visite_virtuelle_embed_url, '')
+
+    def test_fiche_affiche_visite_3d(self):
+        a = creer_annonce('M-4', visite_virtuelle_url='https://my.matterport.com/show/?m=ZZZ999')
+        resp = self.client.get(a.get_absolute_url())
+        self.assertContains(resp, 'Visite virtuelle 3D')
+        self.assertContains(resp, 'm=ZZZ999')  # & echappe en &amp; dans le HTML
+
+    def test_depot_particulier_enregistre_visite_3d(self):
+        from allauth.account.models import EmailAddress
+        u = User.objects.create_user('v3d', 'v3d@test.fr', 'x')
+        EmailAddress.objects.create(user=u, email='v3d@test.fr', verified=True, primary=True)
+        self.client.force_login(u)
+        self.client.post('/mon-compte/deposer/', {
+            'titre': 'Maison visite 3D', 'texte': 'x', 'libelle_type': 'Maison',
+            'type_transaction': 'V', 'prix': '250000', 'ville': 'Caen', 'code_postal': '14000',
+            'visite_virtuelle_url': 'https://my.matterport.com/show/?m=DEPOT1',
+        })
+        a = Annonce.objects.get(titre='Maison visite 3D', user=u)
+        self.assertTrue(a.a_visite_3d)

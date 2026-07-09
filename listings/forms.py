@@ -305,8 +305,13 @@ class ParticulierAnnonceForm(forms.ModelForm):
             'nb_pieces', 'nb_chambres', 'surface', 'surface_terrain',
             'dpe_etiquette_conso', 'dpe_valeur_conso',
             'dpe_etiquette_ges', 'dpe_valeur_ges',
+            'visite_virtuelle_url',
         ]
         widgets = {
+            'visite_virtuelle_url': forms.URLInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Lien Matterport / visite 3D (https://my.matterport.com/show/?m=...)'
+            }),
             'titre': forms.TextInput(attrs={
                 'class': PART_INPUT,
                 'placeholder': 'Ex: Appartement 3 pieces lumineux centre-ville'

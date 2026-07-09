@@ -211,6 +211,18 @@
                     <div id="suggestions-zone" class="hidden mt-4 space-y-2"></div>
                 </div>
 
+                <!-- Visite virtuelle 3D (Matterport / 360) -->
+                <div>
+                    <label for="id_visite_virtuelle_url" class="block text-sm font-semibold text-gray-800 mb-2">
+                        Visite virtuelle 3D <span class="text-gray-400 font-normal">(optionnel)</span>
+                    </label>
+                    <input type="url" name="visite_virtuelle_url" id="id_visite_virtuelle_url"
+                           value="{{ form.visite_virtuelle_url.value|default:'' }}"
+                           placeholder="https://my.matterport.com/show/?m=..."
+                           class="{{ form.visite_virtuelle_url.field.widget.attrs.class }}">
+                    <p class="text-xs text-gray-500 mt-1.5">Collez le lien de votre visite Matterport ou 360°. Les biens avec visite 3D attirent bien plus de contacts.</p>
+                </div>
+
                 <!-- Score de qualite -->
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center justify-between mb-2">

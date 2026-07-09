@@ -228,6 +228,24 @@ class Annonce(models.Model):
         return url
 
     @property
+    def visite_virtuelle_embed_url(self):
+        """URL d'integration de la visite 3D. Normalise les liens Matterport
+        (partage -> embed jouable) ; renvoie tel quel pour Kuula/my360/etc."""
+        import re
+        url = (self.visite_virtuelle_url or '').strip()
+        if not url:
+            return ''
+        m = re.search(r'matterport\.com/(?:show/\?m=|models/)([A-Za-z0-9]+)', url)
+        if m:
+            return f'https://my.matterport.com/show/?m={m.group(1)}&play=1'
+        return url
+
+    @property
+    def a_visite_3d(self):
+        """True si une visite virtuelle 3D est disponible (badge, bouton)."""
+        return bool((self.visite_virtuelle_url or '').strip())
+
+    @property
     def honoraires_charge_acquereur(self):
         return 'acqu' in (self.honoraires_payeurs or '').lower()
 

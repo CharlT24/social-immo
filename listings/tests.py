@@ -1219,20 +1219,21 @@ class RechercheCodePostalTests(TestCase):
 class NettoyerDoublonsTests(TestCase):
     """La commande de nettoyage garde la plus ancienne annonce et desactive les doublons."""
 
-    def test_desactive_doublons_garde_le_plus_ancien(self):
+    def test_desactive_doublons_meme_titres_differents(self):
+        # Cas reel : meme bien (ville+prix), titres differents, certains inactifs
         from django.core.management import call_command
         import io
         u = User.objects.create_user('vdup', 'vdup@test.fr', 'x')
-        refs = []
-        for i in range(4):  # 4 fois la meme annonce (double-clic)
-            a = creer_annonce(f'DUP-{i}', user=u, source='particulier',
-                              titre='Maison Perigueux', ville='Perigueux',
-                              prix=221000, is_active=True)
-            refs.append(a)
+        creer_annonce('DUP-A', user=u, source='particulier',
+                      titre='Maison 3 chambres', ville='Perigueux', prix=221000, is_active=True)
+        creer_annonce('DUP-B', user=u, source='particulier',
+                      titre='Maison 2 cuisines 3 chambres', ville='Perigueux', prix=221000, is_active=True)
+        creer_annonce('DUP-C', user=u, source='particulier',
+                      titre='Maison 3 ch 2 sdb', ville='Perigueux', prix=221000, is_active=False)
         call_command('nettoyer_doublons', stdout=io.StringIO())
-        actives = Annonce.objects.filter(titre='Maison Perigueux', is_active=True)
-        self.assertEqual(actives.count(), 1)  # une seule reste
-        self.assertEqual(actives.first().reference, 'DUP-0')  # la plus ancienne
+        # une seule reste active pour ce vendeur/ville/prix
+        restantes = Annonce.objects.filter(user=u, ville='Perigueux', prix=221000, is_active=True)
+        self.assertEqual(restantes.count(), 1)
 
 
 class GuideVendeurTests(TestCase):

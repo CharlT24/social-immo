@@ -1191,3 +1191,39 @@ class ConfianceDifferenciationTests(TestCase):
         resp = self.client.get('/')
         self.assertContains(resp, 'ventes reelles notariees')
         self.assertContains(resp, 'Agences partenaires')
+
+
+class RechercheCodePostalTests(TestCase):
+    """La recherche fonctionne par nom de ville ET par code postal."""
+
+    def setUp(self):
+        cache.clear()
+        creer_annonce('CP-1', ville='Perigueux', code_postal='24000',
+                      prix=221000, type_transaction='V', is_active=True)
+
+    def test_recherche_par_code_postal(self):
+        resp = self.client.get('/recherche/?ville=24000')
+        self.assertContains(resp, 'CP-1')
+
+    def test_recherche_par_nom_ville(self):
+        resp = self.client.get('/recherche/?ville=Perigueux')
+        self.assertContains(resp, 'CP-1')
+
+
+class NettoyerDoublonsTests(TestCase):
+    """La commande de nettoyage garde la plus ancienne annonce et desactive les doublons."""
+
+    def test_desactive_doublons_garde_le_plus_ancien(self):
+        from django.core.management import call_command
+        import io
+        u = User.objects.create_user('vdup', 'vdup@test.fr', 'x')
+        refs = []
+        for i in range(4):  # 4 fois la meme annonce (double-clic)
+            a = creer_annonce(f'DUP-{i}', user=u, source='particulier',
+                              titre='Maison Perigueux', ville='Perigueux',
+                              prix=221000, is_active=True)
+            refs.append(a)
+        call_command('nettoyer_doublons', stdout=io.StringIO())
+        actives = Annonce.objects.filter(titre='Maison Perigueux', is_active=True)
+        self.assertEqual(actives.count(), 1)  # une seule reste
+        self.assertEqual(actives.first().reference, 'DUP-0')  # la plus ancienne

@@ -187,7 +187,9 @@ def search_results(request):
             annonces = annonces.filter(ville__in=villes_rayon)
             rayon_applique = int(rayon)
         else:
-            annonces = annonces.filter(ville__icontains=ville)
+            # Recherche par nom de ville OU par code postal (ex: "24000")
+            annonces = annonces.filter(
+                models.Q(ville__icontains=ville) | models.Q(code_postal__icontains=ville))
 
     valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
     if type_transaction in valid_types:

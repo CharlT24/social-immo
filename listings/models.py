@@ -1272,3 +1272,36 @@ class StatJour(models.Model):
             cls.objects.filter(pk=obj.pk).update(**{champ: F(champ) + 1})
         except Exception:
             pass  # la stat ne doit jamais casser une requete
+
+
+class PageVue(models.Model):
+    """Analytics maison, sans cookie (RGPD) : une ligne par page vue.
+    Le visiteur est identifie par un hash quotidien anonyme (IP+UA+jour+secret),
+    non reversible et qui change chaque jour -> pas de donnee personnelle stockee.
+    Alimente le cockpit admin (trafic, sources, pages populaires)."""
+
+    SECTION_CHOICES = [
+        ('home', 'Accueil'), ('annonce', 'Fiche annonce'), ('recherche', 'Recherche'),
+        ('ville', 'Page ville (SEO)'), ('inspirations', 'Inspirations'),
+        ('pro', 'Pro / annuaire'), ('agence', 'Agence'), ('estimer', 'Estimation'),
+        ('compte', 'Espace compte'), ('autre', 'Autre'),
+    ]
+
+    path = models.CharField(max_length=300)
+    section = models.CharField(max_length=20, blank=True, default='')
+    referer_host = models.CharField(max_length=200, blank=True, default='')
+    visiteur_hash = models.CharField(max_length=64)
+    is_mobile = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Page vue'
+        verbose_name_plural = 'Pages vues'
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['visiteur_hash', 'created_at']),
+            models.Index(fields=['section', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.path}"

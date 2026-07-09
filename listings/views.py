@@ -430,6 +430,86 @@ def signup(request):
 
 @login_required
 @staff_required
+def cockpit(request):
+    """Cockpit admin : audience (trafic, sources, pages), entonnoir et leads.
+    Alimente par PageVue (analytics maison sans cookie) + StatJour + leads."""
+    from datetime import timedelta
+    from django.db.models.functions import TruncDate
+    from .models import PageVue, StatJour, DemandeAgence, Estimation, DemandeContact
+
+    today = timezone.localdate()
+    d30 = today - timedelta(days=29)
+    d7 = today - timedelta(days=6)
+
+    pv30 = PageVue.objects.filter(created_at__date__gte=d30)
+
+    def _bloc(qs):
+        return {'visites': qs.count(),
+                'uniques': qs.values('visiteur_hash').distinct().count()}
+
+    audience = {
+        'today': _bloc(PageVue.objects.filter(created_at__date=today)),
+        'j7': _bloc(PageVue.objects.filter(created_at__date__gte=d7)),
+        'j30': _bloc(pv30),
+    }
+
+    # Serie par jour (30j), zeros combles pour un graphe continu
+    brut = {r['j']: r for r in pv30.annotate(j=TruncDate('created_at')).values('j')
+            .annotate(v=Count('id'), u=Count('visiteur_hash', distinct=True))}
+    serie = []
+    vmax = 1
+    for i in range(30):
+        jour = d30 + timedelta(days=i)
+        r = brut.get(jour)
+        v = r['v'] if r else 0
+        serie.append({'date': jour, 'visites': v, 'uniques': r['u'] if r else 0})
+        vmax = max(vmax, v)
+    for s in serie:
+        s['pct'] = round(s['visites'] * 100 / vmax)
+
+    top_pages = list(pv30.values('path').annotate(n=Count('id')).order_by('-n')[:12])
+    top_sources = list(pv30.exclude(referer_host='').values('referer_host')
+                       .annotate(n=Count('id')).order_by('-n')[:10])
+    sections = list(pv30.values('section').annotate(n=Count('id')).order_by('-n'))
+    mobile = pv30.filter(is_mobile=True).count()
+    total_pv = audience['j30']['visites'] or 1
+    part_mobile = round(mobile * 100 / total_pv)
+
+    # Entonnoir 30 jours (compteurs StatJour + leads reels)
+    sj = StatJour.objects.filter(date__gte=d30).aggregate(
+        est=Sum('estimations'), dep=Sum('depots_annonces'),
+        ins=Sum('inscriptions'), dev=Sum('demandes_devis'), al=Sum('alertes_creees'))
+    leads_agences = DemandeAgence.objects.filter(created_at__date__gte=d30).count()
+    leads_contacts = DemandeContact.objects.filter(created_at__date__gte=d30).count()
+    leads_estim = Estimation.objects.filter(created_at__date__gte=d30).count()
+    total_leads = leads_agences + leads_contacts + leads_estim
+    uniques30 = audience['j30']['uniques'] or 1
+    taux_conversion = round(total_leads * 100 / uniques30, 1)
+
+    contexte = {
+        'audience': audience,
+        'serie': serie,
+        'top_pages': top_pages,
+        'top_sources': top_sources,
+        'sections': sections,
+        'part_mobile': part_mobile,
+        'part_desktop': 100 - part_mobile,
+        'funnel': {
+            'estimations': sj['est'] or 0, 'depots': sj['dep'] or 0,
+            'inscriptions': sj['ins'] or 0, 'devis': sj['dev'] or 0,
+            'alertes': sj['al'] or 0,
+        },
+        'leads': {'agences': leads_agences, 'contacts': leads_contacts,
+                  'estimations': leads_estim, 'total': total_leads},
+        'taux_conversion': taux_conversion,
+        'recent_agences': DemandeAgence.objects.order_by('-created_at')[:6],
+        'recent_estimations': Estimation.objects.order_by('-created_at')[:6],
+    }
+    return render(request, 'listings/cockpit.html', contexte)
+
+
+@login_required
+@staff_required
 def dashboard(request):
     """Dashboard admin : stats et gestion"""
     today = timezone.now().date()

@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/toggle-inspiration/', views.toggle_inspiration, name='toggle_inspiration'),
     path('api/toggle-inspi-une/', views.toggle_inspi_une, name='toggle_inspi_une'),
     path('gestion/', views.gestion_agences, name='gestion_agences'),
+    path('gestion/cockpit/', views.cockpit, name='cockpit'),
     path('gestion/pros/', views.gestion_pros, name='gestion_pros'),
     path('gestion/creer-agence/', views.creer_agence, name='creer_agence'),
     path('gestion/agence/<int:agence_id>/parametres/', views.admin_agence_settings, name='admin_agence_settings'),

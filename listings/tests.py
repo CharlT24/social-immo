@@ -1038,3 +1038,56 @@ class InteractionsSocialesTests(TestCase):
         r2 = self._post('/api/photo-comment/delete/', {'comment_id': c.id})
         self.assertEqual(r2.status_code, 200)
         self.assertFalse(PhotoCommentaire.objects.filter(id=c.id).exists())
+
+
+class CockpitAnalyticsTests(TestCase):
+    """Analytics maison : le middleware enregistre les pages vues (sans cookie),
+    ignore staff/bots, et le cockpit admin agrege tout."""
+
+    def setUp(self):
+        cache.clear()
+        from listings.models import PageVue
+        PageVue.objects.all().delete()
+
+    def test_middleware_enregistre_visite_publique(self):
+        from listings.models import PageVue, StatJour
+        creer_annonce('COCK-1', is_active=True)
+        self.client.get('/')
+        self.assertGreaterEqual(PageVue.objects.filter(section='home').count(), 1)
+        # StatJour.visites incremente aussi
+        self.assertGreaterEqual(StatJour.objects.get(date=timezone.localdate()).visites, 1)
+
+    def test_middleware_ignore_staff(self):
+        from listings.models import PageVue
+        staff = User.objects.create_user('cockadmin', 'c@a.fr', 'x', is_staff=True)
+        self.client.force_login(staff)
+        self.client.get('/')
+        self.assertEqual(PageVue.objects.count(), 0)  # on ne compte pas nos visites
+
+    def test_middleware_ignore_bot(self):
+        from listings.models import PageVue
+        self.client.get('/', HTTP_USER_AGENT='Googlebot/2.1')
+        self.assertEqual(PageVue.objects.count(), 0)
+
+    def test_visiteur_hash_anonyme_et_stable_par_jour(self):
+        from listings.models import PageVue
+        self.client.get('/', HTTP_USER_AGENT='Mozilla/5.0', REMOTE_ADDR='1.2.3.4')
+        self.client.get('/recherche/', HTTP_USER_AGENT='Mozilla/5.0', REMOTE_ADDR='1.2.3.4')
+        hashes = set(PageVue.objects.values_list('visiteur_hash', flat=True))
+        self.assertEqual(len(hashes), 1)  # meme visiteur = 1 seul hash
+        # le hash ne contient aucune donnee perso en clair
+        h = hashes.pop()
+        self.assertNotIn('1.2.3.4', h)
+        self.assertEqual(len(h), 64)
+
+    def test_cockpit_accessible_staff_seulement(self):
+        # anonyme -> redirige
+        self.assertEqual(self.client.get('/gestion/cockpit/').status_code, 302)
+        # non-staff -> 403
+        u = User.objects.create_user('cockuser', 'cu@a.fr', 'x')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get('/gestion/cockpit/').status_code, 403)
+        # staff -> 200
+        staff = User.objects.create_user('cockstaff', 'cs@a.fr', 'x', is_staff=True)
+        self.client.force_login(staff)
+        self.assertEqual(self.client.get('/gestion/cockpit/').status_code, 200)

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Cockpit - Social Immo{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Cockpit</h1>
+            <p class="text-apple-gray text-sm mt-1">Audience, entonnoir et leads — 30 derniers jours. Mesure maison, sans cookie.</p>
+        </div>
+        <a href="{% url 'listings:gestion_agences' %}" class="text-sm text-apple-blue hover:underline">Gestion &rarr;</a>
+    </div>
+
+    <!-- Cartes audience -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide">Visiteurs aujourd'hui</p>
+            <p class="text-3xl font-bold mt-1">{{ audience.today.uniques }}</p>
+            <p class="text-xs text-apple-gray mt-1">{{ audience.today.visites }} pages vues</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide">Visiteurs (7 j)</p>
+            <p class="text-3xl font-bold mt-1">{{ audience.j7.uniques }}</p>
+            <p class="text-xs text-apple-gray mt-1">{{ audience.j7.visites }} pages vues</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide">Visiteurs (30 j)</p>
+            <p class="text-3xl font-bold mt-1">{{ audience.j30.uniques }}</p>
+            <p class="text-xs text-apple-gray mt-1">{{ audience.j30.visites }} pages vues</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide">Conversion visite &rarr; lead</p>
+            <p class="text-3xl font-bold mt-1 text-apple-blue">{{ taux_conversion }}%</p>
+            <p class="text-xs text-apple-gray mt-1">{{ leads.total }} leads / 30 j</p>
+        </div>
+    </div>
+
+    <!-- Graphe trafic 30 j -->
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold">Trafic — 30 jours</h2>
+            <span class="text-xs text-apple-gray">{{ part_mobile }}% mobile · {{ part_desktop }}% ordinateur</span>
+        </div>
+        <div class="flex items-end gap-1 h-40">
+            {% for s in serie %}
+            <div class="flex-1 flex flex-col justify-end h-full group relative" title="{{ s.date|date:'d/m' }} : {{ s.uniques }} visiteurs">
+                <div class="bg-apple-blue rounded-t hover:bg-blue-700 transition-colors" style="height: {{ s.pct }}%; min-height: 2px;"></div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between text-[10px] text-apple-gray mt-2">
+            <span>{{ serie.0.date|date:'d/m' }}</span>
+            <span>Aujourd'hui</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Pages populaires -->
+        <div class="bg-white rounded-2xl shadow-apple p-6">
+            <h2 class="font-bold mb-4">Pages les plus vues</h2>
+            {% for p in top_pages %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <span class="text-sm text-apple-text truncate mr-3">{{ p.path }}</span>
+                <span class="text-sm font-semibold text-apple-gray flex-shrink-0">{{ p.n }}</span>
+            </div>
+            {% empty %}
+            <p class="text-sm text-apple-gray">Aucune donnee pour le moment.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Sources -->
+        <div class="bg-white rounded-2xl shadow-apple p-6">
+            <h2 class="font-bold mb-4">D'ou viennent les visiteurs</h2>
+            {% for s in top_sources %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <span class="text-sm text-apple-text truncate mr-3">{{ s.referer_host }}</span>
+                <span class="text-sm font-semibold text-apple-gray flex-shrink-0">{{ s.n }}</span>
+            </div>
+            {% empty %}
+            <p class="text-sm text-apple-gray">Trafic direct uniquement (ou pas encore de referents). Partagez le site sur vos reseaux !</p>
+            {% endfor %}
+            {% if sections %}
+            <div class="mt-5 pt-4 border-t border-gray-100">
+                <p class="text-xs text-apple-gray font-medium uppercase tracking-wide mb-2">Repartition par section</p>
+                {% for sec in sections %}
+                <div class="flex items-center justify-between py-1">
+                    <span class="text-xs text-apple-text">{{ sec.section|default:'autre' }}</span>
+                    <span class="text-xs text-apple-gray">{{ sec.n }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Entonnoir + leads -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-apple p-6">
+            <h2 class="font-bold mb-4">Entonnoir — 30 jours</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between"><span class="text-sm">Estimations lancees</span><span class="font-bold text-lg">{{ funnel.estimations }}</span></div>
+                <div class="flex items-center justify-between"><span class="text-sm">Depots d'annonces</span><span class="font-bold text-lg">{{ funnel.depots }}</span></div>
+                <div class="flex items-center justify-between"><span class="text-sm">Inscriptions</span><span class="font-bold text-lg">{{ funnel.inscriptions }}</span></div>
+                <div class="flex items-center justify-between"><span class="text-sm">Demandes de devis</span><span class="font-bold text-lg">{{ funnel.devis }}</span></div>
+                <div class="flex items-center justify-between"><span class="text-sm">Alertes creees</span><span class="font-bold text-lg">{{ funnel.alertes }}</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-apple p-6">
+            <h2 class="font-bold mb-4">Leads recents</h2>
+            <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+                <div class="bg-purple-50 rounded-xl p-3"><p class="text-2xl font-bold text-purple-700">{{ leads.agences }}</p><p class="text-[11px] text-purple-600">Agences</p></div>
+                <div class="bg-blue-50 rounded-xl p-3"><p class="text-2xl font-bold text-blue-700">{{ leads.estimations }}</p><p class="text-[11px] text-blue-600">Estimations</p></div>
+                <div class="bg-green-50 rounded-xl p-3"><p class="text-2xl font-bold text-green-700">{{ leads.contacts }}</p><p class="text-[11px] text-green-600">Contacts</p></div>
+            </div>
+            {% for d in recent_agences %}
+            <div class="flex items-center justify-between py-1.5 text-sm border-b border-gray-50 last:border-0">
+                <span class="truncate mr-2">🏢 {{ d.nom_agence }}{% if d.ville %} · {{ d.ville }}{% endif %}</span>
+                <span class="text-xs text-apple-gray flex-shrink-0">{{ d.created_at|date:'d/m' }}</span>
+            </div>
+            {% endfor %}
+            {% for e in recent_estimations %}
+            <div class="flex items-center justify-between py-1.5 text-sm border-b border-gray-50 last:border-0">
+                <span class="truncate mr-2">📊 {{ e.ville }}{% if e.type_bien %} · {{ e.type_bien }}{% endif %}</span>
+                <span class="text-xs text-apple-gray flex-shrink-0">{{ e.created_at|date:'d/m' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

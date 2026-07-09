@@ -90,6 +90,9 @@ class Command(BaseCommand):
             etape('Rapport hebdo vendeurs', lambda: self._capture(
                 call_command, 'rapport_vendeurs', '--site-url', site))
 
+        # 7b. Purge des vieilles pages vues (analytics : retention 90 j)
+        etape('Purge analytics (90j)', self._purger_pagevues)
+
         # 8. Sauvegarde
         etape('Sauvegarde base', self._sauvegarde)
 
@@ -211,6 +214,14 @@ class Command(BaseCommand):
             n += 1
         return f'{n} boost(s) expire(s)'
 
+    def _purger_pagevues(self):
+        """Supprime les pages vues de plus de 90 jours (le cockpit ne montre
+        que 30 j ; on garde 90 j de marge). Evite que la table gonfle."""
+        from listings.models import PageVue
+        seuil = timezone.now() - timedelta(days=90)
+        n, _ = PageVue.objects.filter(created_at__lt=seuil).delete()
+        return f'{n} page(s) vue(s) purgee(s)'
+
     def _sauvegarde(self):
         """Dump JSON gzip de la base, retention de 7 fichiers."""
         dossier = Path(settings.BASE_DIR) / 'backups'
@@ -220,6 +231,7 @@ class Command(BaseCommand):
         call_command('dumpdata', '--natural-foreign', '--natural-primary',
                      '-e', 'contenttypes', '-e', 'auth.permission',
                      '-e', 'sessions', '-e', 'admin.logentry',
+                     '-e', 'listings.pagevue',  # analytics volumineux, non critique
                      stdout=out)
         with gzip.open(fichier, 'wt', encoding='utf-8') as f:
             f.write(out.getvalue())

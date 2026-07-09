@@ -1091,3 +1091,48 @@ class CockpitAnalyticsTests(TestCase):
         staff = User.objects.create_user('cockstaff', 'cs@a.fr', 'x', is_staff=True)
         self.client.force_login(staff)
         self.assertEqual(self.client.get('/gestion/cockpit/').status_code, 200)
+
+
+class MachineALeadsTests(TestCase):
+    """Relance automatique des estimations sans suite (levier machine a leads)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _estimation(self, jours, **extra):
+        from listings.models import Estimation
+        from datetime import timedelta
+        e = Estimation.objects.create(type_bien='maison', ville='Caen', code_postal='14000',
+                                      nom='Client', email='client@test.fr', **extra)
+        # backdate created_at
+        Estimation.objects.filter(pk=e.pk).update(
+            created_at=timezone.now() - timedelta(days=jours))
+        return Estimation.objects.get(pk=e.pk)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_relance_estimation_sans_suite(self):
+        from listings.management.commands.autopilot import Command
+        e = self._estimation(jours=5)  # dans la fenetre 3-14 j
+        Command()._relancer_estimations('https://social-immo.com')
+        e.refresh_from_db()
+        self.assertTrue(e.relance_envoyee)
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_pas_de_relance_si_recente_ou_traitee(self):
+        from listings.management.commands.autopilot import Command
+        recente = self._estimation(jours=1)         # trop recente
+        traitee = self._estimation(jours=5, is_treated=True)  # deja traitee
+        Command()._relancer_estimations('https://social-immo.com')
+        recente.refresh_from_db(); traitee.refresh_from_db()
+        self.assertFalse(recente.relance_envoyee)
+        self.assertFalse(traitee.relance_envoyee)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_relance_une_seule_fois(self):
+        from listings.management.commands.autopilot import Command
+        self._estimation(jours=5)
+        Command()._relancer_estimations('https://social-immo.com')
+        Command()._relancer_estimations('https://social-immo.com')  # 2e passage
+        self.assertEqual(len(mail.outbox), 1)  # pas de doublon

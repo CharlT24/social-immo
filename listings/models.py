@@ -935,6 +935,8 @@ class Estimation(models.Model):
     message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_treated = models.BooleanField(default=False)
+    relance_envoyee = models.BooleanField(
+        default=False, verbose_name='Relance email envoyee')
     agence_assignee = models.ForeignKey(
         'Agence', null=True, blank=True,
         on_delete=models.SET_NULL, related_name='estimations'

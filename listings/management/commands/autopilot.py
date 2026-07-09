@@ -90,6 +90,12 @@ class Command(BaseCommand):
             etape('Rapport hebdo vendeurs', lambda: self._capture(
                 call_command, 'rapport_vendeurs', '--site-url', site))
 
+        # 6b. Machine a leads : relance des estimations sans suite
+        etape('Relance estimations', lambda: self._relancer_estimations(site))
+
+        # 6c. Resume des leads pour l'admin (24h)
+        etape('Leads (24h)', self._resume_leads)
+
         # 7b. Purge des vieilles pages vues (analytics : retention 90 j)
         etape('Purge analytics (90j)', self._purger_pagevues)
 
@@ -213,6 +219,54 @@ class Command(BaseCommand):
             abo.save(update_fields=['statut'])
             n += 1
         return f'{n} boost(s) expire(s)'
+
+    def _relancer_estimations(self, site):
+        """Relance UNE fois les prospects d'estimation sans suite (3-14 jours),
+        avec consentement recueilli au formulaire. Email utile, non intrusif."""
+        from listings.models import Estimation
+        debut = timezone.now() - timedelta(days=14)
+        fin = timezone.now() - timedelta(days=3)
+        prospects = Estimation.objects.filter(
+            is_treated=False, relance_envoyee=False,
+            created_at__gte=debut, created_at__lte=fin,
+        ).exclude(email='')
+        n = 0
+        for e in prospects:
+            try:
+                send_mail(
+                    subject='[Social Immo] Votre projet immobilier avance ?',
+                    message=(
+                        f"Bonjour {e.nom or ''},\n\n"
+                        f"Il y a quelques jours, vous avez estime votre bien a {e.ville}. "
+                        f"Ou en etes-vous dans votre projet ?\n\n"
+                        f"Pour vendre au meilleur prix, un professionnel de votre secteur "
+                        f"peut vous accompagner gratuitement (visite, prix de marche, diffusion). "
+                        f"Il vous suffit de repondre a cet email et nous vous mettons en relation.\n\n"
+                        f"Vous pouvez aussi affiner votre estimation ici :\n{site}/estimer/\n\n"
+                        f"L'equipe Social Immo\n\n"
+                        f"— Vous recevez cet email car vous avez demande une estimation. "
+                        f"Repondez STOP pour ne plus etre recontacte."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[e.email],
+                    fail_silently=False,
+                )
+                e.relance_envoyee = True
+                e.save(update_fields=['relance_envoyee'])
+                n += 1
+            except Exception:
+                continue
+        return f'{n} relance(s) envoyee(s)'
+
+    def _resume_leads(self):
+        """Compte les leads des dernieres 24h (visible dans le rapport admin)."""
+        from listings.models import Estimation, DemandeContact, DemandeAgence
+        depuis = timezone.now() - timedelta(hours=24)
+        est = Estimation.objects.filter(created_at__gte=depuis).count()
+        contacts = DemandeContact.objects.filter(created_at__gte=depuis).count()
+        agences = DemandeAgence.objects.filter(created_at__gte=depuis).count()
+        total = est + contacts + agences
+        return f'{total} lead(s) : {est} estimation(s), {contacts} contact(s), {agences} agence(s)'
 
     def _purger_pagevues(self):
         """Supprime les pages vues de plus de 90 jours (le cockpit ne montre

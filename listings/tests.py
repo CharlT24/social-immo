@@ -57,6 +57,7 @@ class PagesPubliquesTests(TestCase):
         '/cgu/',
         '/cgv/',
         '/guide-vendeur/',
+        '/guide-acheteur/',
         '/sitemap.xml',
     ]
 
@@ -1244,3 +1245,27 @@ class GuideVendeurTests(TestCase):
         # contenu cle present
         self.assertContains(resp, 'DPE')
         self.assertContains(resp, 'diagnostics')
+
+
+class GuideAcheteurTests(TestCase):
+    """Le guide acheteur est public, avec disclaimer + incitation a l'inscription (non bloquante)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_guide_public_avec_disclaimer_et_cta(self):
+        resp = self.client.get('/guide-acheteur/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'titre purement informatif')
+        self.assertContains(resp, 'ne saurait etre tenu responsable')
+        # incitation a creer un compte (visiteur anonyme), sans bloquer le contenu
+        self.assertContains(resp, 'espace acquereur')
+        self.assertContains(resp, '/accounts/signup/')
+        # le contenu reste accessible sans compte
+        self.assertContains(resp, 'Constituer son dossier')
+
+    def test_guide_connecte_montre_lien_espace(self):
+        u = User.objects.create_user('acq', 'acq@test.fr', 'x')
+        self.client.force_login(u)
+        resp = self.client.get('/guide-acheteur/')
+        self.assertContains(resp, 'Mon espace acquereur')

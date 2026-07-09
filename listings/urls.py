@@ -118,6 +118,7 @@ urlpatterns = [
     path('cgu/', views.cgu, name='cgu'),
     path('cgv/', views.cgv, name='cgv'),
     path('guide-vendeur/', views.guide_vendeur, name='guide_vendeur'),
+    path('guide-acheteur/', views.guide_acheteur, name='guide_acheteur'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),
     path('confidentialite/', views.confidentialite, name='confidentialite'),
 ]

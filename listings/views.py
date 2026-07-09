@@ -3584,6 +3584,12 @@ def guide_vendeur(request):
     return render(request, 'listings/guide_vendeur.html')
 
 
+def guide_acheteur(request):
+    """Guide complet de l'acquereur : budget & financement, dossier de pret,
+    frais, visites, offre, etapes. A titre informatif."""
+    return render(request, 'listings/guide_acheteur.html')
+
+
 def mentions_legales(request):
     return render(request, 'listings/mentions_legales.html')
 

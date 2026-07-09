@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Guide de l'acheteur : budget, pret, visites et etapes | Social Immo{% endblock %}
+{% block meta_description %}Acheter un bien immobilier : calculer son budget, constituer son dossier de pret, prevoir les frais, reussir ses visites, faire une offre et securiser l'achat. Guide gratuit Social Immo.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+
+    <!-- En-tete -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <p class="text-sm font-semibold text-apple-blue mb-1">Espace acquereur</p>
+            <h1 class="text-4xl font-bold tracking-tight">Guide de l'acheteur</h1>
+            <p class="text-apple-gray mt-2">De la definition du budget a la remise des cles, toutes les etapes.</p>
+        </div>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 bg-apple-text text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-black transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer / PDF
+        </button>
+    </div>
+
+    <!-- AVERTISSEMENT GLOBAL -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8">
+        <p class="text-sm text-amber-900 leading-relaxed">
+            <strong>Important — document a titre purement informatif.</strong> Ce guide est fourni gratuitement pour
+            vous accompagner. Il ne constitue ni un conseil juridique, fiscal ou financier, ni une liste exhaustive.
+            La reglementation et les conditions de credit evoluent.
+            <strong>Social Immo (Open I) ne saurait etre tenu responsable</strong>
+            d'une erreur, d'une omission ou de l'usage qui en serait fait. Rapprochez-vous d'un
+            notaire, d'une banque ou d'un courtier pour votre projet.
+        </p>
+    </div>
+
+    <!-- ESPACE ACQUEREUR (incitation a l'inscription, non bloquante) -->
+    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 mb-10 text-white">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+            <div>
+                <h2 class="text-lg font-bold mb-1">Votre espace acquereur gratuit</h2>
+                <p class="text-sm text-white/90">Creez un compte pour ne rien rater : alertes des que le bien ideal arrive,
+                    <strong>alertes baisse de prix</strong> sur vos favoris, et recherches sauvegardees.</p>
+            </div>
+            {% if user.is_authenticated %}
+            <a href="{% url 'listings:particulier_dashboard' %}?tab=acquereur" class="flex-shrink-0 bg-white text-blue-700 font-semibold px-5 py-2.5 rounded-full text-sm hover:bg-blue-50 transition-colors">Mon espace acquereur</a>
+            {% else %}
+            <a href="{% url 'account_signup' %}" class="flex-shrink-0 bg-white text-blue-700 font-semibold px-5 py-2.5 rounded-full text-sm hover:bg-blue-50 transition-colors">Creer mon compte gratuit</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sommaire -->
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-10">
+        <h2 class="font-bold mb-3">Au sommaire</h2>
+        <ol class="grid sm:grid-cols-2 gap-2 text-sm text-apple-blue">
+            <li><a href="#budget" class="hover:underline">1. Definir son budget</a></li>
+            <li><a href="#dossier" class="hover:underline">2. Constituer son dossier de pret</a></li>
+            <li><a href="#pret" class="hover:underline">3. Obtenir son financement</a></li>
+            <li><a href="#frais" class="hover:underline">4. Les frais a prevoir</a></li>
+            <li><a href="#visites" class="hover:underline">5. Reussir ses visites</a></li>
+            <li><a href="#offre" class="hover:underline">6. Faire une offre et negocier</a></li>
+            <li><a href="#etapes" class="hover:underline">7. Les etapes apres l'offre</a></li>
+            <li><a href="#pieges" class="hover:underline">8. Les pieges a eviter</a></li>
+        </ol>
+    </div>
+
+    <!-- 1. BUDGET -->
+    <section id="budget" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">1. Definir son budget</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li><strong>Capacite d'emprunt</strong> : en general, vos mensualites (credits inclus) ne doivent pas depasser <strong>35 % de vos revenus nets</strong> (assurance comprise).</li>
+            <li><strong>Apport personnel</strong> : souvent 10 % minimum est demande, notamment pour couvrir les frais de notaire.</li>
+            <li>Budget total = prix du bien + frais de notaire + eventuels travaux + frais de garantie/dossier.</li>
+            <li>Anticipez les charges recurrentes : taxe fonciere, charges de copropriete, energie.</li>
+        </ul>
+        <div class="bg-blue-50 rounded-xl p-4 mt-5 text-sm text-blue-900">
+            💡 <a href="{% url 'listings:estimation' %}" class="font-semibold underline">Estimez un bien</a> pour situer les prix reels de votre secteur (donnees notariees).
+        </div>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">A titre indicatif — les regles de credit varient selon les etablissements. Social Immo (Open I) n'est pas responsable.</p>
+    </section>
+
+    <!-- 2. DOSSIER -->
+    <section id="dossier" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">2. Constituer son dossier de pret</h2>
+        <p class="text-apple-gray text-sm mb-3">Un dossier complet et soigne rassure la banque et accelere l'accord.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Piece d'identite, justificatif de domicile</li>
+            <li>3 derniers bulletins de salaire + dernier avis d'imposition</li>
+            <li>3 derniers releves de tous vos comptes</li>
+            <li>Justificatif d'apport (epargne, donation, PEL...)</li>
+            <li>Contrat de travail / justificatifs de revenus (independants : bilans)</li>
+            <li>Tableaux d'amortissement des credits en cours</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Liste indicative, non exhaustive. Social Immo (Open I) n'est pas responsable ; votre banque precise les pieces attendues.</p>
+    </section>
+
+    <!-- 3. PRET -->
+    <section id="pret" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">3. Obtenir son financement</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Demandez un <strong>accord de principe</strong> avant de faire des offres : vous serez plus credible.</li>
+            <li><strong>Comparez</strong> plusieurs banques, ou passez par un <strong>courtier</strong> (souvent gratuit pour vous, remunere par la banque).</li>
+            <li>Regardez le taux, mais aussi l'<strong>assurance emprunteur</strong> (delegation possible), les frais de dossier et les conditions de remboursement anticipe.</li>
+            <li>Verifiez votre eligibilite aux prets aides (PTZ, pret Action Logement...).</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Informations generales a titre indicatif, ne constituant pas un conseil financier. Social Immo (Open I) n'est pas responsable.</p>
+    </section>
+
+    <!-- 4. FRAIS -->
+    <section id="frais" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">4. Les frais a prevoir</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li><strong>Frais de notaire</strong> : environ <strong>7 a 8 % dans l'ancien</strong>, 2 a 3 % dans le neuf (l'essentiel etant des taxes reversees a l'Etat).</li>
+            <li><strong>Frais de garantie</strong> du pret (hypotheque ou caution).</li>
+            <li>Frais de dossier bancaire et, le cas echeant, de courtage.</li>
+            <li>Honoraires d'agence si le bien est vendu via une agence.</li>
+            <li>Budget travaux, demenagement, et mise en service des energies.</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Ordres de grandeur indicatifs susceptibles de varier. Social Immo (Open I) n'est pas responsable.</p>
+    </section>
+
+    <!-- 5. VISITES -->
+    <section id="visites" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">5. Reussir ses visites</h2>
+        <p class="text-apple-gray text-sm mb-3">Points a verifier et questions a poser :</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li><strong>DPE</strong> et montant estime des depenses d'energie</li>
+            <li>Etat general : humidite, fissures, toiture, menuiseries, isolation</li>
+            <li>Installations : electricite, plomberie, chauffage (age, entretien)</li>
+            <li>En copropriete : montant des charges, travaux votes ou a venir, ambiance de l'immeuble</li>
+            <li>Exposition, luminosite, vis-a-vis, nuisances (bruit, passage)</li>
+            <li>Environnement : commerces, ecoles, transports, projets d'urbanisme</li>
+            <li>Demandez les <strong>diagnostics</strong> et la <strong>taxe fonciere</strong></li>
+        </ul>
+        <div class="bg-blue-50 rounded-xl p-4 mt-5 text-sm text-blue-900">
+            💡 Mettez les biens en <strong>favori</strong> et activez une <strong>alerte</strong> pour comparer et suivre les baisses de prix depuis votre espace.
+        </div>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Checklist indicative. Social Immo (Open I) n'est pas responsable ; un professionnel peut realiser un controle approfondi.</p>
+    </section>
+
+    <!-- 6. OFFRE -->
+    <section id="offre" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">6. Faire une offre et negocier</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Appuyez votre offre sur des <strong>faits</strong> : prix reels du secteur, travaux a prevoir, DPE.</li>
+            <li>Une offre au prix engage : formalisez par ecrit, avec une duree de validite.</li>
+            <li>Restez courtois : la relation avec le vendeur compte dans l'acceptation.</li>
+            <li>N'oubliez pas d'y integrer vos <strong>conditions suspensives</strong> (notamment l'obtention du pret).</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Conseils indicatifs. Social Immo (Open I) n'est pas responsable de la negociation entre parties.</p>
+    </section>
+
+    <!-- 7. ETAPES -->
+    <section id="etapes" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">7. Les etapes apres l'offre</h2>
+        <ol class="space-y-3 text-sm text-apple-text">
+            <li><strong>1. Compromis de vente</strong> — signe (souvent chez le notaire). Vous versez en general un depot de garantie (5 a 10 %).</li>
+            <li><strong>2. Delai de retractation de 10 jours</strong> — reserve a l'acheteur, sans justification ni penalite.</li>
+            <li><strong>3. Conditions suspensives</strong> — vous disposez d'un delai (souvent 45 a 60 jours) pour obtenir votre pret.</li>
+            <li><strong>4. Offre de pret</strong> — apres emission, un <strong>delai de reflexion de 10 jours</strong> s'applique avant acceptation.</li>
+            <li><strong>5. Acte authentique</strong> — signature definitive chez le notaire, remise des cles.</li>
+        </ol>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">Deroule indicatif et simplifie ; les delais varient. Social Immo (Open I) n'est pas responsable ; le notaire est votre interlocuteur.</p>
+    </section>
+
+    <!-- 8. PIEGES -->
+    <section id="pieges" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">8. Les pieges a eviter</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Faire une offre <strong>avant</strong> d'avoir valide sa capacite d'emprunt.</li>
+            <li>Oublier les frais annexes (notaire, garantie, travaux) dans le budget.</li>
+            <li>Negliger les charges de copropriete et les travaux votes.</li>
+            <li>Ne pas lire les diagnostics ni l'etat des risques.</li>
+            <li>Verser de l'argent en dehors du cadre securise du notaire.</li>
+            <li>Se precipiter sous la pression : prenez le temps de comparer.</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">A titre preventif. Social Immo (Open I) n'est pas responsable des decisions prises.</p>
+    </section>
+
+    <!-- CTA final -->
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-6 text-center">
+        <p class="font-semibold text-apple-text mb-3">Pret a trouver votre futur chez-vous ?</p>
+        <div class="flex flex-wrap gap-3 justify-center">
+            <a href="{% url 'listings:search_results' %}" class="bg-apple-blue text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-600 transition-colors text-sm">Voir les annonces</a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'account_signup' %}" class="bg-gray-100 text-apple-text font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors text-sm">Creer mon espace acquereur</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Rappel final -->
+    <div class="bg-gray-100 rounded-2xl p-5 text-center">
+        <p class="text-xs text-apple-gray leading-relaxed">
+            Ce guide et l'ensemble de ses rubriques sont fournis <strong>a titre purement informatif</strong> et ne
+            sauraient engager la responsabilite de Social Immo (Open I). Ils ne remplacent pas l'avis d'un notaire,
+            d'une banque, d'un courtier ou d'un professionnel qualifie. Mis a jour en 2026 — la reglementation peut
+            avoir evolue depuis.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

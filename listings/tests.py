@@ -56,6 +56,7 @@ class PagesPubliquesTests(TestCase):
         '/agence/inscription/',
         '/cgu/',
         '/cgv/',
+        '/guide-vendeur/',
         '/sitemap.xml',
     ]
 
@@ -1227,3 +1228,19 @@ class NettoyerDoublonsTests(TestCase):
         actives = Annonce.objects.filter(titre='Maison Perigueux', is_active=True)
         self.assertEqual(actives.count(), 1)  # une seule reste
         self.assertEqual(actives.first().reference, 'DUP-0')  # la plus ancienne
+
+
+class GuideVendeurTests(TestCase):
+    """Le guide vendeur est public et porte bien la mention de non-responsabilite."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_guide_public_avec_disclaimer(self):
+        resp = self.client.get('/guide-vendeur/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'titre purement informatif')
+        self.assertContains(resp, 'ne saurait etre tenu responsable')
+        # contenu cle present
+        self.assertContains(resp, 'DPE')
+        self.assertContains(resp, 'diagnostics')

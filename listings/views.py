@@ -3578,6 +3578,12 @@ def cgv(request):
     return render(request, 'listings/cgv.html')
 
 
+def guide_vendeur(request):
+    """Guide complet du vendeur particulier : documents a reunir, conseils
+    de redaction/photos/prix, etapes de la vente. A titre informatif."""
+    return render(request, 'listings/guide_vendeur.html')
+
+
 def mentions_legales(request):
     return render(request, 'listings/mentions_legales.html')
 

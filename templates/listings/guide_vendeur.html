@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Guide du vendeur particulier : documents, conseils et etapes | Social Immo{% endblock %}
+{% block meta_description %}Vendez votre bien sans agence : liste des documents obligatoires a reunir, conseils pour la description et les photos, fixer le bon prix, etapes de la vente. Guide gratuit Social Immo.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+
+    <!-- En-tete -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <p class="text-sm font-semibold text-teal-600 mb-1">Espace vendeur</p>
+            <h1 class="text-4xl font-bold tracking-tight">Guide du vendeur particulier</h1>
+            <p class="text-apple-gray mt-2">Tout ce qu'il faut pour vendre votre bien vous-meme, sereinement.</p>
+        </div>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 bg-apple-text text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-black transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer / PDF
+        </button>
+    </div>
+
+    <!-- AVERTISSEMENT GLOBAL -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-10">
+        <p class="text-sm text-amber-900 leading-relaxed">
+            <strong>Important — document a titre purement informatif.</strong> Ce guide est fourni gratuitement
+            pour vous aider. Il ne constitue ni un conseil juridique, fiscal ou notarial, ni une liste exhaustive.
+            La reglementation evolue et varie selon les situations. <strong>Social Immo (Open I) ne saurait etre
+            tenu responsable</strong> d'une erreur, d'une omission ou de l'usage qui en serait fait. Pour toute
+            operation, rapprochez-vous d'un notaire ou d'un professionnel qualifie.
+        </p>
+    </div>
+
+    <!-- Sommaire -->
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-10">
+        <h2 class="font-bold mb-3">Au sommaire</h2>
+        <ol class="grid sm:grid-cols-2 gap-2 text-sm text-apple-blue">
+            <li><a href="#documents" class="hover:underline">1. Les documents obligatoires a reunir</a></li>
+            <li><a href="#description" class="hover:underline">2. Rediger une description qui vend</a></li>
+            <li><a href="#photos" class="hover:underline">3. Reussir ses photos</a></li>
+            <li><a href="#prix" class="hover:underline">4. Fixer le bon prix</a></li>
+            <li><a href="#etapes" class="hover:underline">5. Les etapes de la vente</a></li>
+            <li><a href="#fiscalite" class="hover:underline">6. Fiscalite et plus-value</a></li>
+            <li><a href="#securite" class="hover:underline">7. Eviter les arnaques</a></li>
+            <li><a href="#checklist" class="hover:underline">8. Votre checklist recapitulative</a></li>
+        </ol>
+    </div>
+
+    {% comment %} Bloc reutilisable de disclaimer sous chaque section {% endcomment %}
+
+    <!-- 1. DOCUMENTS -->
+    <section id="documents" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-2">1. Les documents obligatoires a reunir</h2>
+        <p class="text-apple-gray text-sm mb-6">A preparer avant la mise en vente, puis a remettre au notaire pour le compromis.</p>
+
+        <h3 class="font-semibold text-apple-text mb-2">Identite et propriete</h3>
+        <ul class="space-y-1.5 text-sm text-apple-text mb-5 list-disc pl-5">
+            <li>Piece d'identite en cours de validite</li>
+            <li>Titre de propriete (acte notarie d'acquisition)</li>
+            <li>Dernier avis de taxe fonciere</li>
+            <li>Justificatifs des travaux realises + factures et garanties (decennale, etc.)</li>
+        </ul>
+
+        <h3 class="font-semibold text-apple-text mb-2">Le dossier de diagnostics techniques (DDT)</h3>
+        <p class="text-xs text-apple-gray mb-2">Obligatoire, annexe au compromis. Certains sont fonction de l'age du bien ou de sa localisation.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text mb-5 list-disc pl-5">
+            <li><strong>DPE</strong> (diagnostic de performance energetique) — obligatoire des la publication de l'annonce, valable 10 ans</li>
+            <li><strong>Amiante</strong> — logements dont le permis de construire est anterieur au 1er juillet 1997</li>
+            <li><strong>Plomb (CREP)</strong> — logements construits avant le 1er janvier 1949</li>
+            <li><strong>Termites</strong> — dans les zones definies par arrete prefectoral</li>
+            <li><strong>Gaz</strong> et <strong>electricite</strong> — installations de plus de 15 ans</li>
+            <li><strong>Etat des risques (ERP)</strong> — risques naturels, miniers, technologiques, radon</li>
+            <li><strong>Assainissement</strong> non collectif — si le bien n'est pas raccorde au tout-a-l'egout</li>
+            <li><strong>Diagnostic bruit</strong> — a proximite de certains aeroports</li>
+        </ul>
+
+        <h3 class="font-semibold text-apple-text mb-2">Si le bien est en copropriete</h3>
+        <ul class="space-y-1.5 text-sm text-apple-text mb-5 list-disc pl-5">
+            <li>Surface <strong>Loi Carrez</strong> (metrage certifie)</li>
+            <li>Reglement de copropriete et etat descriptif de division</li>
+            <li>Les 3 derniers proces-verbaux d'assemblee generale</li>
+            <li>Carnet d'entretien de l'immeuble</li>
+            <li>Montant des charges courantes et du fonds de travaux</li>
+            <li>Pre-etat date (fourni par le syndic)</li>
+        </ul>
+
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3">
+            A titre indicatif — liste non exhaustive susceptible d'evoluer. Social Immo (Open I) n'est pas responsable
+            des documents manquants ou errones ; validez votre dossier avec votre notaire.
+        </p>
+    </section>
+
+    <!-- 2. DESCRIPTION -->
+    <section id="description" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">2. Rediger une description qui vend</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <p class="font-semibold text-green-700 mb-2">A faire</p>
+                <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+                    <li>Commencer par une accroche (le point fort du bien)</li>
+                    <li>Annoncer les chiffres cles : surface, pieces, chambres, etage, exterieur</li>
+                    <li>Decrire piece par piece, dans l'ordre d'une visite</li>
+                    <li>Mentionner l'environnement : commerces, ecoles, transports</li>
+                    <li>Etre precis sur le chauffage, l'exposition, l'annee de construction</li>
+                    <li>Rester honnete : la confiance accelere la vente</li>
+                </ul>
+            </div>
+            <div>
+                <p class="font-semibold text-red-600 mb-2">A eviter</p>
+                <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+                    <li>Les majuscules et points d'exclamation a repetition</li>
+                    <li>Les abreviations obscures</li>
+                    <li>Cacher un defaut : il ressortira a la visite ou au diagnostic</li>
+                    <li>Les descriptions trop courtes ou trop vagues</li>
+                    <li>Les fausses informations (surface, DPE)</li>
+                </ul>
+            </div>
+        </div>
+        <div class="bg-teal-50 rounded-xl p-4 mt-5 text-sm text-teal-900">
+            💡 Sur Social Immo, l'assistant de redaction vous propose un titre et une trame de description
+            automatiquement lors du depot de votre annonce.
+        </div>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            Conseils fournis a titre indicatif — Social Immo (Open I) n'est pas responsable du contenu que vous publiez.
+        </p>
+    </section>
+
+    <!-- 3. PHOTOS -->
+    <section id="photos" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">3. Reussir ses photos</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Photographiez en <strong>journee</strong>, volets ouverts, lumiere naturelle</li>
+            <li><strong>Rangez et depersonnalisez</strong> chaque piece avant la photo</li>
+            <li>Cadrez depuis un angle pour montrer le volume, tenez l'appareil droit</li>
+            <li>Une photo par piece + les exterieurs + une vue d'ensemble</li>
+            <li>La 1re photo est la plus importante : choisissez la plus vendeuse</li>
+            <li>Comptez 8 a 15 photos ; evitez les cliches sombres ou flous</li>
+        </ul>
+        <div class="bg-teal-50 rounded-xl p-4 mt-5 text-sm text-teal-900">
+            💡 Social Immo ameliore automatiquement vos photos (luminosite, nettete) au depot de l'annonce.
+        </div>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            A titre informatif — Social Immo (Open I) ne saurait etre tenu responsable du resultat.
+        </p>
+    </section>
+
+    <!-- 4. PRIX -->
+    <section id="prix" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">4. Fixer le bon prix</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Basez-vous sur les <strong>ventes reelles</strong> de votre secteur (donnees notariees DVF), pas sur les prix affiches ailleurs</li>
+            <li>Un bien <strong>surevalue</strong> ne se visite pas et finit par baisser : c'est le pire scenario</li>
+            <li>Gardez une petite marge de negociation (2 a 5 %)</li>
+            <li>Tenez compte de l'etat, du DPE, de l'etage, de l'exterieur, de l'exposition</li>
+        </ul>
+        <div class="bg-teal-50 rounded-xl p-4 mt-5 text-sm text-teal-900">
+            💡 <a href="{% url 'listings:estimation' %}" class="font-semibold underline">Estimez gratuitement votre bien</a>
+            avec notre outil base sur les ventes reelles de votre commune.
+        </div>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            L'estimation est fournie a titre indicatif et ne constitue pas un avis de valeur ; Social Immo (Open I)
+            n'est pas responsable du prix que vous fixez.
+        </p>
+    </section>
+
+    <!-- 5. ETAPES -->
+    <section id="etapes" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">5. Les etapes de la vente</h2>
+        <ol class="space-y-3 text-sm text-apple-text">
+            <li><strong>1. Preparation</strong> — reunir les diagnostics et documents, estimer le prix.</li>
+            <li><strong>2. Publication</strong> — annonce avec photos, description et DPE.</li>
+            <li><strong>3. Visites</strong> — organiser, repondre aux questions, noter les retours.</li>
+            <li><strong>4. Offre d'achat</strong> — l'acheteur propose un prix ; vous acceptez, refusez ou negociez.</li>
+            <li><strong>5. Compromis de vente</strong> — signe (souvent chez le notaire). L'acheteur dispose d'un <strong>delai de retractation de 10 jours</strong>.</li>
+            <li><strong>6. Conditions suspensives</strong> — notamment l'obtention du pret de l'acheteur (comptez 2 a 3 mois).</li>
+            <li><strong>7. Acte authentique</strong> — signature definitive chez le notaire, remise des cles et du prix.</li>
+        </ol>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            Deroule indicatif et simplifie — les delais et modalites varient. Social Immo (Open I) n'est pas responsable ;
+            le notaire est l'interlocuteur de reference.
+        </p>
+    </section>
+
+    <!-- 6. FISCALITE -->
+    <section id="fiscalite" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">6. Fiscalite et plus-value</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>La vente de votre <strong>residence principale</strong> est en principe <strong>exoneree</strong> d'impot sur la plus-value.</li>
+            <li>Pour une residence secondaire ou un investissement locatif, une plus-value peut etre imposable, avec des <strong>abattements pour duree de detention</strong>.</li>
+            <li>Certains travaux et frais peuvent venir en deduction du calcul.</li>
+            <li>Chaque situation est particuliere : faites le point avec votre notaire ou le service des impots.</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            Informations generales a titre indicatif, ne constituant pas un conseil fiscal. Social Immo (Open I)
+            n'est pas responsable ; consultez un professionnel.
+        </p>
+    </section>
+
+    <!-- 7. SECURITE -->
+    <section id="securite" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">7. Eviter les arnaques</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Ne communiquez <strong>jamais</strong> de coordonnees bancaires, mot de passe ou copie de piece d'identite par message.</li>
+            <li>Mefiez-vous d'un acheteur qui veut payer sans visite ou qui envoie un « trop-percu » a rembourser.</li>
+            <li>Ne versez aucun « frais » pour debloquer une vente ou un pret.</li>
+            <li>Privilegiez les echanges via la messagerie du site et le paiement par le notaire.</li>
+            <li>En cas de doute, interrompez l'echange et signalez-le.</li>
+        </ul>
+        <p class="text-xs italic text-apple-gray border-t border-gray-100 pt-3 mt-5">
+            A titre preventif et informatif — Social Immo (Open I) n'est pas responsable des relations entre utilisateurs.
+        </p>
+    </section>
+
+    <!-- 8. CHECKLIST -->
+    <section id="checklist" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">8. Votre checklist recapitulative</h2>
+        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-apple-text">
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Titre de propriete</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> DPE realise</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Diagnostics (amiante, plomb, gaz, elec...)</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Etat des risques (ERP)</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Documents copropriete (si concerne)</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Taxe fonciere + factures travaux</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Prix fixe (estimation DVF)</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> 8 a 15 photos de qualite</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Description complete et honnete</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="rounded"> Annonce publiee</label>
+        </div>
+        <div class="mt-6">
+            <a href="{% url 'listings:particulier_creer_annonce' %}" class="inline-flex items-center gap-2 bg-teal-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-teal-700 transition-colors text-sm">
+                Deposer mon annonce gratuitement
+            </a>
+        </div>
+    </section>
+
+    <!-- Rappel final -->
+    <div class="bg-gray-100 rounded-2xl p-5 text-center">
+        <p class="text-xs text-apple-gray leading-relaxed">
+            Ce guide et l'ensemble de ses rubriques sont fournis <strong>a titre purement informatif</strong> et ne
+            sauraient engager la responsabilite de Social Immo (Open I). Ils ne remplacent pas l'avis d'un notaire,
+            d'un diagnostiqueur ou d'un professionnel du droit et de la fiscalite. Mis a jour en 2026 — la reglementation
+            peut avoir evolue depuis.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

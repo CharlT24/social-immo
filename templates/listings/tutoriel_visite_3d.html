@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Creer une visite virtuelle 3D pour votre annonce | Social Immo{% endblock %}
+{% block meta_description %}Tutoriel pas-a-pas : capturer une visite virtuelle 3D (Matterport ou 360) de votre bien et la brancher sur votre annonce Social Immo en un copier-coller.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <p class="text-sm font-semibold text-indigo-600 mb-1">Tutoriel</p>
+            <h1 class="text-4xl font-bold tracking-tight">Creer une visite virtuelle 3D</h1>
+            <p class="text-apple-gray mt-2">Offrez une vraie visite immersive : l'acheteur se deplace dans le logement, comme sur place.</p>
+        </div>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 bg-apple-text text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-black transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer / PDF
+        </button>
+    </div>
+
+    <!-- Ce dont vous avez besoin -->
+    <section class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">Ce dont vous avez besoin</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Un <strong>iPhone Pro recent</strong> (avec capteur LiDAR) ou un iPad Pro — la maniere la plus simple ; ou</li>
+            <li>Une <strong>camera 360</strong> compatible (ex. Ricoh Theta, ~250-400 €) pour un rendu plus net ; ou</li>
+            <li>Une <strong>camera Matterport Pro</strong> (le plus qualitatif, pour un usage intensif).</li>
+            <li>L'application <strong>Matterport</strong> (gratuite) et un compte Matterport.</li>
+        </ul>
+    </section>
+
+    <!-- Etapes -->
+    <section class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-6">Les etapes</h2>
+        <ol class="space-y-6">
+            <li class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">1</span>
+                <div>
+                    <p class="font-semibold text-apple-text">Installez l'application Matterport</p>
+                    <p class="text-sm text-apple-gray mt-1">Telechargez « Matterport Capture » sur l'App Store (ou Google Play selon l'appareil) et creez votre compte Matterport.</p>
+                </div>
+            </li>
+            <li class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">2</span>
+                <div>
+                    <p class="font-semibold text-apple-text">Scannez le logement piece par piece</p>
+                    <p class="text-sm text-apple-gray mt-1">Placez l'appareil sur un pied ou tenez-le stable, et laissez l'app capturer chaque piece depuis plusieurs points. Rangez et allumez les lumieres pour un beau rendu.</p>
+                </div>
+            </li>
+            <li class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">3</span>
+                <div>
+                    <p class="font-semibold text-apple-text">Publiez la visite</p>
+                    <p class="text-sm text-apple-gray mt-1">Depuis l'app ou votre espace Matterport, lancez le traitement. Matterport reconstruit la visite 3D sur ses serveurs et vous fournit un <strong>lien de partage</strong>.</p>
+                </div>
+            </li>
+            <li class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">4</span>
+                <div>
+                    <p class="font-semibold text-apple-text">Copiez le lien de partage</p>
+                    <p class="text-sm text-apple-gray mt-1">Il ressemble a <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">https://my.matterport.com/show/?m=XXXXXXXX</code>. Copiez-le.</p>
+                </div>
+            </li>
+            <li class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">5</span>
+                <div>
+                    <p class="font-semibold text-apple-text">Collez-le dans votre annonce Social Immo</p>
+                    <p class="text-sm text-apple-gray mt-1">
+                        <strong>Vendeur particulier</strong> : au depot de l'annonce, champ « Visite virtuelle 3D ».<br>
+                        <strong>Agence</strong> : dans Mon agence &rarr; Parametres (ou via votre flux si votre CRM l'exporte).
+                    </p>
+                    <p class="text-sm text-apple-gray mt-1">La visite s'affiche aussitot sur la fiche, avec un bouton « Visite 3D » et un badge sur les listes.</p>
+                </div>
+            </li>
+        </ol>
+    </section>
+
+    <!-- Alternatives -->
+    <section class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">Alternatives a Matterport</h2>
+        <p class="text-sm text-apple-text mb-3">Social Immo accepte aussi d'autres visites immersives. Collez simplement leur lien de partage :</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li><strong>Kuula</strong> — visites 360 a partir de photos panoramiques (offre gratuite disponible).</li>
+            <li>Autres visites 360 fournissant un lien « embed » / partage.</li>
+        </ul>
+    </section>
+
+    <!-- Conseils -->
+    <section class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">Conseils pour une belle visite</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Rangez et depersonnalisez chaque piece avant de scanner.</li>
+            <li>Ouvrez volets et rideaux, allumez les lumieres : la luminosite change tout.</li>
+            <li>Scannez dans l'ordre d'une visite reelle (entree, sejour, cuisine, chambres...).</li>
+            <li>Ne coupez pas les angles : plus les points de capture se chevauchent, plus la 3D est fluide.</li>
+        </ul>
+    </section>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <p class="text-xs text-amber-900 leading-relaxed">
+            Tutoriel fourni <strong>a titre informatif</strong>. Matterport et Kuula sont des services tiers independants :
+            la capture, l'hebergement des visites et les eventuels abonnements relevent de ces prestataires et de leurs
+            conditions. Social Immo (Open I) se contente d'integrer le lien que vous fournissez et
+            <strong>ne saurait etre tenu responsable</strong> du service, de son cout ou de son fonctionnement.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

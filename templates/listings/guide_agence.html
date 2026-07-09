@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Guide agence : diffuser vos annonces sur Social Immo{% endblock %}
+{% block meta_description %}Agences immobilieres : creez votre compte, branchez votre flux CRM (AC3/Poliris), gerez vos annonces et votre vitrine, ajoutez des visites 3D et recevez des contacts.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <p class="text-sm font-semibold text-indigo-600 mb-1">Guide agence</p>
+            <h1 class="text-4xl font-bold tracking-tight">Diffuser vos annonces</h1>
+            <p class="text-apple-gray mt-2">De la creation du compte a la reception des contacts, en quelques minutes.</p>
+        </div>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 bg-apple-text text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-black transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer / PDF
+        </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-8">
+        <ol class="grid sm:grid-cols-2 gap-2 text-sm text-apple-blue">
+            <li><a href="#compte" class="hover:underline">1. Creer votre compte agence</a></li>
+            <li><a href="#flux" class="hover:underline">2. Brancher votre flux CRM</a></li>
+            <li><a href="#vitrine" class="hover:underline">3. Personnaliser votre vitrine</a></li>
+            <li><a href="#inspirations" class="hover:underline">4. Mettre en avant vos plus belles photos</a></li>
+            <li><a href="#visite3d" class="hover:underline">5. Ajouter des visites 3D</a></li>
+            <li><a href="#contacts" class="hover:underline">6. Recevoir et traiter les contacts</a></li>
+        </ol>
+    </div>
+
+    <section id="compte" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">1. Creer votre compte agence</h2>
+        <p class="text-sm text-apple-text mb-3">L'inscription est <strong>gratuite et immediate</strong>, sans intervention de notre part.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Rendez-vous sur la page <a href="{% url 'listings:agence_inscription' %}" class="text-apple-blue underline">Inscription agence</a>.</li>
+            <li>Renseignez le nom de l'agence, votre email et un mot de passe.</li>
+            <li>Votre espace <strong>Mon agence</strong> est cree instantanement.</li>
+        </ul>
+    </section>
+
+    <section id="flux" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">2. Brancher votre flux CRM (diffusion automatique)</h2>
+        <p class="text-sm text-apple-text mb-3">Vos annonces se publient et se mettent a jour <strong>toutes seules</strong> chaque jour depuis votre logiciel immobilier.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5 mb-4">
+            <li>Formats supportes : <strong>AC3 / Ubiflow</strong> et <strong>Poliris</strong>.</li>
+            <li>Depuis <strong>Mon agence &rarr; Parametres</strong>, collez l'URL de votre flux XML (ou vos acces FTP).</li>
+            <li>Import quotidien en mode <strong>« annule et remplace »</strong> : un bien retire de votre flux est desactive automatiquement, un bien qui revient est reactive.</li>
+        </ul>
+        <div class="bg-indigo-50 rounded-xl p-4 text-sm text-indigo-900">
+            Vous n'avez pas de flux ? Contactez l'editeur de votre logiciel pour obtenir votre lien d'export, ou ecrivez-nous depuis <a href="{% url 'listings:aide' %}" class="underline font-semibold">l'aide</a>.
+        </div>
+    </section>
+
+    <section id="vitrine" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">3. Personnaliser votre vitrine</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Ajoutez votre <strong>logo</strong>, une <strong>description</strong>, vos coordonnees et vos horaires.</li>
+            <li>Votre agence dispose d'une <strong>page publique</strong> (annuaire) avec tous vos biens.</li>
+            <li>Renseignez votre <strong>SIRET</strong> pour renforcer la confiance.</li>
+        </ul>
+    </section>
+
+    <section id="inspirations" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">4. Mettre en avant vos plus belles photos</h2>
+        <p class="text-sm text-apple-text mb-3">Le feed <strong>Inspirations</strong> est une vitrine facon Pinterest qui attire les visiteurs.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Dans <strong>Mon agence &rarr; Inspirations</strong>, cliquez sur vos plus belles photos pour les publier (elles se bordent de violet).</li>
+            <li>Assignez-leur une ambiance (deco, cuisine, exterieur...).</li>
+            <li>L'etoile permet de mettre une photo « a la une » sur la page d'accueil.</li>
+        </ul>
+    </section>
+
+    <section id="visite3d" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">5. Ajouter des visites 3D</h2>
+        <p class="text-sm text-apple-text mb-3">Les biens avec <strong>visite virtuelle 3D</strong> recoivent beaucoup plus de contacts. Si vous utilisez deja Matterport, branchez vos visites en un copier-coller.</p>
+        <a href="{% url 'listings:tutoriel_visite_3d' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
+            Voir le tutoriel visite 3D &rarr;
+        </a>
+    </section>
+
+    <section id="contacts" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">6. Recevoir et traiter les contacts</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Les demandes des acheteurs arrivent dans votre espace et par email.</li>
+            <li>Repondez vite : la reactivite fait la difference.</li>
+            <li>Un rapport mensuel de performance vous est envoye automatiquement.</li>
+        </ul>
+    </section>
+
+    <div class="bg-white rounded-2xl shadow-apple p-6 text-center">
+        <p class="font-semibold text-apple-text mb-3">Pret a diffuser vos biens ?</p>
+        <a href="{% url 'listings:agence_inscription' %}" class="inline-flex items-center gap-2 bg-apple-blue text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-600 transition-colors text-sm">Creer mon compte agence</a>
+    </div>
+
+</div>
+{% endblock %}

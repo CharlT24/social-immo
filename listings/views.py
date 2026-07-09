@@ -3590,6 +3590,26 @@ def guide_acheteur(request):
     return render(request, 'listings/guide_acheteur.html')
 
 
+def guides(request):
+    """Hub des guides et tutoriels, par public."""
+    return render(request, 'listings/guides.html')
+
+
+def guide_agence(request):
+    """Tutoriel agence : rejoindre, brancher son flux, gerer, visites 3D."""
+    return render(request, 'listings/guide_agence.html')
+
+
+def guide_pro(request):
+    """Tutoriel artisan/pro : profil, badge verifie, realisations, contacts."""
+    return render(request, 'listings/guide_pro.html')
+
+
+def tutoriel_visite_3d(request):
+    """Tutoriel : creer et brancher une visite virtuelle 3D (Matterport/360)."""
+    return render(request, 'listings/tutoriel_visite_3d.html')
+
+
 def mentions_legales(request):
     return render(request, 'listings/mentions_legales.html')
 

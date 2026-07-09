@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Guide artisan & pro : developpez votre activite sur Social Immo{% endblock %}
+{% block meta_description %}Artisans et professionnels du batiment : creez votre profil, obtenez le badge Verifie (SIRET), publiez vos realisations et recevez des demandes de contact et de devis.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <p class="text-sm font-semibold text-purple-600 mb-1">Guide artisan & pro</p>
+            <h1 class="text-4xl font-bold tracking-tight">Developpez votre activite</h1>
+            <p class="text-apple-gray mt-2">Montrez votre savoir-faire et recevez des demandes qualifiees.</p>
+        </div>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 bg-apple-text text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-black transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer / PDF
+        </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-apple p-6 mb-8">
+        <ol class="grid sm:grid-cols-2 gap-2 text-sm text-apple-blue">
+            <li><a href="#profil" class="hover:underline">1. Creer votre profil</a></li>
+            <li><a href="#verifie" class="hover:underline">2. Obtenir le badge Verifie</a></li>
+            <li><a href="#metiers" class="hover:underline">3. Plusieurs corps de metier</a></li>
+            <li><a href="#realisations" class="hover:underline">4. Publier vos realisations</a></li>
+            <li><a href="#contacts" class="hover:underline">5. Recevoir des demandes</a></li>
+            <li><a href="#demarquer" class="hover:underline">6. Vous demarquer</a></li>
+        </ol>
+    </div>
+
+    <section id="profil" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">1. Creer votre profil</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Rendez-vous sur <a href="{% url 'listings:pro_inscription' %}" class="text-apple-blue underline">Inscription pro</a> et renseignez votre entreprise, metier et zone.</li>
+            <li>Deja un compte sur Social Immo ? Le profil pro se <strong>rattache a votre compte</strong> : pas besoin d'en recreer un.</li>
+            <li>Ajoutez une description, votre telephone, votre site et vos avis Google.</li>
+        </ul>
+    </section>
+
+    <section id="verifie" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">2. Obtenir le badge Verifie</h2>
+        <p class="text-sm text-apple-text mb-3">Le badge <strong>Verifie</strong> rassure les clients et vous distingue des faux comptes.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Renseignez votre <strong>SIRET</strong> (14 chiffres) dans votre profil.</li>
+            <li>Nous le controlons automatiquement au registre officiel des entreprises — c'est <strong>gratuit</strong>.</li>
+            <li>Utilisez le <strong>nom exact</strong> de votre entreprise pour que la verification corresponde.</li>
+        </ul>
+    </section>
+
+    <section id="metiers" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">3. Plusieurs corps de metier</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Choisissez votre <strong>metier principal</strong> dans la liste.</li>
+            <li>Entreprise <strong>tous corps d'etat</strong> ? Selectionnez « Tous corps d'etat ».</li>
+            <li>Listez vos autres specialites dans le champ <strong>« Autres corps de metier »</strong> (ex : Plomberie, Electricite, Peinture).</li>
+        </ul>
+    </section>
+
+    <section id="realisations" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">4. Publier vos realisations</h2>
+        <p class="text-sm text-apple-text mb-3">Vos chantiers sont votre meilleure publicite. Elles apparaissent dans le feed <strong>Inspirations</strong>.</p>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Depuis <strong>Espace Pro &rarr; Ajouter une realisation</strong> : titre, description, categorie, tags.</li>
+            <li>Ajoutez jusqu'a 10 photos. Les <strong>photos iPhone (HEIC) sont acceptees</strong> et optimisees automatiquement.</li>
+            <li>Photographiez avant/apres, en lumiere du jour, chantier range.</li>
+        </ul>
+    </section>
+
+    <section id="contacts" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">5. Recevoir des demandes</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Les particuliers vous contactent directement depuis votre profil et le feed.</li>
+            <li>Les demandes arrivent dans votre espace et par email.</li>
+            <li>Un rapport mensuel vous montre vos vues, favoris et contacts.</li>
+        </ul>
+    </section>
+
+    <section id="demarquer" class="bg-white rounded-2xl shadow-apple p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">6. Vous demarquer</h2>
+        <ul class="space-y-1.5 text-sm text-apple-text list-disc pl-5">
+            <li>Obtenez le badge Verifie et collectez des avis clients (etoiles).</li>
+            <li>Publiez regulierement de nouvelles realisations de qualite.</li>
+            <li>Repondez vite aux demandes : la reactivite convertit.</li>
+        </ul>
+    </section>
+
+    <div class="bg-white rounded-2xl shadow-apple p-6 text-center">
+        <p class="font-semibold text-apple-text mb-3">Pret a recevoir vos premiers contacts ?</p>
+        <a href="{% url 'listings:pro_inscription' %}" class="inline-flex items-center gap-2 bg-purple-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-purple-700 transition-colors text-sm">Creer mon profil pro</a>
+    </div>
+
+</div>
+{% endblock %}

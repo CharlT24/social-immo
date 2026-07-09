@@ -58,6 +58,10 @@ class PagesPubliquesTests(TestCase):
         '/cgv/',
         '/guide-vendeur/',
         '/guide-acheteur/',
+        '/guides/',
+        '/guide-agence/',
+        '/guide-pro/',
+        '/tutoriel-visite-3d/',
         '/sitemap.xml',
     ]
 
@@ -1313,3 +1317,23 @@ class Visite3DTests(TestCase):
         })
         a = Annonce.objects.get(titre='Maison visite 3D', user=u)
         self.assertTrue(a.a_visite_3d)
+
+
+class GuidesEtTutorielsTests(TestCase):
+    """Hub des guides + tutoriel visite 3D (public, avec disclaimer tiers)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_hub_liste_les_guides(self):
+        resp = self.client.get('/guides/')
+        self.assertContains(resp, "Guide du vendeur")
+        self.assertContains(resp, "Guide agence")
+        self.assertContains(resp, "Guide artisan")
+        self.assertContains(resp, "visite virtuelle 3D")
+
+    def test_tutoriel_visite_3d_disclaimer_tiers(self):
+        resp = self.client.get('/tutoriel-visite-3d/')
+        self.assertContains(resp, 'Matterport')
+        self.assertContains(resp, 'services tiers independants')
+        self.assertContains(resp, 'ne saurait etre tenu responsable')

@@ -220,7 +220,7 @@
                            value="{{ form.visite_virtuelle_url.value|default:'' }}"
                            placeholder="https://my.matterport.com/show/?m=..."
                            class="{{ form.visite_virtuelle_url.field.widget.attrs.class }}">
-                    <p class="text-xs text-gray-500 mt-1.5">Collez le lien de votre visite Matterport ou 360°. Les biens avec visite 3D attirent bien plus de contacts.</p>
+                    <p class="text-xs text-gray-500 mt-1.5">Collez le lien de votre visite Matterport ou 360°. Les biens avec visite 3D attirent bien plus de contacts. <a href="{% url 'listings:tutoriel_visite_3d' %}" target="_blank" class="text-teal-600 underline">Comment en creer une ?</a></p>
                 </div>
 
                 <!-- Score de qualite -->

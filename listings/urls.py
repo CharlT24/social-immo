@@ -119,6 +119,10 @@ urlpatterns = [
     path('cgv/', views.cgv, name='cgv'),
     path('guide-vendeur/', views.guide_vendeur, name='guide_vendeur'),
     path('guide-acheteur/', views.guide_acheteur, name='guide_acheteur'),
+    path('guides/', views.guides, name='guides'),
+    path('guide-agence/', views.guide_agence, name='guide_agence'),
+    path('guide-pro/', views.guide_pro, name='guide_pro'),
+    path('tutoriel-visite-3d/', views.tutoriel_visite_3d, name='tutoriel_visite_3d'),
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),
     path('confidentialite/', views.confidentialite, name='confidentialite'),
 ]

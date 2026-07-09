@@ -41,14 +41,20 @@ def homepage(request):
     from django.core.cache import cache
 
     # Compteurs : caches 10 min (evite 3 COUNT + 1 GROUP BY a chaque visite anonyme)
-    stats = cache.get_or_set('home:stats', lambda: {
-        'total': Annonce.objects.filter(is_active=True).count(),
-        'vente': Annonce.objects.filter(is_active=True, type_transaction='V').count(),
-        'location': Annonce.objects.filter(is_active=True, type_transaction='L').count(),
-        'villes': list(Annonce.objects.filter(is_active=True).exclude(ville='')
-                       .values('ville').annotate(count=Count('id'))
-                       .order_by('-count')[:12]),
-    }, 600)
+    def _calc_stats():
+        from listings.models import Agence, ProProfile, CommuneDVF
+        return {
+            'total': Annonce.objects.filter(is_active=True).count(),
+            'vente': Annonce.objects.filter(is_active=True, type_transaction='V').count(),
+            'location': Annonce.objects.filter(is_active=True, type_transaction='L').count(),
+            'villes': list(Annonce.objects.filter(is_active=True).exclude(ville='')
+                           .values('ville').annotate(count=Count('id'))
+                           .order_by('-count')[:12]),
+            'nb_agences': Agence.objects.filter(is_active=True).count(),
+            'nb_pros': ProProfile.objects.filter(is_active=True).count(),
+            'nb_communes_dvf': CommuneDVF.objects.count(),
+        }
+    stats = cache.get_or_set('home:stats', _calc_stats, 600)
     total_annonces = stats['total']
     count_vente = stats['vente']
     count_location = stats['location']
@@ -140,6 +146,9 @@ def homepage(request):
         'agences_vedettes': agences_vedettes,
         'pros_vedettes': pros_vedettes,
         'inspi_urls': inspi_urls,
+        'nb_agences': stats.get('nb_agences', 0),
+        'nb_pros': stats.get('nb_pros', 0),
+        'nb_communes_dvf': stats.get('nb_communes_dvf', 0),
     }
     return render(request, 'listings/homepage.html', context)
 

@@ -3,6 +3,23 @@
 {% block title %}{{ pro.nom_entreprise }} - Professionnel | Social Immo{% endblock %}
 {% block meta_description %}{{ pro.nom_entreprise }}{% if pro.ville %} a {{ pro.ville }}{% endif %} - {{ pro.get_metier_display }}. Decouvrez ses realisations sur Social Immo.{% endblock %}
 {% block og_title %}{{ pro.nom_entreprise }} - {{ pro.get_metier_display }}{% endblock %}
+{% block canonical %}https://social-immo.com{{ pro.get_absolute_url }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HomeAndConstructionBusiness",
+  "name": "{{ pro.nom_entreprise|escapejs }}",
+  "url": "https://social-immo.com{{ pro.get_absolute_url }}",
+  "description": "{{ pro.get_metier_display }}{% if pro.autres_metiers %}, {{ pro.autres_metiers|escapejs }}{% endif %}"{% if pro.telephone %},
+  "telephone": "{{ pro.telephone }}"{% endif %}{% if pro.ville %},
+  "address": {"@type": "PostalAddress", "addressLocality": "{{ pro.ville|escapejs }}", "postalCode": "{{ pro.code_postal }}", "addressCountry": "FR"}{% endif %}{% if pro.nb_avis %},
+  "aggregateRating": {"@type": "AggregateRating", "ratingValue": "{{ pro.note_moyenne }}", "reviewCount": "{{ pro.nb_avis }}", "bestRating": "5", "worstRating": "1"},
+  "review": [{% for a in avis|slice:":5" %}{"@type": "Review", "author": {"@type": "Person", "name": "{{ a.auteur.username|escapejs }}"}, "reviewRating": {"@type": "Rating", "ratingValue": "{{ a.note }}", "bestRating": "5"}{% if a.commentaire %}, "reviewBody": "{{ a.commentaire|escapejs }}"{% endif %}}{% if not forloop.last %},{% endif %}{% endfor %}]{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-6 py-12">

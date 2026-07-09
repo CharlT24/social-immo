@@ -1166,3 +1166,28 @@ class RapportPartenairesTests(TestCase):
                                   is_active=True, email='prov@test.fr')
         Command()._rapport_partenaires('https://social-immo.com')
         self.assertEqual(len(mail.outbox), 0)  # rien a dire -> pas d'email
+
+
+class ConfianceDifferenciationTests(TestCase):
+    """Levier confiance : etoiles avis pro (rich snippet) + preuve sociale homepage."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_pro_avis_aggregate_rating(self):
+        from listings.models import ProProfile, ProAvis
+        u = User.objects.create_user('proC', 'proc@test.fr', 'x')
+        pro = ProProfile.objects.create(user=u, nom_entreprise='ACB Renov',
+                                        metier='tous_corps_etat', ville='Perigueux', is_active=True)
+        client = User.objects.create_user('clientavis', 'ca@test.fr', 'x')
+        ProAvis.objects.create(pro=pro, auteur=client, note=5, commentaire='Excellent travail')
+        resp = self.client.get(pro.get_absolute_url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'AggregateRating')
+        self.assertContains(resp, '"ratingValue": "5')
+
+    def test_homepage_bande_reassurance(self):
+        cache.delete('home:stats')
+        resp = self.client.get('/')
+        self.assertContains(resp, 'ventes reelles notariees')
+        self.assertContains(resp, 'Agences partenaires')

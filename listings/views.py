@@ -4015,18 +4015,26 @@ def particulier_creer_annonce(request):
     if request.method == 'POST':
         form = ParticulierAnnonceForm(request.POST)
         if form.is_valid():
-            # Anti-doublon : un double-clic (ou soumission repetee) ne doit pas
-            # creer plusieurs fois la meme annonce. On detecte un depot identique
-            # (meme titre + ville) du meme user dans les 2 dernieres minutes.
-            recent = timezone.now() - timedelta(minutes=2)
+            # Anti-doublon robuste : on ne recree jamais une annonce identique
+            # (meme titre + ville) deja ACTIVE pour ce vendeur, quel que soit le
+            # delai. Cela couvre le double-clic ET le re-depot repete (ex. un
+            # vendeur qui n'arrive pas a changer ses photos et re-poste). On le
+            # renvoie vers la MODIFICATION de son annonce existante.
+            titre = (form.cleaned_data.get('titre') or '').strip()
+            ville = (form.cleaned_data.get('ville') or '').strip()
+            recent = timezone.now() - timedelta(minutes=10)
             doublon = Annonce.objects.filter(
                 user=request.user, source='particulier',
-                titre=form.cleaned_data.get('titre', ''),
-                ville=form.cleaned_data.get('ville', ''),
-                created_at__gte=recent,
-            ).first()
+                titre=titre, ville=ville,
+            ).filter(
+                models.Q(is_active=True) | models.Q(created_at__gte=recent)
+            ).order_by('created_at').first()
             if doublon:
-                return redirect('listings:annonce_publiee', annonce_id=doublon.id)
+                messages.info(
+                    request,
+                    "Vous avez deja cette annonce en ligne. Modifiez-la ici "
+                    "(vous pouvez changer les photos) plutot que d'en recreer une.")
+                return redirect('listings:particulier_modifier_annonce', annonce_id=doublon.id)
 
             # Email verifie ? Sinon l'annonce attend la confirmation
             from allauth.account.models import EmailAddress
@@ -4132,11 +4140,23 @@ def particulier_modifier_annonce(request, annonce_id):
             nb_photos_actuelles = annonce.photos.count()
             nouvelles_photos = request.FILES.getlist('photos')
             ameliorer = request.POST.get('ameliorer_photos') == 'on'
-            places_dispo = 5 - nb_photos_actuelles
+            LIMITE = 10
+            places_dispo = LIMITE - nb_photos_actuelles
+            ajoutees = 0
             for i, photo_file in enumerate(nouvelles_photos[:max(0, places_dispo)]):
                 _creer_photo_annonce(annonce, photo_file, nb_photos_actuelles + i + 1, ameliorer)
+                ajoutees += 1
 
-            messages.success(request, 'Annonce mise a jour !')
+            # Feedback honnete : ne jamais ignorer des photos en silence.
+            non_ajoutees = len(nouvelles_photos) - ajoutees
+            if non_ajoutees > 0:
+                messages.warning(
+                    request,
+                    f"Annonce mise a jour. {non_ajoutees} photo(s) n'ont pas pu etre "
+                    f"ajoutee(s) : limite de {LIMITE} photos atteinte. Supprimez des "
+                    f"photos existantes (cases a cocher) pour en ajouter d'autres.")
+            else:
+                messages.success(request, 'Annonce mise a jour !')
             return redirect('listings:particulier_dashboard')
     else:
         form = ParticulierAnnonceForm(instance=annonce)

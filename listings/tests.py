@@ -1337,3 +1337,51 @@ class GuidesEtTutorielsTests(TestCase):
         self.assertContains(resp, 'Matterport')
         self.assertContains(resp, 'services tiers independants')
         self.assertContains(resp, 'ne saurait etre tenu responsable')
+
+
+class ModifierAnnonceAntiDoublonTests(TestCase):
+    """Un vendeur qui re-depose une annonce identique (au lieu de la modifier)
+    ne cree pas de doublon : il est renvoye vers la modification."""
+
+    def setUp(self):
+        cache.clear()
+        from allauth.account.models import EmailAddress
+        self.u = User.objects.create_user('revend', 'revend@test.fr', 'x')
+        EmailAddress.objects.create(user=self.u, email='revend@test.fr', verified=True, primary=True)
+        self.client.force_login(self.u)
+        self.data = {'titre': 'Maison bord de mer', 'texte': 'x', 'libelle_type': 'Maison',
+                     'type_transaction': 'V', 'prix': '300000', 'ville': 'Deauville',
+                     'code_postal': '14800'}
+
+    def test_redepot_identique_pas_de_doublon(self):
+        # 1er depot -> annonce active
+        self.client.post('/mon-compte/deposer/', self.data)
+        self.assertEqual(Annonce.objects.filter(user=self.u, is_active=True).count(), 1)
+        annonce = Annonce.objects.get(user=self.u)
+        # re-depots successifs (comme le client qui re-poste 5 fois)
+        for _ in range(5):
+            resp = self.client.post('/mon-compte/deposer/', self.data)
+            # redirige vers la MODIFICATION de l'annonce existante
+            self.assertEqual(resp.status_code, 302)
+            self.assertIn(f'/annonce/{annonce.id}/modifier/', resp['Location'])
+        # toujours une seule annonce
+        self.assertEqual(Annonce.objects.filter(user=self.u).count(), 1)
+
+    def test_modif_limite_photos_previent(self):
+        from listings.models import Photo
+        annonce = creer_annonce('MOD-1', user=self.u, source='particulier', is_active=True)
+        for i in range(10):  # deja au max (10)
+            Photo.objects.create(annonce=annonce, url=f'http://x/{i}.jpg', ordre=i + 1)
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        b = io.BytesIO(); Image.new('RGB', (400, 300)).save(b, 'JPEG'); b.seek(0)
+        photo = SimpleUploadedFile('new.jpg', b.read(), content_type='image/jpeg')
+        resp = self.client.post(f'/mon-compte/annonce/{annonce.id}/modifier/',
+                                {'titre': annonce.titre, 'texte': 'x', 'libelle_type': 'Maison',
+                                 'type_transaction': 'V', 'prix': '150000', 'ville': 'Caen',
+                                 'code_postal': '14000', 'photos': photo}, follow=True)
+        # la photo n'est pas ajoutee en silence : message d'avertissement
+        msgs = [m.message for m in resp.context['messages']]
+        self.assertTrue(any('limite' in m.lower() for m in msgs))
+        self.assertEqual(annonce.photos.count(), 10)  # pas de 11e

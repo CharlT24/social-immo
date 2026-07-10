@@ -3656,6 +3656,7 @@ def api_pros_proches(request):
     selection = a_la_une if a_la_une else tous  # a la une prioritaires, sinon tout
 
     data = [{
+        'id': p.id,
         'nom': p.nom_entreprise,
         'ville': p.ville,
         'telephone': p.telephone,
@@ -3666,6 +3667,59 @@ def api_pros_proches(request):
         'a_la_une': p.mise_en_avant,
     } for p in selection[:12]]
     return JsonResponse({'diagnostiqueurs': data, 'total': len(selection)})
+
+
+@login_required
+@require_POST
+def api_demander_pro(request):
+    """Le vendeur (connecte) sollicite un pro depuis le depot. Cree une demande
+    de contact -> visible sur le dashboard du pro ET envoyee par email."""
+    from .models import ProProfile
+    try:
+        data = json.loads(request.body)
+        pro_id = data.get('pro_id')
+        metier = (data.get('metier') or '').strip()
+        ville = (data.get('ville') or '').strip()
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Donnees invalides'}, status=400)
+
+    pro = get_object_or_404(ProProfile, id=pro_id, is_active=True)
+    lieu = f" a {ville}" if ville else ""
+    besoins = {
+        'diagnostiqueur': f"je vends un bien{lieu} et j'ai besoin d'un DPE (diagnostic de performance energetique)",
+        'photographe': f"je souhaite des photos professionnelles de mon bien{lieu} pour mon annonce",
+        'home_stager': f"je souhaite valoriser mon bien{lieu} avant sa mise en vente",
+    }
+    corps = besoins.get(metier, f"je vends un bien{lieu} et je souhaite faire appel a vos services")
+    message_text = f"Bonjour, {corps}. Pourriez-vous me recontacter ? Merci."
+
+    prof = getattr(request.user, 'profile', None)
+    tel = getattr(prof, 'telephone', '') if prof else ''
+
+    DemandeContact.objects.create(
+        pro=pro, expediteur=request.user, message=message_text, telephone=tel)
+
+    if pro.email:
+        try:
+            expe = request.user.get_full_name() or request.user.username
+            send_mail(
+                subject=f"[Social Immo] Nouvelle demande d'un vendeur{lieu}",
+                message=(
+                    f"Bonjour {pro.nom_entreprise},\n\n"
+                    f"Un vendeur vous a sollicite via Social Immo.\n\n"
+                    f"De : {expe}\n"
+                    f"Email : {request.user.email}\n"
+                    + (f"Telephone : {tel}\n" if tel else "")
+                    + f"\nMessage :\n{message_text}\n\n"
+                    f"Retrouvez cette demande sur votre espace :\n"
+                    f"https://social-immo.com/pro/dashboard/\n\n"
+                    f"L'equipe Social Immo"),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[pro.email], fail_silently=True)
+        except Exception:
+            pass
+
+    return JsonResponse({'success': True})
 
 
 def guide_vendeur(request):

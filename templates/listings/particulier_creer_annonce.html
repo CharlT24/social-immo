@@ -356,13 +356,39 @@ function chargerProsProches(metier, checkboxId, zoneId, intro, vide) {
                     + (d.a_la_une ? '<span class="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-full">A la une</span>' : '')
                     + '</div>'
                     + '<div class="text-xs text-gray-500">' + (d.ville || '') + '</div></div>'
-                    + (d.telephone ? '<a href="tel:' + d.telephone + '" class="text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 px-3 py-1.5 rounded-full flex-shrink-0">Appeler</a>' : '<a href="' + d.url + '" target="_blank" class="text-xs font-semibold text-teal-600 flex-shrink-0">Voir</a>')
+                    + '<div class="flex items-center gap-1.5 flex-shrink-0">'
+                    + (d.telephone ? '<a href="tel:' + d.telephone + '" class="text-xs font-medium text-teal-600 px-2 py-1.5">Appeler</a>' : '')
+                    + '<button type="button" onclick="demanderPro(' + d.id + ', \'' + metier + '\', this)" class="text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 px-3 py-1.5 rounded-full">Demander</button>'
+                    + '</div>'
                     + '</div>';
             });
             html += '</div>';
             zone.innerHTML = html;
         })
         .catch(() => { zone.innerHTML = '<p class="text-xs text-gray-500">Impossible de charger les pros pour le moment.</p>'; });
+}
+
+function demanderPro(proId, metier, btn) {
+    btn.disabled = true;
+    btn.textContent = '...';
+    fetch('{% url "listings:api_demander_pro" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ pro_id: proId, metier: metier, ville: champ('id_ville').trim() })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            btn.textContent = '✓ Demande envoyee';
+            btn.classList.remove('bg-teal-600', 'hover:bg-teal-700');
+            btn.classList.add('bg-green-600');
+            if (typeof showToast === 'function') showToast('Demande envoyee — le pro va vous recontacter.', 'success');
+        } else {
+            btn.disabled = false; btn.textContent = 'Demander';
+            if (typeof showToast === 'function') showToast(data.error || 'Erreur, reessayez.', 'error');
+        }
+    })
+    .catch(() => { btn.disabled = false; btn.textContent = 'Demander'; });
 }
 
 function afficherEtape(n) {

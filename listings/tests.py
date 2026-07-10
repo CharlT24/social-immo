@@ -1566,3 +1566,38 @@ class ProsProchesMetierTests(TestCase):
         self._pro('Diag Pro', 'diagnostiqueur')
         r = self.client.get('/api/pros-proches/?ville=Perigueux&code_postal=24000&metier=nimportequoi')
         self.assertEqual(len(r.json()['diagnostiqueurs']), 1)
+
+
+class DemanderProTests(TestCase):
+    """Sollicitation d'un pro depuis le depot -> lead sur son dashboard + email."""
+
+    def setUp(self):
+        cache.clear()
+        from listings.models import ProProfile
+        pu = User.objects.create_user('lepro', 'lepro@d.fr', 'x')
+        self.pro = ProProfile.objects.create(user=pu, nom_entreprise='Diag Perigord',
+            metier='diagnostiqueur', is_active=True, ville='Perigueux',
+            departement='24', code_postal='24000', email='lepro@d.fr')
+        self.vendeur = User.objects.create_user('levendeur', 'vend@t.fr', 'x')
+
+    def _post(self):
+        return self.client.post('/api/demander-pro/',
+            data=json.dumps({'pro_id': self.pro.id, 'metier': 'diagnostiqueur', 'ville': 'Perigueux'}),
+            content_type='application/json')
+
+    def test_necessite_login(self):
+        self.assertEqual(self._post().status_code, 302)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_demande_cree_lead_et_email(self):
+        self.client.force_login(self.vendeur)
+        resp = self._post()
+        self.assertTrue(resp.json().get('success'))
+        # lead visible sur le dashboard du pro
+        self.assertEqual(self.pro.demandes_contact.count(), 1)
+        d = self.pro.demandes_contact.first()
+        self.assertEqual(d.expediteur, self.vendeur)
+        self.assertIn('DPE', d.message)
+        # email au pro
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('lepro@d.fr', mail.outbox[0].to)

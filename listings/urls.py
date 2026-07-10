@@ -118,6 +118,7 @@ urlpatterns = [
     path('cgu/', views.cgu, name='cgu'),
     path('cgv/', views.cgv, name='cgv'),
     path('api/pros-proches/', views.api_pros_proches, name='api_pros_proches'),
+    path('api/demander-pro/', views.api_demander_pro, name='api_demander_pro'),
     path('guide-vendeur/', views.guide_vendeur, name='guide_vendeur'),
     path('guide-acheteur/', views.guide_acheteur, name='guide_acheteur'),
     path('guides/', views.guides, name='guides'),

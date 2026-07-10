@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}{{ annonce.titre }} - {{ annonce.ville }} | Social Immo{% endblock %}
 {% block meta_description %}{{ annonce.titre }} a {{ annonce.ville }} ({{ annonce.code_postal }}). {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}. Consultez l'annonce sur Social Immo.{% endblock %}
@@ -851,7 +852,7 @@
             titre: "{{ annonce.titre|escapejs }}",
             ville: "{{ annonce.ville|escapejs }}",
             prix: "{{ annonce.prix_format|escapejs }}",
-            surface: {{ annonce.surface|default:"null" }},
+            surface: {{ annonce.surface|default:"null"|unlocalize }}, {# unlocalize: point decimal, sinon la virgule FR casse le JS #}
             photo: {% if annonce.photos.first %}"{{ annonce.photos.first.src }}"{% else %}null{% endif %},
             url: "{% url 'listings:detail' annonce.reference %}",
             type_transaction: "{{ annonce.type_transaction }}",

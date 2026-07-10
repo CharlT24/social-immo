@@ -1474,3 +1474,17 @@ class ContactCompteAcquereurTests(TestCase):
         self.assertFalse(User.objects.filter(email='bob@test.fr').exists())
         # mais la demande (lead) est bien enregistree
         self.assertEqual(DemandeContact.objects.filter(annonce=self.a, email='bob@test.fr').count(), 1)
+
+
+class FicheJsLocaleTests(TestCase):
+    """Regression : une surface decimale (120,00) ne doit pas casser le JS de la
+    fiche (la virgule FR rendait envoyerContact indefini)."""
+
+    def test_surface_decimale_js_valide(self):
+        from decimal import Decimal
+        a = creer_annonce('JS-1', surface=Decimal('120.00'), prix=Decimal('221000.00'),
+                          ville='Perigueux', code_postal='24000', is_active=True)
+        html = self.client.get(a.get_absolute_url()).content.decode()
+        # point decimal en JS, jamais la virgule
+        self.assertIn('surface: 120.00', html)
+        self.assertNotIn('surface: 120,00', html)

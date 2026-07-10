@@ -1386,3 +1386,21 @@ class ModifierAnnonceAntiDoublonTests(TestCase):
         msgs = [m.message for m in resp.context['messages']]
         self.assertTrue(any('limite' in m.lower() for m in msgs))
         self.assertEqual(annonce.photos.count(), 10)  # pas de 11e
+
+
+class LibelleVendeurTests(TestCase):
+    """La fiche affiche le bon libelle vendeur (particulier vs agent immo)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_particulier_affiche_vendeur_particulier(self):
+        a = creer_annonce('LBL-1', source='particulier', contact_nom='Marie Leroy', is_active=True)
+        resp = self.client.get(a.get_absolute_url())
+        self.assertContains(resp, 'Vendeur particulier')
+        self.assertNotContains(resp, 'Agent immobilier')
+
+    def test_agence_affiche_agent_immobilier(self):
+        a = creer_annonce('LBL-2', source='import', contact_nom='Agence Soleil', is_active=True)
+        resp = self.client.get(a.get_absolute_url())
+        self.assertContains(resp, 'Agent immobilier')

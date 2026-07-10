@@ -521,7 +521,7 @@
                     </div>
                     <div>
                         <div class="font-medium">{{ annonce.contact_nom }}</div>
-                        <div class="text-sm text-apple-gray">Agent immobilier</div>
+                        <div class="text-sm text-apple-gray">{% if annonce.source == 'particulier' %}Vendeur particulier{% else %}Agent immobilier{% endif %}</div>
                     </div>
                 </div>
                 {% endif %}
@@ -572,7 +572,7 @@
                                 Envoyer ma demande
                             </button>
                             <p class="text-[11px] text-apple-gray text-center mt-2">
-                                Vos coordonnees sont transmises au professionnel pour vous recontacter, conformement a notre
+                                Vos coordonnees sont transmises au vendeur pour vous recontacter, conformement a notre
                                 <a href="{% url 'listings:confidentialite' %}" class="text-apple-blue hover:underline">politique de confidentialite</a>.
                             </p>
                         </div>
@@ -581,7 +581,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <p class="text-sm font-medium text-apple-text">Message envoye !</p>
-                            <p class="text-xs text-apple-gray mt-1">Le professionnel vous recontactera bientot.</p>
+                            <p class="text-xs text-apple-gray mt-1">Le vendeur vous recontactera bientot.</p>
                         </div>
                     </div>
                 </div>

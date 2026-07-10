@@ -410,6 +410,12 @@ def listing_detail(request, reference, slug=None):
     if request.user.is_authenticated:
         user_favorites = list(Favori.objects.filter(user=request.user).values_list('annonce_id', flat=True))
 
+    # Pre-remplissage du formulaire de contact pour un acquereur connecte
+    mon_tel = ''
+    if request.user.is_authenticated:
+        prof = getattr(request.user, 'profile', None)
+        mon_tel = getattr(prof, 'telephone', '') if prof else ''
+
     context = {
         'annonce': annonce,
         'commentaires': annonce.commentaires.all(),
@@ -418,6 +424,7 @@ def listing_detail(request, reference, slug=None):
         'pros_secteur': pros_secteur,
         'similaires': similaires,
         'user_favorites': user_favorites,
+        'mon_tel': mon_tel,
     }
     return render(request, 'listings/listing_detail.html', context)
 
@@ -2094,14 +2101,57 @@ def envoyer_contact(request):
     if not message_text:
         return JsonResponse({'error': 'Message requis'}, status=400)
 
+    # Telephone obligatoire pour tous (necessaire pour etre rappele)
+    if not telephone:
+        return JsonResponse({'error': 'Votre telephone est requis pour etre recontacte'}, status=400)
+
     # Visiteur anonyme : nom + email valides obligatoires
     if not request.user.is_authenticated:
         if not nom_visiteur or not email_visiteur:
-            return JsonResponse({'error': 'Nom et email requis pour vous recontacter'}, status=400)
+            return JsonResponse({'error': 'Nom, email et telephone requis pour vous recontacter'}, status=400)
         try:
             validate_email(email_visiteur)
         except ValidationError:
             return JsonResponse({'error': 'Email invalide'}, status=400)
+
+    # Option : creer un compte acquereur automatiquement (visiteur non connecte
+    # qui coche la case). Construit la liste des acquereurs. Consentement = la case.
+    compte_cree = False
+    if (not request.user.is_authenticated and data.get('creer_compte')
+            and email_visiteur):
+        from django.contrib.auth.models import User as _User
+        import uuid as _uuid
+        if not _User.objects.filter(email=email_visiteur).exists():
+            base = (email_visiteur.split('@')[0] or 'acquereur')[:140]
+            username = base
+            while _User.objects.filter(username=username).exists():
+                username = f'{base}-{_uuid.uuid4().hex[:6]}'
+            nouvel_user = _User.objects.create_user(username=username, email=email_visiteur)
+            nouvel_user.first_name = nom_visiteur[:150]
+            nouvel_user.set_unusable_password()  # il definira son mot de passe via "mot de passe oublie"
+            nouvel_user.save()
+            try:
+                from .models import UserProfile
+                UserProfile.objects.get_or_create(
+                    user=nouvel_user, defaults={'telephone': telephone})
+            except Exception:
+                pass
+            compte_cree = True
+            try:
+                send_mail(
+                    subject='[Social Immo] Votre compte acquereur est cree',
+                    message=(
+                        f"Bonjour {nom_visiteur},\n\n"
+                        f"Votre compte acquereur a ete cree suite a votre demande. "
+                        f"Definissez votre mot de passe pour suivre vos demandes, "
+                        f"enregistrer vos favoris et creer des alertes :\n"
+                        f"https://social-immo.com/accounts/password/reset/\n\n"
+                        f"(utilisez l'email {email_visiteur})\n\n"
+                        f"L'equipe Social Immo"),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email_visiteur], fail_silently=True)
+            except Exception:
+                pass
 
     demande = DemandeContact(
         expediteur=request.user if request.user.is_authenticated else None,
@@ -2166,7 +2216,7 @@ Connectez-vous sur SocialImmo pour repondre.
         except Exception:
             pass  # Ne pas bloquer si l'email echoue (la demande est deja en base)
 
-    return JsonResponse({'success': True})
+    return JsonResponse({'success': True, 'compte_cree': compte_cree})
 
 
 @login_required

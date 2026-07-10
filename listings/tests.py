@@ -1435,6 +1435,42 @@ class ContactAnnonceTests(TestCase):
         u = User.objects.create_user('acheteurc', 'ac@test.fr', 'x')
         self.client.force_login(u)
         a = creer_annonce('CT-C', source='particulier', contact_email='v@test.fr', is_active=True)
-        resp = self._post({'annonce_id': a.id, 'message': 'Interesse par ce bien'})
+        resp = self._post({'annonce_id': a.id, 'message': 'Interesse par ce bien', 'telephone': '0655667788'})
         self.assertTrue(resp.json().get('success'))
         self.assertEqual(DemandeContact.objects.filter(annonce=a, expediteur=u).count(), 1)
+
+
+class ContactCompteAcquereurTests(TestCase):
+    """Contact : telephone obligatoire + creation de compte acquereur optionnelle."""
+
+    def setUp(self):
+        cache.clear()
+        self.a = creer_annonce('CT-CC', source='particulier', contact_email='v@test.fr', is_active=True)
+
+    def _post(self, payload):
+        return self.client.post('/api/contact/', data=json.dumps(payload),
+                                content_type='application/json')
+
+    def test_telephone_obligatoire(self):
+        resp = self._post({'annonce_id': self.a.id, 'message': 'Bonjour',
+                           'nom': 'Jean', 'email': 'jean@test.fr'})  # pas de tel
+        self.assertEqual(resp.status_code, 400)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_creation_compte_acquereur(self):
+        resp = self._post({'annonce_id': self.a.id, 'message': 'Interesse',
+                           'nom': 'Alice Acheteur', 'email': 'alice@test.fr',
+                           'telephone': '0611223344', 'creer_compte': True})
+        self.assertTrue(resp.json().get('success'))
+        self.assertTrue(resp.json().get('compte_cree'))
+        u = User.objects.get(email='alice@test.fr')
+        self.assertEqual(u.first_name, 'Alice Acheteur')
+        self.assertFalse(u.has_usable_password())  # definira via reset
+        self.assertEqual(u.profile.telephone, '0611223344')
+
+    def test_sans_case_pas_de_compte(self):
+        self._post({'annonce_id': self.a.id, 'message': 'Interesse',
+                    'nom': 'Bob', 'email': 'bob@test.fr', 'telephone': '0600'})
+        self.assertFalse(User.objects.filter(email='bob@test.fr').exists())
+        # mais la demande (lead) est bien enregistree
+        self.assertEqual(DemandeContact.objects.filter(annonce=self.a, email='bob@test.fr').count(), 1)

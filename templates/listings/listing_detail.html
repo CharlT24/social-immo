@@ -553,8 +553,15 @@
                             <textarea id="contact-message" rows="3"
                                 placeholder="Bonjour, je suis interesse par ce bien, pourriez-vous me recontacter ?"
                                 class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2">{% if not user.is_authenticated %}Bonjour, je suis interesse par ce bien ({{ annonce.reference }}). Pourriez-vous me recontacter ? Merci.{% endif %}</textarea>
-                            <input type="tel" id="contact-tel" placeholder="Votre telephone (recommande pour un rappel)"
+                            <input type="tel" id="contact-tel" value="{{ mon_tel }}" placeholder="Votre telephone *"
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-2">
+                            {% if not user.is_authenticated %}
+                            <label class="flex items-start gap-2 mb-2 cursor-pointer select-none">
+                                <input type="checkbox" id="contact-creer-compte" checked
+                                    class="mt-0.5 rounded border-gray-300 text-apple-blue focus:ring-apple-blue">
+                                <span class="text-xs text-apple-gray">Creer mon compte acquereur (gratuit) pour suivre ma demande, enregistrer mes favoris et recevoir des alertes.</span>
+                            </label>
+                            {% endif %}
                             {% if agence_opts.contact_prioritaire %}
                             <select id="contact-creneau"
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-3">
@@ -870,20 +877,23 @@ function envoyerContact(targetId, targetType) {
     const creneau = creneauEl ? creneauEl.value : '';
     const nomEl = document.getElementById('contact-nom');
     const emailEl = document.getElementById('contact-email');
+    const creerEl = document.getElementById('contact-creer-compte');
     if (!msg) { showToast('Veuillez ecrire un message.', 'error'); return; }
+    if (!tel) { showToast('Indiquez votre telephone pour etre recontacte.', 'error'); return; }
 
     const body = { message: msg, telephone: tel };
     if (creneau) body.creneau_rappel = creneau;
     if (targetType === 'annonce') body.annonce_id = targetId;
     else body.pro_id = targetId;
 
-    // Visiteur non connecte : nom + email requis
+    // Visiteur non connecte : nom + email requis (+ option creation de compte)
     if (nomEl && emailEl) {
         const nom = nomEl.value.trim();
         const email = emailEl.value.trim();
         if (!nom || !email) { showToast('Indiquez votre nom et votre email pour etre recontacte.', 'error'); return; }
         body.nom = nom;
         body.email = email;
+        if (creerEl) body.creer_compte = creerEl.checked;
     }
 
     fetch('{% url "listings:envoyer_contact" %}', {
@@ -896,6 +906,10 @@ function envoyerContact(targetId, targetType) {
         if (data.success) {
             document.getElementById('contact-form-container').classList.add('hidden');
             document.getElementById('contact-success').classList.remove('hidden');
+            if (data.compte_cree) {
+                const s = document.querySelector('#contact-success p:last-child');
+                if (s) s.textContent = 'Votre compte a ete cree — un email vous permet de definir votre mot de passe.';
+            }
         } else {
             showToast(data.error || 'Une erreur est survenue.', 'error');
         }

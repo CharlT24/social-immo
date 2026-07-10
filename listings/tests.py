@@ -1626,3 +1626,58 @@ class CorrectifsAuditTests(TestCase):
             'annonce_id': a.id, 'message': 'Bonjour', 'nom': 'X', 'email': 'x@t.fr',
             'telephone': '0600', 'creer_compte': True}), content_type='application/json')
         self.assertNotIn('compte_cree', resp.json())
+
+
+class PaiementsCheckoutTests(TestCase):
+    """Robustesse Stripe : dormant si pas de cles, bon mode selon le produit."""
+
+    def test_dormant_sans_cles(self):
+        from listings.services import paiements
+        self.assertFalse(paiements.actif())
+        u = User.objects.create_user('pay', 'pay@t.fr', 'x')
+        self.assertIsNone(paiements.creer_session_checkout('agence', u, 'http://s', 'http://c'))
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test', STRIPE_PRICE_AGENCE='price_a',
+                       STRIPE_PRICE_PACK='price_p')
+    def test_mode_selon_produit(self):
+        from listings.services import paiements
+        u = User.objects.create_user('pay2', 'pay2@t.fr', 'x')
+        captures = {}
+        def fake_post(endpoint, data):
+            captures.update(data)
+            return {'url': 'https://stripe/checkout'}
+        with mock.patch.object(paiements, '_post', side_effect=fake_post):
+            url = paiements.creer_session_checkout('agence', u, 'http://s', 'http://c')
+            self.assertEqual(url, 'https://stripe/checkout')
+            self.assertEqual(captures['mode'], 'subscription')
+            captures.clear()
+            paiements.creer_session_checkout('pack_vendeur', u, 'http://s', 'http://c')
+            self.assertEqual(captures['mode'], 'payment')
+
+
+class EnvoyerContactRobustesseTests(TestCase):
+    """Robustesse envoyer_contact : email invalide, email existant sans crash."""
+
+    def setUp(self):
+        cache.clear()
+        self.a = creer_annonce('EC-1', source='particulier', contact_email='v@t.fr', is_active=True)
+
+    def _post(self, payload):
+        return self.client.post('/api/contact/', data=json.dumps(payload),
+                                content_type='application/json')
+
+    def test_email_invalide_400(self):
+        r = self._post({'annonce_id': self.a.id, 'message': 'x', 'nom': 'Jean',
+                        'email': 'pas-un-email', 'telephone': '0600'})
+        self.assertEqual(r.status_code, 400)
+
+    def test_email_existant_pas_de_doublon_ni_500(self):
+        User.objects.create_user('exist', 'exist@t.fr', 'x')
+        r = self._post({'annonce_id': self.a.id, 'message': 'x', 'nom': 'Jean',
+                        'email': 'exist@t.fr', 'telephone': '0600', 'creer_compte': True})
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json().get('success'))
+        # pas de 2e compte cree pour cet email
+        self.assertEqual(User.objects.filter(email='exist@t.fr').count(), 1)
+        # la demande (lead) est bien enregistree
+        self.assertEqual(DemandeContact.objects.filter(annonce=self.a, email='exist@t.fr').count(), 1)

@@ -141,6 +141,15 @@
                         <span class="block text-xs text-gray-500 mt-0.5">Luminosite, contraste et nettete ajustes pour un rendu professionnel.</span>
                     </span>
                 </label>
+
+                <!-- Pas de belles photos -> photographe immobilier a proximite -->
+                <label class="flex items-center gap-2 mt-4 cursor-pointer select-none">
+                    <input type="checkbox" id="photo-pro"
+                        onchange="chargerProsProches('photographe', 'photo-pro', 'photographes-zone', 'Des photos professionnelles attirent bien plus d\'acheteurs. Photographes immobiliers pres de chez vous :', 'Aucun photographe reference dans votre secteur pour le moment.')"
+                        class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                    <span class="text-sm text-gray-700">Je veux des photos pro — trouver un photographe immobilier près de chez moi</span>
+                </label>
+                <div id="photographes-zone" class="hidden mt-3"></div>
             </div>
         </div>
 
@@ -231,6 +240,17 @@
                     <p class="text-xs text-gray-500 mt-1.5">Collez le lien de votre visite Matterport ou 360°. Les biens avec visite 3D attirent bien plus de contacts. <a href="{% url 'listings:tutoriel_visite_3d' %}" target="_blank" class="text-teal-600 underline">Comment en creer une ?</a></p>
                 </div>
 
+                <!-- Valoriser le bien -> home stager a proximite -->
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="home-stager"
+                            onchange="chargerProsProches('home_stager', 'home-stager', 'home-stager-zone', 'Un bien mis en valeur se vend plus vite et plus cher. Home stagers pres de chez vous :', 'Aucun home stager reference dans votre secteur pour le moment.')"
+                            class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                        <span class="text-sm text-gray-700">Valoriser mon bien avant la vente — trouver un home stager près de chez moi</span>
+                    </label>
+                    <div id="home-stager-zone" class="hidden mt-3"></div>
+                </div>
+
                 <!-- Score de qualite -->
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center justify-between mb-2">
@@ -300,31 +320,36 @@ function champ(id) {
 }
 
 function chargerDiagnostiqueurs() {
-    const zone = document.getElementById('diagnostiqueurs-zone');
-    const coche = document.getElementById('dpe-absent').checked;
+    chargerProsProches('diagnostiqueur', 'dpe-absent', 'diagnostiqueurs-zone',
+        "Le DPE est obligatoire. Voici des diagnostiqueurs pres de chez vous pour le realiser :",
+        "Aucun diagnostiqueur reference dans votre secteur pour le moment.");
+}
+
+function chargerProsProches(metier, checkboxId, zoneId, intro, vide) {
+    const zone = document.getElementById(zoneId);
+    const coche = document.getElementById(checkboxId).checked;
     if (!coche) { zone.classList.add('hidden'); zone.innerHTML = ''; return; }
     const ville = champ('id_ville').trim();
     const cp = champ('id_code_postal').trim();
+    zone.classList.remove('hidden');
     if (!ville && !cp) {
-        zone.classList.remove('hidden');
-        zone.innerHTML = '<p class="text-xs text-gray-500">Renseignez d\'abord la ville de votre bien (etape 1) pour voir les diagnostiqueurs proches.</p>';
+        zone.innerHTML = '<p class="text-xs text-gray-500">Renseignez d\'abord la ville de votre bien (etape 1) pour voir les pros proches.</p>';
         return;
     }
-    zone.classList.remove('hidden');
-    zone.innerHTML = '<p class="text-xs text-gray-400">Recherche des diagnostiqueurs autour de vous...</p>';
-    const params = new URLSearchParams({ ville: ville, code_postal: cp });
-    fetch('{% url "listings:api_diagnostiqueurs_proches" %}?' + params)
+    zone.innerHTML = '<p class="text-xs text-gray-400">Recherche autour de vous...</p>';
+    const params = new URLSearchParams({ ville: ville, code_postal: cp, metier: metier });
+    fetch('{% url "listings:api_pros_proches" %}?' + params)
         .then(r => r.json())
         .then(data => {
             const list = data.diagnostiqueurs || [];
             if (!list.length) {
-                zone.innerHTML = '<div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">Aucun diagnostiqueur reference dans votre secteur pour le moment. Vous pourrez publier votre annonce et ajouter le DPE des que vous l\'aurez.</div>';
+                zone.innerHTML = '<div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">' + vide + '</div>';
                 return;
             }
-            let html = '<div class="bg-teal-50 rounded-xl p-3 mb-2 text-xs text-teal-800">Le DPE est obligatoire. Voici des diagnostiqueurs pres de chez vous pour le realiser :</div><div class="space-y-2">';
+            let html = '<div class="bg-teal-50 rounded-xl p-3 mb-2 text-xs text-teal-800">' + intro + '</div><div class="space-y-2">';
             list.forEach(d => {
                 html += '<div class="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">'
-                    + '<div class="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0 text-teal-600 font-bold">' + (d.nom ? d.nom[0] : 'D') + '</div>'
+                    + '<div class="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0 text-teal-600 font-bold">' + (d.nom ? d.nom[0] : '?') + '</div>'
                     + '<div class="min-w-0 flex-1">'
                     + '<div class="flex items-center gap-1.5"><a href="' + d.url + '" target="_blank" class="text-sm font-semibold text-gray-800 hover:text-teal-600 truncate">' + d.nom + '</a>'
                     + (d.verifie ? '<span class="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full">Verifie</span>' : '')
@@ -337,7 +362,7 @@ function chargerDiagnostiqueurs() {
             html += '</div>';
             zone.innerHTML = html;
         })
-        .catch(() => { zone.innerHTML = '<p class="text-xs text-gray-500">Impossible de charger les diagnostiqueurs pour le moment.</p>'; });
+        .catch(() => { zone.innerHTML = '<p class="text-xs text-gray-500">Impossible de charger les pros pour le moment.</p>'; });
 }
 
 function afficherEtape(n) {

@@ -1504,7 +1504,7 @@ class DiagnostiqueursProchesTests(TestCase):
             ville=ville, departement=dep, code_postal='24000', mise_en_avant=alaune)
 
     def _get(self):
-        resp = self.client.get('/api/diagnostiqueurs-proches/?ville=Perigueux&code_postal=24000')
+        resp = self.client.get('/api/pros-proches/?ville=Perigueux&code_postal=24000&metier=diagnostiqueur')
         return resp.json()['diagnostiqueurs']
 
     def test_aucun_a_la_une_liste_complete(self):
@@ -1541,3 +1541,28 @@ class DepotPageRenduTests(TestCase):
         resp = self.client.get('/mon-compte/deposer/')
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Je n'ai pas encore de DPE")
+
+
+class ProsProchesMetierTests(TestCase):
+    """L'API pros-proches filtre bien par metier (generique)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _pro(self, nom, metier, dep='24', ville='Perigueux'):
+        from listings.models import ProProfile
+        u = User.objects.create_user(f'p_{nom}', f'{nom}@d.fr', 'x')
+        return ProProfile.objects.create(user=u, nom_entreprise=nom, metier=metier,
+            is_active=True, ville=ville, departement=dep, code_postal='24000')
+
+    def test_filtre_par_metier(self):
+        self._pro('Photo Pro', 'photographe')
+        self._pro('Diag Pro', 'diagnostiqueur')
+        r = self.client.get('/api/pros-proches/?ville=Perigueux&code_postal=24000&metier=photographe')
+        noms = [d['nom'] for d in r.json()['diagnostiqueurs']]
+        self.assertEqual(noms, ['Photo Pro'])  # que le photographe
+
+    def test_metier_inconnu_retombe_sur_diagnostiqueur(self):
+        self._pro('Diag Pro', 'diagnostiqueur')
+        r = self.client.get('/api/pros-proches/?ville=Perigueux&code_postal=24000&metier=nimportequoi')
+        self.assertEqual(len(r.json()['diagnostiqueurs']), 1)

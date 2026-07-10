@@ -117,7 +117,7 @@ urlpatterns = [
     # Pages legales
     path('cgu/', views.cgu, name='cgu'),
     path('cgv/', views.cgv, name='cgv'),
-    path('api/diagnostiqueurs-proches/', views.api_diagnostiqueurs_proches, name='api_diagnostiqueurs_proches'),
+    path('api/pros-proches/', views.api_pros_proches, name='api_pros_proches'),
     path('guide-vendeur/', views.guide_vendeur, name='guide_vendeur'),
     path('guide-acheteur/', views.guide_acheteur, name='guide_acheteur'),
     path('guides/', views.guides, name='guides'),

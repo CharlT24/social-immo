@@ -3628,17 +3628,20 @@ def cgv(request):
     return render(request, 'listings/cgv.html')
 
 
-def api_diagnostiqueurs_proches(request):
-    """Liste des diagnostiqueurs dans un rayon de 20 km d'une ville (pour un
-    vendeur sans DPE). Regle de mise en avant :
-      - s'il existe des diagnostiqueurs 'a la une' -> on ne montre QU'EUX
-        (option payante valorisee) ;
+def api_pros_proches(request):
+    """Liste des pros d'un metier donne dans un rayon de 20 km d'une ville
+    (ex. diagnostiqueur au moment du DPE, photographe au moment des photos).
+    Regle de mise en avant :
+      - s'il existe des pros 'a la une' -> on ne montre QU'EUX (option payante) ;
       - sinon -> la liste complete du secteur."""
     from .models import ProProfile, VilleGeo
     ville = (request.GET.get('ville') or '').strip()
     cp = (request.GET.get('code_postal') or '').strip()
+    metier = (request.GET.get('metier') or 'diagnostiqueur').strip()
+    if metier not in dict(ProProfile.METIER_CHOICES):
+        metier = 'diagnostiqueur'
 
-    qs = ProProfile.objects.filter(metier='diagnostiqueur', is_active=True)
+    qs = ProProfile.objects.filter(metier=metier, is_active=True)
     villes_rayon = VilleGeo.villes_dans_rayon(ville, 20) if ville else None
     if villes_rayon:
         qs = qs.filter(ville__in=villes_rayon)

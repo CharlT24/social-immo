@@ -586,6 +586,11 @@ class ProProfile(models.Model):
     class Meta:
         verbose_name = 'Profil Pro'
         verbose_name_plural = 'Profils Pro'
+        indexes = [
+            # api_pros_proches / annuaire : filtres metier + departement + actif
+            models.Index(fields=['is_active', 'departement', 'metier']),
+            models.Index(fields=['is_active', 'mise_en_avant']),
+        ]
 
     def __str__(self):
         return f"{self.nom_entreprise} ({self.get_metier_display()})"
@@ -1118,6 +1123,10 @@ class VilleGeo(models.Model):
         unique_together = ('ville', 'code_postal')
         verbose_name = 'Ville geocodee'
         verbose_name_plural = 'Villes geocodees'
+        indexes = [
+            # boite englobante du calcul de rayon (villes_dans_rayon)
+            models.Index(fields=['latitude', 'longitude']),
+        ]
 
     def __str__(self):
         return f"{self.ville} ({self.code_postal})"
@@ -1284,12 +1293,16 @@ class StatJour(models.Model):
 
     @classmethod
     def incrementer(cls, champ):
-        """Incremente un compteur du jour de maniere atomique et silencieuse."""
+        """Incremente un compteur du jour de maniere atomique et silencieuse.
+        1 seule requete dans le cas courant (UPDATE) ; create seulement au
+        premier hit du jour."""
         from django.db.models import F
         from django.utils import timezone
         try:
-            obj, _ = cls.objects.get_or_create(date=timezone.localdate())
-            cls.objects.filter(pk=obj.pk).update(**{champ: F(champ) + 1})
+            today = timezone.localdate()
+            modifiees = cls.objects.filter(date=today).update(**{champ: F(champ) + 1})
+            if not modifiees:
+                cls.objects.get_or_create(date=today, defaults={champ: 1})
         except Exception:
             pass  # la stat ne doit jamais casser une requete
 

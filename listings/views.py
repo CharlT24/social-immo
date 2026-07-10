@@ -224,18 +224,18 @@ def search_results(request):
     }
     annonces = annonces.order_by('-mise_en_avant', sort_map.get(tri, '-created_at'))
 
-    result_count = annonces.count()
-
-    # Pagination
+    # Pagination (paginator.count evite un COUNT separe)
     from django.core.paginator import Paginator
+    from django.core.cache import cache
     paginator = Paginator(annonces, 24)
     page_number = request.GET.get('page', 1)
     annonces_page = paginator.get_page(page_number)
+    result_count = paginator.count
 
-    # Villes pour autocomplete fallback
-    villes_disponibles = Annonce.objects.filter(
-        is_active=True
-    ).exclude(ville='').values_list('ville', flat=True).distinct().order_by('ville')
+    # Villes pour autocomplete fallback (change peu -> cache 5 min)
+    villes_disponibles = cache.get_or_set('search:villes', lambda: list(
+        Annonce.objects.filter(is_active=True).exclude(ville='')
+        .values_list('ville', flat=True).distinct().order_by('ville')), 300)
 
     # Favoris
     user_favorites = []
@@ -247,8 +247,10 @@ def search_results(request):
     # Seuil "nouveau" = 7 jours
     seuil_nouveau = timezone.now() - timedelta(days=7)
 
-    # Charger les options agences pour logo, badge, exclusif
-    agences_with_options = Agence.objects.filter(is_active=True).select_related('options')
+    # Charger les options agences UNIQUEMENT pour les annonces affichees
+    agence_ids_page = {a.agence_id for a in annonces_page if a.agence_id}
+    agences_with_options = Agence.objects.filter(
+        id__in=agence_ids_page, is_active=True).select_related('options')
     agence_data = {}
     for a in agences_with_options:
         opts = getattr(a, 'options', None)
@@ -455,71 +457,69 @@ def cockpit(request):
     from django.db.models.functions import TruncDate
     from .models import PageVue, StatJour, DemandeAgence, Estimation, DemandeContact
 
+    from django.core.cache import cache
     today = timezone.localdate()
     d30 = today - timedelta(days=29)
     d7 = today - timedelta(days=6)
 
-    pv30 = PageVue.objects.filter(created_at__date__gte=d30)
+    def _calcul_cockpit():
+        pv30 = PageVue.objects.filter(created_at__date__gte=d30)
 
-    def _bloc(qs):
-        return {'visites': qs.count(),
-                'uniques': qs.values('visiteur_hash').distinct().count()}
+        def _bloc(qs):
+            return {'visites': qs.count(),
+                    'uniques': qs.values('visiteur_hash').distinct().count()}
 
-    audience = {
-        'today': _bloc(PageVue.objects.filter(created_at__date=today)),
-        'j7': _bloc(PageVue.objects.filter(created_at__date__gte=d7)),
-        'j30': _bloc(pv30),
-    }
+        audience = {
+            'today': _bloc(PageVue.objects.filter(created_at__date=today)),
+            'j7': _bloc(PageVue.objects.filter(created_at__date__gte=d7)),
+            'j30': _bloc(pv30),
+        }
+        brut = {r['j']: r for r in pv30.annotate(j=TruncDate('created_at')).values('j')
+                .annotate(v=Count('id'), u=Count('visiteur_hash', distinct=True))}
+        serie = []
+        vmax = 1
+        for i in range(30):
+            jour = d30 + timedelta(days=i)
+            r = brut.get(jour)
+            v = r['v'] if r else 0
+            serie.append({'date': jour, 'visites': v, 'uniques': r['u'] if r else 0})
+            vmax = max(vmax, v)
+        for s in serie:
+            s['pct'] = round(s['visites'] * 100 / vmax)
 
-    # Serie par jour (30j), zeros combles pour un graphe continu
-    brut = {r['j']: r for r in pv30.annotate(j=TruncDate('created_at')).values('j')
-            .annotate(v=Count('id'), u=Count('visiteur_hash', distinct=True))}
-    serie = []
-    vmax = 1
-    for i in range(30):
-        jour = d30 + timedelta(days=i)
-        r = brut.get(jour)
-        v = r['v'] if r else 0
-        serie.append({'date': jour, 'visites': v, 'uniques': r['u'] if r else 0})
-        vmax = max(vmax, v)
-    for s in serie:
-        s['pct'] = round(s['visites'] * 100 / vmax)
+        top_pages = list(pv30.values('path').annotate(n=Count('id')).order_by('-n')[:12])
+        top_sources = list(pv30.exclude(referer_host='').values('referer_host')
+                           .annotate(n=Count('id')).order_by('-n')[:10])
+        sections = list(pv30.values('section').annotate(n=Count('id')).order_by('-n'))
+        mobile = pv30.filter(is_mobile=True).count()
+        total_pv = audience['j30']['visites'] or 1
+        part_mobile = round(mobile * 100 / total_pv)
 
-    top_pages = list(pv30.values('path').annotate(n=Count('id')).order_by('-n')[:12])
-    top_sources = list(pv30.exclude(referer_host='').values('referer_host')
-                       .annotate(n=Count('id')).order_by('-n')[:10])
-    sections = list(pv30.values('section').annotate(n=Count('id')).order_by('-n'))
-    mobile = pv30.filter(is_mobile=True).count()
-    total_pv = audience['j30']['visites'] or 1
-    part_mobile = round(mobile * 100 / total_pv)
+        sj = StatJour.objects.filter(date__gte=d30).aggregate(
+            est=Sum('estimations'), dep=Sum('depots_annonces'),
+            ins=Sum('inscriptions'), dev=Sum('demandes_devis'), al=Sum('alertes_creees'))
+        leads_agences = DemandeAgence.objects.filter(created_at__date__gte=d30).count()
+        leads_contacts = DemandeContact.objects.filter(created_at__date__gte=d30).count()
+        leads_estim = Estimation.objects.filter(created_at__date__gte=d30).count()
+        total_leads = leads_agences + leads_contacts + leads_estim
+        uniques30 = audience['j30']['uniques'] or 1
+        return {
+            'audience': audience, 'serie': serie, 'top_pages': top_pages,
+            'top_sources': top_sources, 'sections': sections,
+            'part_mobile': part_mobile, 'part_desktop': 100 - part_mobile,
+            'funnel': {'estimations': sj['est'] or 0, 'depots': sj['dep'] or 0,
+                       'inscriptions': sj['ins'] or 0, 'devis': sj['dev'] or 0,
+                       'alertes': sj['al'] or 0},
+            'leads': {'agences': leads_agences, 'contacts': leads_contacts,
+                      'estimations': leads_estim, 'total': total_leads},
+            'taux_conversion': round(total_leads * 100 / uniques30, 1),
+        }
 
-    # Entonnoir 30 jours (compteurs StatJour + leads reels)
-    sj = StatJour.objects.filter(date__gte=d30).aggregate(
-        est=Sum('estimations'), dep=Sum('depots_annonces'),
-        ins=Sum('inscriptions'), dev=Sum('demandes_devis'), al=Sum('alertes_creees'))
-    leads_agences = DemandeAgence.objects.filter(created_at__date__gte=d30).count()
-    leads_contacts = DemandeContact.objects.filter(created_at__date__gte=d30).count()
-    leads_estim = Estimation.objects.filter(created_at__date__gte=d30).count()
-    total_leads = leads_agences + leads_contacts + leads_estim
-    uniques30 = audience['j30']['uniques'] or 1
-    taux_conversion = round(total_leads * 100 / uniques30, 1)
+    # Agregations lourdes cachees 5 min (COUNT DISTINCT, GROUP BY sur 30j)
+    bloc = cache.get_or_set('cockpit:30j', _calcul_cockpit, 300)
 
     contexte = {
-        'audience': audience,
-        'serie': serie,
-        'top_pages': top_pages,
-        'top_sources': top_sources,
-        'sections': sections,
-        'part_mobile': part_mobile,
-        'part_desktop': 100 - part_mobile,
-        'funnel': {
-            'estimations': sj['est'] or 0, 'depots': sj['dep'] or 0,
-            'inscriptions': sj['ins'] or 0, 'devis': sj['dev'] or 0,
-            'alertes': sj['al'] or 0,
-        },
-        'leads': {'agences': leads_agences, 'contacts': leads_contacts,
-                  'estimations': leads_estim, 'total': total_leads},
-        'taux_conversion': taux_conversion,
+        **bloc,
         'recent_agences': DemandeAgence.objects.order_by('-created_at')[:6],
         'recent_estimations': Estimation.objects.order_by('-created_at')[:6],
     }
@@ -681,16 +681,17 @@ def decoration_list(request):
     if search_ref:
         inspiration_photos = inspiration_photos.filter(annonce__reference__icontains=search_ref)
 
-    # Categories disponibles
-    cat_agent = set(Photo.objects.filter(
-        is_inspiration=True, annonce__is_active=True
-    ).exclude(inspiration_categorie='').values_list('inspiration_categorie', flat=True))
-    cat_pro = set(ProRealisation.objects.filter(
-        is_active=True
-    ).exclude(categorie='').values_list('categorie', flat=True))
-    all_cats = cat_agent | cat_pro
-    cat_choices = dict(Annonce.INSPIRATION_CHOICES)
-    categories = [(c, cat_choices.get(c, c)) for c in sorted(all_cats)]
+    # Categories disponibles (change peu -> cache 5 min, evite 2 scans DISTINCT/req)
+    from django.core.cache import cache as _cache
+    def _calc_categories():
+        cat_agent = set(Photo.objects.filter(
+            is_inspiration=True, annonce__is_active=True
+        ).exclude(inspiration_categorie='').values_list('inspiration_categorie', flat=True))
+        cat_pro = set(ProRealisation.objects.filter(
+            is_active=True).exclude(categorie='').values_list('categorie', flat=True))
+        cat_choices = dict(Annonce.INSPIRATION_CHOICES)
+        return [(c, cat_choices.get(c, c)) for c in sorted(cat_agent | cat_pro)]
+    categories = _cache.get_or_set('inspi:categories', _calc_categories, 300)
 
     # Tags disponibles (groupes par groupe)
     all_tags = InspirationTag.objects.all()

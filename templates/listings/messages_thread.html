@@ -26,6 +26,31 @@
         {% endfor %}
     </div>
 
+    <!-- RDV en attente -->
+    {% for rdv in rdv_en_attente %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3 flex items-center justify-between gap-3">
+        <p class="text-sm text-amber-900">📅 Visite proposee le <strong>{{ rdv.date|date:'d/m/Y a Hh i' }}</strong></p>
+        {% if rdv.propose_par_id != user.id %}
+        <div class="flex gap-2 flex-shrink-0">
+            <form method="post" action="{% url 'listings:repondre_rdv' rdv.id %}">{% csrf_token %}<input type="hidden" name="reponse" value="accepte"><button class="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-full">Accepter</button></form>
+            <form method="post" action="{% url 'listings:repondre_rdv' rdv.id %}">{% csrf_token %}<input type="hidden" name="reponse" value="refuse"><button class="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full">Refuser</button></form>
+        </div>
+        {% else %}
+        <span class="text-xs text-amber-700 flex-shrink-0">En attente de reponse</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Proposer une visite -->
+    <details class="bg-white rounded-2xl shadow-apple p-3 mb-3">
+        <summary class="text-sm font-semibold text-apple-blue cursor-pointer">📅 Proposer une visite</summary>
+        <form method="post" action="{% url 'listings:proposer_rdv' conv.id %}" class="flex items-center gap-2 mt-3">
+            {% csrf_token %}
+            <input type="datetime-local" name="date" required class="flex-1 px-3 py-2 bg-apple-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+            <button type="submit" class="text-sm font-semibold text-white bg-apple-blue hover:bg-blue-600 px-4 py-2 rounded-xl">Proposer</button>
+        </form>
+    </details>
+
     <form method="post" class="sticky bottom-4 flex items-end gap-2 bg-white rounded-2xl shadow-apple p-2">
         {% csrf_token %}
         <textarea name="texte" rows="1" required placeholder="Votre message..." aria-label="Votre message"

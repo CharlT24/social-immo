@@ -1821,3 +1821,35 @@ class MessagerieTests(TestCase):
     def test_inbox_accessible(self):
         self.client.force_login(self.acheteur)
         self.assertEqual(self.client.get('/messages/').status_code, 200)
+
+
+class RendezVousTests(TestCase):
+    """Prise de RDV dans une conversation : proposer, accepter."""
+
+    def setUp(self):
+        cache.clear()
+        self.vendeur = User.objects.create_user('v_rdv', 'v@r.fr', 'x')
+        self.acheteur = User.objects.create_user('a_rdv', 'a@r.fr', 'x')
+        from listings.models import Conversation
+        self.conv = Conversation.objects.create(acheteur=self.acheteur, proprietaire=self.vendeur)
+
+    def test_proposer_et_accepter(self):
+        from listings.models import RendezVous
+        self.client.force_login(self.acheteur)
+        self.client.post(f'/messages/{self.conv.id}/rdv/', {'date': '2026-08-01T14:30'})
+        rdv = RendezVous.objects.get(conversation=self.conv)
+        self.assertEqual(rdv.statut, 'propose')
+        # le vendeur (autre partie) accepte
+        self.client.force_login(self.vendeur)
+        self.client.post(f'/rdv/{rdv.id}/repondre/', {'reponse': 'accepte'})
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, 'accepte')
+
+    def test_proposeur_ne_peut_pas_accepter_son_rdv(self):
+        from listings.models import RendezVous
+        self.client.force_login(self.acheteur)
+        self.client.post(f'/messages/{self.conv.id}/rdv/', {'date': '2026-08-01T14:30'})
+        rdv = RendezVous.objects.get(conversation=self.conv)
+        self.client.post(f'/rdv/{rdv.id}/repondre/', {'reponse': 'accepte'})  # meme user
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, 'propose')  # inchange

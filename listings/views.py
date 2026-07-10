@@ -3747,7 +3747,62 @@ def messages_thread(request, conversation_id):
     return render(request, 'listings/messages_thread.html', {
         'conv': conv, 'autre': conv.autre(request.user),
         'messages_fil': conv.messages.select_related('auteur').all(),
+        'rdv_en_attente': conv.rendez_vous.filter(statut='propose'),
     })
+
+
+@login_required
+@require_POST
+def proposer_rdv(request, conversation_id):
+    """Proposer un creneau de visite dans une conversation."""
+    from .models import Conversation, Message, RendezVous
+    from django.db.models import Q
+    from django.utils.dateparse import parse_datetime
+    conv = get_object_or_404(
+        Conversation.objects.filter(Q(acheteur=request.user) | Q(proprietaire=request.user)),
+        id=conversation_id)
+    dt = parse_datetime(request.POST.get('date', '') or '')
+    if not dt:
+        messages.error(request, 'Date invalide.')
+        return redirect('listings:messages_thread', conversation_id=conv.id)
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    RendezVous.objects.create(conversation=conv, propose_par=request.user, date=dt)
+    Message.objects.create(conversation=conv, auteur=request.user,
+                           texte=f"📅 Proposition de visite le {dt:%d/%m/%Y a %Hh%M}.")
+    conv.save(update_fields=['updated_at'])
+    autre = conv.autre(request.user)
+    if autre and autre.email:
+        try:
+            send_mail('[Social Immo] Proposition de visite',
+                      f"Une visite vous est proposee le {dt:%d/%m/%Y a %Hh%M} pour "
+                      f"\"{conv.titre()}\".\nRepondez : https://social-immo.com/messages/{conv.id}/",
+                      settings.DEFAULT_FROM_EMAIL, [autre.email], fail_silently=True)
+        except Exception:
+            pass
+    return redirect('listings:messages_thread', conversation_id=conv.id)
+
+
+@login_required
+@require_POST
+def repondre_rdv(request, rdv_id):
+    """Accepter ou refuser une proposition de visite."""
+    from .models import Conversation, Message, RendezVous
+    from django.db.models import Q
+    rdv = get_object_or_404(
+        RendezVous.objects.filter(
+            Q(conversation__acheteur=request.user) | Q(conversation__proprietaire=request.user)),
+        id=rdv_id)
+    reponse = request.POST.get('reponse')
+    # Seul l'autre partie (pas celui qui propose) peut repondre
+    if rdv.propose_par_id != request.user.id and reponse in ('accepte', 'refuse'):
+        rdv.statut = reponse
+        rdv.save(update_fields=['statut'])
+        libelle = 'acceptee ✅' if reponse == 'accepte' else 'declinee'
+        Message.objects.create(conversation=rdv.conversation, auteur=request.user,
+                               texte=f"Visite du {rdv.date:%d/%m/%Y a %Hh%M} : {libelle}.")
+        rdv.conversation.save(update_fields=['updated_at'])
+    return redirect('listings:messages_thread', conversation_id=rdv.conversation_id)
 
 
 def desabonnement(request):

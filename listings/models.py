@@ -1389,6 +1389,27 @@ class Message(models.Model):
         return f"{self.auteur}: {self.texte[:40]}"
 
 
+class RendezVous(models.Model):
+    """Proposition de visite au sein d'une conversation."""
+
+    STATUT_CHOICES = [('propose', 'Propose'), ('accepte', 'Accepte'), ('refuse', 'Refuse')]
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE, related_name='rendez_vous')
+    propose_par = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField()
+    statut = models.CharField(max_length=10, choices=STATUT_CHOICES, default='propose')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Rendez-vous'
+        verbose_name_plural = 'Rendez-vous'
+
+    def __str__(self):
+        return f"Visite {self.date:%d/%m %H:%M} ({self.get_statut_display()})"
+
+
 class Desabonnement(models.Model):
     """Adresses ayant demande a ne plus recevoir d'emails de relance/prospection.
     Verifie avant chaque envoi (relance estimation, rapport partenaires)."""

@@ -103,6 +103,8 @@ urlpatterns = [
     # Espace Particulier
     path('messages/', views.messages_inbox, name='messages_inbox'),
     path('messages/<int:conversation_id>/', views.messages_thread, name='messages_thread'),
+    path('messages/<int:conversation_id>/rdv/', views.proposer_rdv, name='proposer_rdv'),
+    path('rdv/<int:rdv_id>/repondre/', views.repondre_rdv, name='repondre_rdv'),
     path('mon-compte/', views.particulier_dashboard, name='particulier_dashboard'),
     path('mon-compte/deposer/', views.particulier_creer_annonce, name='particulier_creer_annonce'),
     path('mon-compte/annonce/<int:annonce_id>/publiee/', views.annonce_publiee, name='annonce_publiee'),

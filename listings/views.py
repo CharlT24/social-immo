@@ -3628,6 +3628,43 @@ def cgv(request):
     return render(request, 'listings/cgv.html')
 
 
+def api_diagnostiqueurs_proches(request):
+    """Liste des diagnostiqueurs dans un rayon de 20 km d'une ville (pour un
+    vendeur sans DPE). Regle de mise en avant :
+      - s'il existe des diagnostiqueurs 'a la une' -> on ne montre QU'EUX
+        (option payante valorisee) ;
+      - sinon -> la liste complete du secteur."""
+    from .models import ProProfile, VilleGeo
+    ville = (request.GET.get('ville') or '').strip()
+    cp = (request.GET.get('code_postal') or '').strip()
+
+    qs = ProProfile.objects.filter(metier='diagnostiqueur', is_active=True)
+    villes_rayon = VilleGeo.villes_dans_rayon(ville, 20) if ville else None
+    if villes_rayon:
+        qs = qs.filter(ville__in=villes_rayon)
+    elif cp and len(cp) >= 2:
+        qs = qs.filter(departement=cp[:2])
+    elif ville:
+        qs = qs.filter(ville__iexact=ville)
+
+    qs = qs.order_by('-mise_en_avant', '-siret_verifie', 'nom_entreprise')
+    tous = list(qs)
+    a_la_une = [p for p in tous if p.mise_en_avant]
+    selection = a_la_une if a_la_une else tous  # a la une prioritaires, sinon tout
+
+    data = [{
+        'nom': p.nom_entreprise,
+        'ville': p.ville,
+        'telephone': p.telephone,
+        'site_web': p.site_web,
+        'google': p.google_business_url,
+        'url': p.get_absolute_url(),
+        'verifie': p.siret_verifie,
+        'a_la_une': p.mise_en_avant,
+    } for p in selection[:12]]
+    return JsonResponse({'diagnostiqueurs': data, 'total': len(selection)})
+
+
 def guide_vendeur(request):
     """Guide complet du vendeur particulier : documents a reunir, conseils
     de redaction/photos/prix, etapes de la vente. A titre informatif."""

@@ -1488,3 +1488,56 @@ class FicheJsLocaleTests(TestCase):
         # point decimal en JS, jamais la virgule
         self.assertIn('surface: 120.00', html)
         self.assertNotIn('surface: 120,00', html)
+
+
+class DiagnostiqueursProchesTests(TestCase):
+    """API diagnostiqueurs proches : a la une prioritaires, sinon liste complete."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _diag(self, nom, alaune=False, dep='24', ville='Perigueux'):
+        from listings.models import ProProfile
+        u = User.objects.create_user(f'diag_{nom}', f'{nom}@d.fr', 'x')
+        return ProProfile.objects.create(
+            user=u, nom_entreprise=nom, metier='diagnostiqueur', is_active=True,
+            ville=ville, departement=dep, code_postal='24000', mise_en_avant=alaune)
+
+    def _get(self):
+        resp = self.client.get('/api/diagnostiqueurs-proches/?ville=Perigueux&code_postal=24000')
+        return resp.json()['diagnostiqueurs']
+
+    def test_aucun_a_la_une_liste_complete(self):
+        self._diag('Diag A'); self._diag('Diag B')
+        res = self._get()
+        self.assertEqual(len(res), 2)  # tous
+
+    def test_un_seul_a_la_une_seul_affiche(self):
+        self._diag('Diag A'); self._diag('Diag B', alaune=True); self._diag('Diag C')
+        res = self._get()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]['nom'], 'Diag B')
+        self.assertTrue(res[0]['a_la_une'])
+
+    def test_plusieurs_a_la_une_seuls_eux(self):
+        self._diag('Diag A', alaune=True); self._diag('Diag B', alaune=True)
+        self._diag('Diag C'); self._diag('Diag D')
+        res = self._get()
+        self.assertEqual(len(res), 2)
+        self.assertTrue(all(d['a_la_une'] for d in res))
+
+    def test_hors_secteur_exclu(self):
+        self._diag('Diag Loin', dep='75', ville='Paris')  # autre departement
+        res = self._get()
+        self.assertEqual(len(res), 0)
+
+
+class DepotPageRenduTests(TestCase):
+    """La page de depot particulier rend sans erreur de template."""
+
+    def test_page_depot_200(self):
+        u = User.objects.create_user('depot', 'depot@t.fr', 'x')
+        self.client.force_login(u)
+        resp = self.client.get('/mon-compte/deposer/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Je n'ai pas encore de DPE")

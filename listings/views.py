@@ -2201,6 +2201,20 @@ def envoyer_contact(request):
 
     demande.save()
 
+    # Messagerie interne : un acheteur CONNECTE ouvre une conversation avec le
+    # proprietaire (en plus de l'email) -> reponse tracee sur le site.
+    if request.user.is_authenticated:
+        try:
+            cible_annonce = demande.annonce if annonce_id else None
+            cible_pro = demande.pro if pro_id else None
+            conv = obtenir_ou_creer_conversation(request.user, cible_annonce, cible_pro)
+            if conv:
+                from .models import Message as _Msg
+                _Msg.objects.create(conversation=conv, auteur=request.user, texte=message_text[:2000])
+                conv.save(update_fields=['updated_at'])
+        except Exception:
+            pass
+
     # Envoyer l'email directement au conseiller/agent
     if recipient_email:
         try:
@@ -3650,6 +3664,90 @@ def cgu(request):
 
 def cgv(request):
     return render(request, 'listings/cgv.html')
+
+
+def _proprietaire_de(annonce=None, pro=None):
+    """Retourne l'utilisateur destinataire (proprietaire) d'une annonce/pro."""
+    if pro is not None:
+        return pro.user
+    if annonce is not None:
+        if annonce.user_id:
+            return annonce.user
+        if annonce.agence_id and annonce.agence.responsable_id:
+            return annonce.agence.responsable
+    return None
+
+
+def obtenir_ou_creer_conversation(acheteur, annonce=None, pro=None):
+    """Cree ou recupere la conversation entre l'acheteur et le proprietaire."""
+    from .models import Conversation
+    proprietaire = _proprietaire_de(annonce, pro)
+    if not proprietaire or proprietaire == acheteur:
+        return None
+    conv, _ = Conversation.objects.get_or_create(
+        acheteur=acheteur, proprietaire=proprietaire,
+        annonce=annonce if annonce else None,
+        pro=pro if pro else None,
+    )
+    return conv
+
+
+@login_required
+def messages_inbox(request):
+    """Boite de reception : toutes les conversations de l'utilisateur."""
+    from .models import Conversation
+    from django.db.models import Q, Count
+    convs = (Conversation.objects
+             .filter(Q(acheteur=request.user) | Q(proprietaire=request.user))
+             .select_related('annonce', 'pro', 'acheteur', 'proprietaire')
+             .prefetch_related('messages'))
+    items = []
+    for c in convs:
+        msgs = list(c.messages.all())
+        dernier = msgs[-1] if msgs else None
+        non_lus = sum(1 for m in msgs if not m.lu and m.auteur_id != request.user.id)
+        items.append({'conv': c, 'autre': c.autre(request.user),
+                      'dernier': dernier, 'non_lus': non_lus})
+    return render(request, 'listings/messages_inbox.html', {'items': items})
+
+
+@login_required
+def messages_thread(request, conversation_id):
+    """Fil d'une conversation : lecture + reponse."""
+    from .models import Conversation, Message
+    from django.db.models import Q
+    conv = get_object_or_404(
+        Conversation.objects.filter(Q(acheteur=request.user) | Q(proprietaire=request.user)),
+        id=conversation_id)
+
+    if request.method == 'POST':
+        texte = (request.POST.get('texte') or '').strip()
+        if texte:
+            Message.objects.create(conversation=conv, auteur=request.user, texte=texte[:2000])
+            conv.save(update_fields=['updated_at'])
+            # Notifier l'autre partie par email
+            autre = conv.autre(request.user)
+            if autre and autre.email:
+                try:
+                    send_mail(
+                        subject='[Social Immo] Nouveau message',
+                        message=(f"Bonjour,\n\nVous avez recu un nouveau message concernant "
+                                 f"\"{conv.titre()}\" sur Social Immo :\n\n{texte[:500]}\n\n"
+                                 f"Repondez depuis votre messagerie :\n"
+                                 f"https://social-immo.com/messages/{conv.id}/\n\n"
+                                 f"L'equipe Social Immo"),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[autre.email], fail_silently=True)
+                except Exception:
+                    pass
+        return redirect('listings:messages_thread', conversation_id=conv.id)
+
+    # Marquer comme lus les messages recus
+    conv.messages.filter(lu=False).exclude(auteur=request.user).update(lu=True)
+    return render(request, 'listings/messages_thread.html', {
+        'conv': conv, 'autre': conv.autre(request.user),
+        'messages_fil': conv.messages.select_related('auteur').all(),
+    })
 
 
 def desabonnement(request):

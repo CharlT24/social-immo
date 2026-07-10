@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Messagerie | Social Immo{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+    <h1 class="text-3xl font-bold tracking-tight mb-6">Messagerie</h1>
+
+    {% if items %}
+    <div class="bg-white rounded-2xl shadow-apple divide-y divide-gray-100 overflow-hidden">
+        {% for it in items %}
+        <a href="{% url 'listings:messages_thread' it.conv.id %}" class="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+            <div class="w-11 h-11 rounded-full bg-apple-blue/10 flex items-center justify-center flex-shrink-0 text-apple-blue font-bold">
+                {{ it.autre.get_full_name|default:it.autre.username|first|upper }}
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="font-semibold text-apple-text truncate">{{ it.autre.get_full_name|default:it.autre.username }}</p>
+                    {% if it.dernier %}<span class="text-xs text-apple-gray flex-shrink-0">{{ it.dernier.created_at|timesince }}</span>{% endif %}
+                </div>
+                <p class="text-xs text-apple-gray truncate">{{ it.conv.titre }}</p>
+                {% if it.dernier %}<p class="text-sm text-gray-600 truncate mt-0.5">{{ it.dernier.texte }}</p>{% endif %}
+            </div>
+            {% if it.non_lus %}
+            <span class="flex-shrink-0 bg-apple-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">{{ it.non_lus }}</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-apple p-10 text-center">
+        <p class="text-apple-gray">Aucune conversation pour le moment.</p>
+        <a href="{% url 'listings:search_results' %}" class="inline-block mt-4 text-apple-blue font-semibold hover:underline">Parcourir les annonces</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

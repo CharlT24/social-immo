@@ -1775,3 +1775,49 @@ class FiltresEnrichisTests(TestCase):
         r = self.client.get('/recherche/?meuble=1')
         self.assertContains(r, 'F-EXT')
         self.assertNotContains(r, 'F-ASC')
+
+
+class MessagerieTests(TestCase):
+    """Messagerie interne : contact -> conversation, reponse, controle d'acces."""
+
+    def setUp(self):
+        cache.clear()
+        self.vendeur = User.objects.create_user('vend_msg', 'vend@m.fr', 'x')
+        self.annonce = creer_annonce('MSG-1', user=self.vendeur, source='particulier',
+                                     contact_email='vend@m.fr', is_active=True)
+        self.acheteur = User.objects.create_user('ach_msg', 'ach@m.fr', 'x')
+
+    def test_contact_connecte_cree_conversation(self):
+        from listings.models import Conversation, Message
+        self.client.force_login(self.acheteur)
+        self.client.post('/api/contact/', data=json.dumps({
+            'annonce_id': self.annonce.id, 'message': 'Bonjour, ce bien est-il dispo ?',
+            'telephone': '0600'}), content_type='application/json')
+        conv = Conversation.objects.get(acheteur=self.acheteur, proprietaire=self.vendeur)
+        self.assertEqual(conv.annonce_id, self.annonce.id)
+        self.assertEqual(conv.messages.count(), 1)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_reponse_dans_le_fil_notifie(self):
+        from listings.models import Conversation, Message
+        conv = Conversation.objects.create(acheteur=self.acheteur, proprietaire=self.vendeur,
+                                           annonce=self.annonce)
+        Message.objects.create(conversation=conv, auteur=self.acheteur, texte='Coucou')
+        # le vendeur repond
+        self.client.force_login(self.vendeur)
+        self.client.post(f'/messages/{conv.id}/', {'texte': 'Oui, toujours dispo !'})
+        self.assertEqual(conv.messages.count(), 2)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('ach@m.fr', mail.outbox[0].to)
+
+    def test_acces_interdit_a_un_tiers(self):
+        from listings.models import Conversation
+        conv = Conversation.objects.create(acheteur=self.acheteur, proprietaire=self.vendeur,
+                                           annonce=self.annonce)
+        tiers = User.objects.create_user('tiers', 't@m.fr', 'x')
+        self.client.force_login(tiers)
+        self.assertEqual(self.client.get(f'/messages/{conv.id}/').status_code, 404)
+
+    def test_inbox_accessible(self):
+        self.client.force_login(self.acheteur)
+        self.assertEqual(self.client.get('/messages/').status_code, 200)

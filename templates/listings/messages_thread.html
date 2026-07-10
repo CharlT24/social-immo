@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ autre.get_full_name|default:autre.username }} | Messagerie{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+
+    <div class="flex items-center gap-3 mb-5">
+        <a href="{% url 'listings:messages_inbox' %}" class="text-apple-gray hover:text-apple-text">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="min-w-0">
+            <p class="font-bold text-apple-text truncate">{{ autre.get_full_name|default:autre.username }}</p>
+            {% if conv.annonce_id %}<a href="{{ conv.annonce.get_absolute_url }}" class="text-xs text-apple-blue hover:underline">{{ conv.titre }}</a>
+            {% elif conv.pro_id %}<a href="{{ conv.pro.get_absolute_url }}" class="text-xs text-apple-blue hover:underline">{{ conv.titre }}</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="space-y-3 mb-6">
+        {% for m in messages_fil %}
+        <div class="flex {% if m.auteur_id == user.id %}justify-end{% endif %}">
+            <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-sm {% if m.auteur_id == user.id %}bg-apple-blue text-white rounded-br-md{% else %}bg-white shadow-apple text-apple-text rounded-bl-md{% endif %}">
+                <p class="whitespace-pre-wrap break-words">{{ m.texte }}</p>
+                <p class="text-[10px] mt-1 {% if m.auteur_id == user.id %}text-white/70{% else %}text-apple-gray{% endif %}">{{ m.created_at|date:'d/m H:i' }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <form method="post" class="sticky bottom-4 flex items-end gap-2 bg-white rounded-2xl shadow-apple p-2">
+        {% csrf_token %}
+        <textarea name="texte" rows="1" required placeholder="Votre message..." aria-label="Votre message"
+                  class="flex-1 resize-none px-3 py-2.5 bg-apple-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"></textarea>
+        <button type="submit" class="flex-shrink-0 bg-apple-blue text-white font-semibold w-11 h-11 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1328,6 +1328,67 @@ class StatJour(models.Model):
             pass  # la stat ne doit jamais casser une requete
 
 
+class Conversation(models.Model):
+    """Fil de discussion interne entre un acheteur/visiteur (initiateur) et le
+    proprietaire d'une annonce (particulier, agence ou pro)."""
+
+    annonce = models.ForeignKey(
+        Annonce, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='conversations')
+    pro = models.ForeignKey(
+        ProProfile, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='conversations')
+    acheteur = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='conversations_initiees')
+    proprietaire = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='conversations_recues')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'Conversation'
+        indexes = [
+            models.Index(fields=['acheteur', '-updated_at']),
+            models.Index(fields=['proprietaire', '-updated_at']),
+        ]
+
+    def __str__(self):
+        return f"Conversation {self.acheteur} <-> {self.proprietaire}"
+
+    def autre(self, user):
+        """L'interlocuteur de `user` dans cette conversation."""
+        return self.proprietaire if user_id_eq(user, self.acheteur_id) else self.acheteur
+
+    def titre(self):
+        if self.annonce_id:
+            return self.annonce.titre[:60]
+        if self.pro_id:
+            return self.pro.nom_entreprise
+        return 'Conversation'
+
+
+def user_id_eq(user, uid):
+    return getattr(user, 'id', None) == uid
+
+
+class Message(models.Model):
+    """Message d'une conversation interne."""
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE, related_name='messages')
+    auteur = models.ForeignKey(User, on_delete=models.CASCADE)
+    texte = models.TextField()
+    lu = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.auteur}: {self.texte[:40]}"
+
+
 class Desabonnement(models.Model):
     """Adresses ayant demande a ne plus recevoir d'emails de relance/prospection.
     Verifie avant chaque envoi (relance estimation, rapport partenaires)."""

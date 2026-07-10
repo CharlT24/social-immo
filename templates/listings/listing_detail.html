@@ -546,15 +546,18 @@
                             {% if not user.is_authenticated %}
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                                 <input type="text" id="contact-nom" placeholder="Votre nom *"
+                                    aria-label="Votre nom" required autocomplete="name"
                                     class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
                                 <input type="email" id="contact-email" placeholder="Votre email *"
+                                    aria-label="Votre email" required autocomplete="email"
                                     class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all">
                             </div>
                             {% endif %}
-                            <textarea id="contact-message" rows="3"
+                            <textarea id="contact-message" rows="3" aria-label="Votre message"
                                 placeholder="Bonjour, je suis interesse par ce bien, pourriez-vous me recontacter ?"
                                 class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all resize-none mb-2">{% if not user.is_authenticated %}Bonjour, je suis interesse par ce bien ({{ annonce.reference }}). Pourriez-vous me recontacter ? Merci.{% endif %}</textarea>
                             <input type="tel" id="contact-tel" value="{{ mon_tel }}" placeholder="Votre telephone *"
+                                aria-label="Votre telephone" required autocomplete="tel"
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-2">
                             {% if not user.is_authenticated %}
                             <label class="flex items-start gap-2 mb-2 cursor-pointer select-none">

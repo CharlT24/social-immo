@@ -255,6 +255,13 @@
 <!-- ==================== RESULTS ==================== -->
 <div class="max-w-7xl mx-auto px-4 py-6">
 
+    <!-- H1 SEO -->
+    <h1 class="text-xl sm:text-2xl font-bold tracking-tight mb-4">
+        {% if current_ville %}Immobilier a {{ current_ville }}{% else %}Annonces immobilieres{% endif %}
+        {% if current_type == 'V' %} — a vendre{% elif current_type == 'L' %} — a louer{% endif %}
+        <span class="text-apple-gray font-medium text-base">· {{ result_count }} bien{{ result_count|pluralize:"s" }}</span>
+    </h1>
+
     <!-- Result count + tabs -->
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">

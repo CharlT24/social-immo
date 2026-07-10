@@ -1716,3 +1716,33 @@ class DesabonnementTests(TestCase):
         mail.outbox.clear()
         self.assertFalse(envoyer_email_prospection('Sujet', 'Corps', 'p@test.fr'))
         self.assertEqual(len(mail.outbox), 0)
+
+
+class AvisVerifieTests(TestCase):
+    """Un avis est 'verifie' si l'auteur a reellement contacte le pro."""
+
+    def setUp(self):
+        cache.clear()
+        from listings.models import ProProfile
+        pu = User.objects.create_user('proav', 'proav@t.fr', 'x')
+        self.pro = ProProfile.objects.create(user=pu, nom_entreprise='Pro Av',
+            metier='peintre', is_active=True)
+
+    def _avis(self, user, note=5):
+        self.client.force_login(user)
+        return self.client.post('/api/pro-avis/', data=json.dumps(
+            {'pro_id': self.pro.id, 'note': note, 'commentaire': 'Top'}),
+            content_type='application/json')
+
+    def test_avis_verifie_si_contact_prealable(self):
+        from listings.models import ProAvis, DemandeContact
+        client = User.objects.create_user('clientv', 'cv@t.fr', 'x')
+        DemandeContact.objects.create(pro=self.pro, expediteur=client, message='Bonjour')
+        self._avis(client)
+        self.assertTrue(ProAvis.objects.get(pro=self.pro, auteur=client).verifie)
+
+    def test_avis_non_verifie_sans_contact(self):
+        from listings.models import ProAvis
+        client = User.objects.create_user('clientn', 'cn@t.fr', 'x')
+        self._avis(client)
+        self.assertFalse(ProAvis.objects.get(pro=self.pro, auteur=client).verifie)

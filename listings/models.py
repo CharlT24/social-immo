@@ -678,6 +678,9 @@ class ProAvis(models.Model):
     auteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='avis_donnes')
     note = models.PositiveIntegerField()  # 1 a 5
     commentaire = models.TextField(blank=True)
+    verifie = models.BooleanField(
+        default=False, verbose_name='Avis verifie',
+        help_text='True si l\'auteur a reellement contacte ce pro (preuve d\'interaction).')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

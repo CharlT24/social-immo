@@ -2241,9 +2241,12 @@ def submit_pro_avis(request):
     if request.user == pro.user:
         return JsonResponse({'error': 'Vous ne pouvez pas vous auto-evaluer'}, status=400)
 
+    # Avis verifie : l'auteur a reellement sollicite ce pro (preuve d'interaction)
+    verifie = DemandeContact.objects.filter(pro=pro, expediteur=request.user).exists()
+
     avis, created = ProAvis.objects.update_or_create(
         pro=pro, auteur=request.user,
-        defaults={'note': note, 'commentaire': commentaire}
+        defaults={'note': note, 'commentaire': commentaire, 'verifie': verifie}
     )
 
     return JsonResponse({

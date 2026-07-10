@@ -1404,3 +1404,37 @@ class LibelleVendeurTests(TestCase):
         a = creer_annonce('LBL-2', source='import', contact_nom='Agence Soleil', is_active=True)
         resp = self.client.get(a.get_absolute_url())
         self.assertContains(resp, 'Agent immobilier')
+
+
+class ContactAnnonceTests(TestCase):
+    """Le formulaire de contact d'une annonce fonctionne (lead enregistre + success)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def _post(self, payload):
+        return self.client.post('/api/contact/', data=json.dumps(payload),
+                                content_type='application/json')
+
+    def test_contact_anonyme_ok(self):
+        a = creer_annonce('CT-A', source='particulier', contact_email='vendeur@test.fr',
+                          contact_nom='Marie', is_active=True)
+        resp = self._post({'annonce_id': a.id, 'message': 'Bonjour, interesse',
+                           'telephone': '0600000000', 'nom': 'Jean Acheteur',
+                           'email': 'jean@test.fr'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        self.assertEqual(DemandeContact.objects.filter(annonce=a).count(), 1)
+
+    def test_contact_anonyme_sans_nom_email_refuse(self):
+        a = creer_annonce('CT-B', source='particulier', contact_email='v@test.fr', is_active=True)
+        resp = self._post({'annonce_id': a.id, 'message': 'Bonjour'})
+        self.assertEqual(resp.status_code, 400)  # nom+email requis, message d'erreur clair
+
+    def test_contact_connecte_ok(self):
+        u = User.objects.create_user('acheteurc', 'ac@test.fr', 'x')
+        self.client.force_login(u)
+        a = creer_annonce('CT-C', source='particulier', contact_email='v@test.fr', is_active=True)
+        resp = self._post({'annonce_id': a.id, 'message': 'Interesse par ce bien'})
+        self.assertTrue(resp.json().get('success'))
+        self.assertEqual(DemandeContact.objects.filter(annonce=a, expediteur=u).count(), 1)

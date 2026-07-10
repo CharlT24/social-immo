@@ -2159,12 +2159,12 @@ Connectez-vous sur SocialImmo pour repondre.
             send_mail(
                 subject,
                 body,
-                'noreply@social-immo.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [recipient_email],
                 fail_silently=True,
             )
         except Exception:
-            pass  # Ne pas bloquer si l'email echoue
+            pass  # Ne pas bloquer si l'email echoue (la demande est deja en base)
 
     return JsonResponse({'success': True})
 

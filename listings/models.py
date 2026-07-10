@@ -189,9 +189,14 @@ class Annonce(models.Model):
         'paris': [str(d).zfill(2) for d in range(75001, 75021)],  # tout Paris (750xx)
         'lyon': ['6900', '6910'], 'villeurbanne': ['69100'],
         'lille': ['59000', '59260', '59160', '59800'],
+        'hellemmes': ['59260'], 'lomme': ['59160'],
         'montpellier': ['34000', '34070', '34080', '34090'],
         'bordeaux': ['33000', '33100', '33200', '33300', '33800'],
-        'plaine-commune': [], 'est-ensemble': [],
+        'grenoble': ['38000', '38100'],
+        'bayonne': ['64100'], 'biarritz': ['64200'], 'anglet': ['64600'],
+        'saint-jean-de-luz': ['64500'], 'bidart': ['64210'],
+        'plaine-commune': ['93200', '93210', '93300', '93400', '93430', '93450', '93800', '93240', '93380'],
+        'est-ensemble': ['93100', '93130', '93140', '93170', '93230', '93260', '93310', '93330', '93500'],
     }
 
     @property
@@ -1305,6 +1310,25 @@ class StatJour(models.Model):
                 cls.objects.get_or_create(date=today, defaults={champ: 1})
         except Exception:
             pass  # la stat ne doit jamais casser une requete
+
+
+class Desabonnement(models.Model):
+    """Adresses ayant demande a ne plus recevoir d'emails de relance/prospection.
+    Verifie avant chaque envoi (relance estimation, rapport partenaires)."""
+
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Desabonnement email'
+        verbose_name_plural = 'Desabonnements email'
+
+    def __str__(self):
+        return self.email
+
+    @classmethod
+    def est_desabonne(cls, email):
+        return bool(email) and cls.objects.filter(email__iexact=email.strip()).exists()
 
 
 class PageVue(models.Model):

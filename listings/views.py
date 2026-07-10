@@ -3635,6 +3635,16 @@ def cgv(request):
     return render(request, 'listings/cgv.html')
 
 
+def desabonnement(request):
+    """Desinscription (RGPD) via lien signe dans les emails de relance."""
+    from .services.emails import email_from_token
+    from .models import Desabonnement
+    email = email_from_token(request.GET.get('token', ''))
+    if email:
+        Desabonnement.objects.get_or_create(email=email)
+    return render(request, 'listings/desabonnement.html', {'email': email})
+
+
 def api_pros_proches(request):
     """Liste des pros d'un metier donne dans un rayon de 20 km d'une ville
     (ex. diagnostiqueur au moment du DPE, photographe au moment des photos).

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Desinscription | Social Immo{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto px-6 py-20 text-center">
+    {% if email %}
+    <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
+        <svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h1 class="text-2xl font-bold mb-2">Vous etes desabonne</h1>
+    <p class="text-apple-gray">L'adresse <strong class="text-apple-text">{{ email }}</strong> ne recevra plus d'emails de relance ou de rapport de notre part.</p>
+    {% else %}
+    <h1 class="text-2xl font-bold mb-2">Lien invalide ou expire</h1>
+    <p class="text-apple-gray">Ce lien de desinscription n'est plus valide. Contactez-nous a contact@social-immo.com si besoin.</p>
+    {% endif %}
+    <a href="{% url 'listings:homepage' %}" class="inline-block mt-6 text-apple-blue font-semibold hover:underline">Retour a l'accueil</a>
+</div>
+{% endblock %}

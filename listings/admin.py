@@ -3,7 +3,7 @@ from .models import (
     Annonce, Photo, Commentaire, Favori, Agence,
     ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation,
-    DemandeAgence,
+    DemandeAgence, Desabonnement,
 )
 
 
@@ -116,3 +116,9 @@ class EstimationAdmin(admin.ModelAdmin):
     list_display = ['nom', 'type_bien', 'ville', 'code_postal', 'email', 'is_treated', 'agence_assignee', 'created_at']
     list_filter = ['type_bien', 'is_treated', 'created_at']
     search_fields = ['nom', 'email', 'ville']
+
+
+@admin.register(Desabonnement)
+class DesabonnementAdmin(admin.ModelAdmin):
+    list_display = ['email', 'created_at']
+    search_fields = ['email']

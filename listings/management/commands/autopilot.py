@@ -235,32 +235,27 @@ class Command(BaseCommand):
             is_treated=False, relance_envoyee=False,
             created_at__gte=debut, created_at__lte=fin,
         ).exclude(email='')
+        from listings.services.emails import envoyer_email_prospection
         n = 0
         for e in prospects:
-            try:
-                send_mail(
-                    subject='[Social Immo] Votre projet immobilier avance ?',
-                    message=(
-                        f"Bonjour {e.nom or ''},\n\n"
-                        f"Il y a quelques jours, vous avez estime votre bien a {e.ville}. "
-                        f"Ou en etes-vous dans votre projet ?\n\n"
-                        f"Pour vendre au meilleur prix, un professionnel de votre secteur "
-                        f"peut vous accompagner gratuitement (visite, prix de marche, diffusion). "
-                        f"Il vous suffit de repondre a cet email et nous vous mettons en relation.\n\n"
-                        f"Vous pouvez aussi affiner votre estimation ici :\n{site}/estimer/\n\n"
-                        f"L'equipe Social Immo\n\n"
-                        f"— Vous recevez cet email car vous avez demande une estimation. "
-                        f"Repondez STOP pour ne plus etre recontacte."
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[e.email],
-                    fail_silently=False,
-                )
-                e.relance_envoyee = True
-                e.save(update_fields=['relance_envoyee'])
+            corps = (
+                f"Bonjour {e.nom or ''},\n\n"
+                f"Il y a quelques jours, vous avez estime votre bien a {e.ville}. "
+                f"Ou en etes-vous dans votre projet ?\n\n"
+                f"Pour vendre au meilleur prix, un professionnel de votre secteur "
+                f"peut vous accompagner gratuitement (visite, prix de marche, diffusion). "
+                f"Il vous suffit de repondre a cet email et nous vous mettons en relation.\n\n"
+                f"Vous pouvez aussi affiner votre estimation ici :\n{site}/estimer/\n\n"
+                f"L'equipe Social Immo\n\n"
+                f"— Vous recevez cet email car vous avez demande une estimation.")
+            envoye = envoyer_email_prospection(
+                '[Social Immo] Votre projet immobilier avance ?', corps, e.email, site)
+            # On marque comme traitee dans tous les cas (desabonne inclus) pour
+            # ne pas reessayer chaque jour.
+            e.relance_envoyee = True
+            e.save(update_fields=['relance_envoyee'])
+            if envoye:
                 n += 1
-            except Exception:
-                continue
         return f'{n} relance(s) envoyee(s)'
 
     def _rapport_partenaires(self, site):
@@ -268,6 +263,7 @@ class Command(BaseCommand):
         On n'envoie que s'il y a quelque chose a dire (jamais un email vide)."""
         from listings.models import (ProProfile, Agence, DemandeContact,
                                      PhotoFavori, Annonce)
+        from listings.services.emails import envoyer_email_prospection
         depuis = timezone.now() - timedelta(days=30)
         n = 0
 
@@ -282,24 +278,16 @@ class Command(BaseCommand):
             contacts = pro.demandes_contact.filter(created_at__gte=depuis).count()
             if nb_real == 0 and favoris == 0 and contacts == 0:
                 continue
-            try:
-                send_mail(
-                    subject='[Social Immo] Votre bilan du mois',
-                    message=(
-                        f"Bonjour {pro.nom_entreprise},\n\n"
-                        f"Votre activite sur Social Immo ces 30 derniers jours :\n"
-                        f"  - Realisations en ligne : {nb_real}\n"
-                        f"  - Photos mises en favori : {favoris}\n"
-                        f"  - Demandes de contact recues : {contacts}\n\n"
-                        f"Ajoutez des realisations pour gagner en visibilite :\n{site}/pro/dashboard/\n\n"
-                        f"L'equipe Social Immo"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email], fail_silently=False,
-                )
+            corps = (
+                f"Bonjour {pro.nom_entreprise},\n\n"
+                f"Votre activite sur Social Immo ces 30 derniers jours :\n"
+                f"  - Realisations en ligne : {nb_real}\n"
+                f"  - Photos mises en favori : {favoris}\n"
+                f"  - Demandes de contact recues : {contacts}\n\n"
+                f"Ajoutez des realisations pour gagner en visibilite :\n{site}/pro/dashboard/\n\n"
+                f"L'equipe Social Immo")
+            if envoyer_email_prospection('[Social Immo] Votre bilan du mois', corps, email, site):
                 n += 1
-            except Exception:
-                continue
 
         # Agences
         for agence in Agence.objects.filter(is_active=True).select_related('responsable'):
@@ -311,23 +299,15 @@ class Command(BaseCommand):
                 annonce__agence=agence, created_at__gte=depuis).count()
             if nb_annonces == 0 and contacts == 0:
                 continue
-            try:
-                send_mail(
-                    subject='[Social Immo] Le bilan mensuel de votre agence',
-                    message=(
-                        f"Bonjour {agence.nom},\n\n"
-                        f"Votre activite sur Social Immo ces 30 derniers jours :\n"
-                        f"  - Annonces en ligne : {nb_annonces}\n"
-                        f"  - Demandes de contact recues : {contacts}\n\n"
-                        f"Gerez vos annonces et votre vitrine :\n{site}/mon-agence/\n\n"
-                        f"L'equipe Social Immo"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email], fail_silently=False,
-                )
+            corps = (
+                f"Bonjour {agence.nom},\n\n"
+                f"Votre activite sur Social Immo ces 30 derniers jours :\n"
+                f"  - Annonces en ligne : {nb_annonces}\n"
+                f"  - Demandes de contact recues : {contacts}\n\n"
+                f"Gerez vos annonces et votre vitrine :\n{site}/mon-agence/\n\n"
+                f"L'equipe Social Immo")
+            if envoyer_email_prospection('[Social Immo] Le bilan mensuel de votre agence', corps, email, site):
                 n += 1
-            except Exception:
-                continue
 
         return f'{n} rapport(s) partenaire envoye(s)'
 

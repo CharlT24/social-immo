@@ -1681,3 +1681,38 @@ class EnvoyerContactRobustesseTests(TestCase):
         self.assertEqual(User.objects.filter(email='exist@t.fr').count(), 1)
         # la demande (lead) est bien enregistree
         self.assertEqual(DemandeContact.objects.filter(annonce=self.a, email='exist@t.fr').count(), 1)
+
+
+class DesabonnementTests(TestCase):
+    """Desinscription RGPD : lien signe + les emails de prospection la respectent."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_lien_signe_desabonne(self):
+        from listings.services.emails import token_desabo
+        from listings.models import Desabonnement
+        token = token_desabo('prospect@test.fr')
+        resp = self.client.get(f'/desabonnement/?token={token}')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'desabonne')
+        self.assertTrue(Desabonnement.est_desabonne('prospect@test.fr'))
+
+    def test_token_invalide(self):
+        resp = self.client.get('/desabonnement/?token=nimportequoi')
+        self.assertContains(resp, 'invalide')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_prospection_respecte_desabonnement(self):
+        from listings.services.emails import envoyer_email_prospection
+        from listings.models import Desabonnement
+        # 1er envoi OK + en-tete List-Unsubscribe
+        self.assertTrue(envoyer_email_prospection('Sujet', 'Corps', 'p@test.fr'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('List-Unsubscribe', mail.outbox[0].extra_headers)
+        self.assertIn('desabonnement', mail.outbox[0].body)
+        # apres desabonnement -> plus d'envoi
+        Desabonnement.objects.create(email='p@test.fr')
+        mail.outbox.clear()
+        self.assertFalse(envoyer_email_prospection('Sujet', 'Corps', 'p@test.fr'))
+        self.assertEqual(len(mail.outbox), 0)

@@ -42,15 +42,16 @@ class Command(BaseCommand):
         hard = options['delete']
         fenetre = timedelta(hours=options['fenetre_heures'])
 
-        groupes = (Annonce.objects.filter(source='particulier')
-                   .values('user_id', 'ville', 'prix')
+        # On exclut les locations : leur prix est vide (loyer separe) -> le
+        # regroupement par prix fusionnerait a tort deux locations distinctes.
+        base = Annonce.objects.filter(source='particulier').exclude(type_transaction='L')
+        groupes = (base.values('user_id', 'ville', 'prix')
                    .annotate(n=Count('id')).filter(n__gt=1))
 
         total = 0
         for g in groupes:
-            items = list(Annonce.objects.filter(
-                source='particulier', user_id=g['user_id'],
-                ville=g['ville'], prix=g['prix'],
+            items = list(base.filter(
+                user_id=g['user_id'], ville=g['ville'], prix=g['prix'],
             ).order_by('created_at'))
 
             garde = max(items, key=self._score)

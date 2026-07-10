@@ -30,6 +30,13 @@ class StaticSitemap(Sitemap):
             'listings:locaux_pro',
             'listings:barometre',
             'listings:demande_devis',
+            'listings:pro_inscription',
+            'listings:guides',
+            'listings:guide_vendeur',
+            'listings:guide_acheteur',
+            'listings:guide_agence',
+            'listings:guide_pro',
+            'listings:tutoriel_visite_3d',
         ]
 
     def location(self, item):

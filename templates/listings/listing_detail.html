@@ -17,26 +17,26 @@
 {
   "@context": "https://schema.org",
   "@type": "RealEstateListing",
-  "name": "{{ annonce.titre }}",
+  "name": "{{ annonce.titre|escapejs }}",
   "description": "{{ annonce.texte|truncatewords:50|escapejs }}",
   "url": "https://social-immo.com{{ annonce.get_absolute_url }}",
-  {% if annonce.photo_principale %}"image": "{{ annonce.photo_principale.src }}",{% endif %}
+  {% if annonce.photo_principale %}"image": "{{ annonce.photo_principale.src|escapejs }}",{% endif %}
   "datePosted": "{{ annonce.created_at|date:'Y-m-d' }}",
   "offers": {
     "@type": "Offer",
-    "price": "{% if annonce.type_transaction == 'L' %}{{ annonce.loyer_mensuel|default:annonce.prix }}{% else %}{{ annonce.prix }}{% endif %}",
+    "price": "{% if annonce.type_transaction == 'L' %}{{ annonce.loyer_mensuel|default:annonce.prix|unlocalize }}{% else %}{{ annonce.prix|unlocalize }}{% endif %}",
     "priceCurrency": "EUR",
     "availability": "https://schema.org/InStock"
   },
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "{{ annonce.ville }}",
-    "postalCode": "{{ annonce.code_postal }}",
+    "addressLocality": "{{ annonce.ville|escapejs }}",
+    "postalCode": "{{ annonce.code_postal|escapejs }}",
     "addressCountry": "FR"
   }{% if annonce.surface %},
   "floorSize": {
     "@type": "QuantitativeValue",
-    "value": "{{ annonce.surface }}",
+    "value": "{{ annonce.surface|unlocalize }}",
     "unitCode": "MTK"
   }{% endif %}{% if annonce.nb_pieces %},
   "numberOfRooms": "{{ annonce.nb_pieces }}"{% endif %}
@@ -558,7 +558,7 @@
                                 class="w-full px-4 py-2.5 bg-apple-bg border border-transparent rounded-xl text-sm text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-2">
                             {% if not user.is_authenticated %}
                             <label class="flex items-start gap-2 mb-2 cursor-pointer select-none">
-                                <input type="checkbox" id="contact-creer-compte" checked
+                                <input type="checkbox" id="contact-creer-compte"
                                     class="mt-0.5 rounded border-gray-300 text-apple-blue focus:ring-apple-blue">
                                 <span class="text-xs text-apple-gray">Creer mon compte acquereur (gratuit) pour suivre ma demande, enregistrer mes favoris et recevoir des alertes.</span>
                             </label>

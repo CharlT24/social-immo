@@ -2216,7 +2216,8 @@ Connectez-vous sur SocialImmo pour repondre.
         except Exception:
             pass  # Ne pas bloquer si l'email echoue (la demande est deja en base)
 
-    return JsonResponse({'success': True, 'compte_cree': compte_cree})
+    # Reponse generique : on ne revele pas si un compte existait deja (anti-enumeration).
+    return JsonResponse({'success': True})
 
 
 @login_required
@@ -3281,12 +3282,17 @@ def estimation(request):
         if est_un_bot(request) or trop_de_requetes(request, 'lead_estimation', 10, 3600):
             messages.success(request, 'Votre demande d\'estimation a bien ete envoyee !')
             return redirect('listings:estimation')
+        def _to_int(v):
+            try:
+                return int(float(str(v).replace(',', '.')))
+            except (TypeError, ValueError):
+                return None
         est = Estimation.objects.create(
             type_bien=request.POST.get('type_bien', 'autre'),
             ville=request.POST.get('ville', ''),
             code_postal=request.POST.get('code_postal', ''),
-            surface=int(request.POST.get('surface') or 0) or None,
-            nb_pieces=int(request.POST.get('nb_pieces') or 0) or None,
+            surface=_to_int(request.POST.get('surface')) or None,
+            nb_pieces=_to_int(request.POST.get('nb_pieces')) or None,
             nom=request.POST.get('nom', ''),
             email=request.POST.get('email', ''),
             telephone=request.POST.get('telephone', ''),
@@ -3675,6 +3681,9 @@ def api_demander_pro(request):
     """Le vendeur (connecte) sollicite un pro depuis le depot. Cree une demande
     de contact -> visible sur le dashboard du pro ET envoyee par email."""
     from .models import ProProfile
+    from .services.protection import trop_de_requetes
+    if trop_de_requetes(request, 'demander_pro', maximum=20, fenetre_secondes=3600):
+        return JsonResponse({'error': 'Trop de demandes — reessayez plus tard.'}, status=429)
     try:
         data = json.loads(request.body)
         pro_id = data.get('pro_id')

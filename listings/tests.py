@@ -1462,8 +1462,7 @@ class ContactCompteAcquereurTests(TestCase):
                            'nom': 'Alice Acheteur', 'email': 'alice@test.fr',
                            'telephone': '0611223344', 'creer_compte': True})
         self.assertTrue(resp.json().get('success'))
-        self.assertTrue(resp.json().get('compte_cree'))
-        u = User.objects.get(email='alice@test.fr')
+        u = User.objects.get(email='alice@test.fr')  # compte bien cree (flag retire de la reponse: anti-enumeration)
         self.assertEqual(u.first_name, 'Alice Acheteur')
         self.assertFalse(u.has_usable_password())  # definira via reset
         self.assertEqual(u.profile.telephone, '0611223344')
@@ -1601,3 +1600,29 @@ class DemanderProTests(TestCase):
         # email au pro
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('lepro@d.fr', mail.outbox[0].to)
+
+
+class CorrectifsAuditTests(TestCase):
+    """Correctifs suite a l'audit : estimation surface decimale, rate-limit."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_estimation_surface_decimale_pas_de_500(self):
+        resp = self.client.post('/estimer/', {
+            'type_bien': 'maison', 'ville': 'Caen', 'code_postal': '14000',
+            'surface': '75.5', 'nb_pieces': '3', 'nom': 'Jean',
+            'email': 'jean@test.fr', 'telephone': '0600', 'message': 'x'})
+        self.assertNotEqual(resp.status_code, 500)
+        from listings.models import Estimation
+        e = Estimation.objects.filter(email='jean@test.fr').first()
+        self.assertIsNotNone(e)
+        self.assertEqual(e.surface, 75)  # 75.5 -> 75, pas de crash
+
+    def test_contact_ne_revele_pas_existence_compte(self):
+        # la reponse ne contient plus 'compte_cree' (anti-enumeration)
+        a = creer_annonce('ENUM-1', source='particulier', contact_email='v@t.fr', is_active=True)
+        resp = self.client.post('/api/contact/', data=json.dumps({
+            'annonce_id': a.id, 'message': 'Bonjour', 'nom': 'X', 'email': 'x@t.fr',
+            'telephone': '0600', 'creer_compte': True}), content_type='application/json')
+        self.assertNotIn('compte_cree', resp.json())

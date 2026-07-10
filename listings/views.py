@@ -215,6 +215,16 @@ def search_results(request):
         if valid_dpe:
             annonces = annonces.filter(dpe_etiquette_conso__in=valid_dpe)
 
+    # Filtres caracteristiques (cases a cocher)
+    if request.GET.get('ascenseur') == '1':
+        annonces = annonces.filter(ascenseur=True)
+    if request.GET.get('parking') == '1':
+        annonces = annonces.filter(parking=True)
+    if request.GET.get('meuble') == '1':
+        annonces = annonces.filter(meuble=True)
+    if request.GET.get('exterieur') == '1':
+        annonces = annonces.exclude(exterieur='')
+
     # Tri - mise en avant toujours en premier
     sort_map = {
         'prix_asc': 'prix',
@@ -308,6 +318,10 @@ def search_results(request):
         'current_chambres_max': chambres_max,
         'current_dpe': dpe_list,
         'current_tri': tri,
+        'current_ascenseur': request.GET.get('ascenseur') == '1',
+        'current_parking': request.GET.get('parking') == '1',
+        'current_meuble': request.GET.get('meuble') == '1',
+        'current_exterieur': request.GET.get('exterieur') == '1',
     }
     return render(request, 'listings/search_results.html', context)
 

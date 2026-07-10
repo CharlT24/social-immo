@@ -257,6 +257,36 @@
                             <span class="text-sm font-semibold">{{ annonce.surface_terrain }} m²</span>
                         </div>
                         {% endif %}
+                        {% if annonce.etage is not None %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3"><svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg><span class="text-sm text-apple-gray">Etage</span></div>
+                            <span class="text-sm font-semibold">{% if annonce.etage == 0 %}Rez-de-chaussee{% else %}{{ annonce.etage }}e{% endif %}</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.exterieur %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3"><svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v18m0-18C8 3 5 6 5 10m7-7c4 0 7 3 7 7"/></svg><span class="text-sm text-apple-gray">Exterieur</span></div>
+                            <span class="text-sm font-semibold">{{ annonce.get_exterieur_display }}</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.ascenseur %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3"><svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7l4-4 4 4M8 17l4 4 4-4"/></svg><span class="text-sm text-apple-gray">Ascenseur</span></div>
+                            <span class="text-sm font-semibold text-green-600">Oui</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.parking %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3"><svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7h4a3 3 0 010 6H9m-4 8h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg><span class="text-sm text-apple-gray">Parking / garage</span></div>
+                            <span class="text-sm font-semibold text-green-600">Oui</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.meuble %}
+                        <div class="flex items-center justify-between px-6 py-4">
+                            <div class="flex items-center gap-3"><svg class="w-5 h-5 text-apple-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12V7a2 2 0 012-2h10a2 2 0 012 2v5m-16 0h16m-16 0v5a1 1 0 001 1h1m12-6v5a1 1 0 01-1 1h-1"/></svg><span class="text-sm text-apple-gray">Meuble</span></div>
+                            <span class="text-sm font-semibold text-green-600">Oui</span>
+                        </div>
+                        {% endif %}
                         {% if annonce.nb_pieces %}
                         <div class="flex items-center justify-between px-6 py-4">
                             <div class="flex items-center gap-3">

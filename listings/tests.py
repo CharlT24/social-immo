@@ -1746,3 +1746,32 @@ class AvisVerifieTests(TestCase):
         client = User.objects.create_user('clientn', 'cn@t.fr', 'x')
         self._avis(client)
         self.assertFalse(ProAvis.objects.get(pro=self.pro, auteur=client).verifie)
+
+
+class FiltresEnrichisTests(TestCase):
+    """Recherche : filtres ascenseur/parking/meuble/exterieur."""
+
+    def setUp(self):
+        cache.clear()
+        creer_annonce('F-ASC', ville='Lyon', code_postal='69001', type_transaction='V',
+                      ascenseur=True, parking=True, is_active=True)
+        creer_annonce('F-EXT', ville='Lyon', code_postal='69001', type_transaction='V',
+                      exterieur='balcon', meuble=True, is_active=True)
+        creer_annonce('F-NONE', ville='Lyon', code_postal='69001', type_transaction='V',
+                      is_active=True)
+
+    def test_filtre_ascenseur(self):
+        r = self.client.get('/recherche/?ascenseur=1')
+        self.assertContains(r, 'F-ASC')
+        self.assertNotContains(r, 'F-EXT')
+        self.assertNotContains(r, 'F-NONE')
+
+    def test_filtre_exterieur(self):
+        r = self.client.get('/recherche/?exterieur=1')
+        self.assertContains(r, 'F-EXT')
+        self.assertNotContains(r, 'F-NONE')
+
+    def test_filtre_meuble(self):
+        r = self.client.get('/recherche/?meuble=1')
+        self.assertContains(r, 'F-EXT')
+        self.assertNotContains(r, 'F-ASC')

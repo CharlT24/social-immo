@@ -240,6 +240,29 @@
                 </div>
             </div>
 
+            <!-- Caracteristiques -->
+            <div>
+                <h4 class="text-sm font-bold text-apple-text mb-3">Caracteristiques</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" id="d-ascenseur" class="rounded text-apple-blue" {% if current_ascenseur %}checked{% endif %}>
+                        <span class="text-sm">Ascenseur</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" id="d-parking" class="rounded text-apple-blue" {% if current_parking %}checked{% endif %}>
+                        <span class="text-sm">Parking / garage</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" id="d-exterieur" class="rounded text-apple-blue" {% if current_exterieur %}checked{% endif %}>
+                        <span class="text-sm">Exterieur (balcon, jardin...)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" id="d-meuble" class="rounded text-apple-blue" {% if current_meuble %}checked{% endif %}>
+                        <span class="text-sm">Meuble</span>
+                    </label>
+                </div>
+            </div>
+
         </div>
 
         <!-- Fixed CTA -->
@@ -437,6 +460,17 @@ function applyDrawerFilters() {
         const inp = document.createElement('input');
         inp.type = 'hidden'; inp.name = 'dpe'; inp.value = cb.value; inp.className = 'dpe-hidden';
         document.getElementById('filter-form').appendChild(inp);
+    });
+
+    // Caracteristiques (cases a cocher -> parametres 0/1)
+    const form = document.getElementById('filter-form');
+    document.querySelectorAll('.carac-hidden').forEach(el => el.remove());
+    [['d-ascenseur', 'ascenseur'], ['d-parking', 'parking'], ['d-exterieur', 'exterieur'], ['d-meuble', 'meuble']].forEach(([id, name]) => {
+        if (document.getElementById(id).checked) {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = name; inp.value = '1'; inp.className = 'carac-hidden';
+            form.appendChild(inp);
+        }
     });
 
     toggleDrawer();

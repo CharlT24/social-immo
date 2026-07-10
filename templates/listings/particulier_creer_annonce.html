@@ -81,6 +81,35 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface_terrain.label }}</label>
                         {{ form.surface_terrain }}
                     </div>
+                    <div>
+                        <label for="id_etage" class="block text-sm font-medium text-gray-700 mb-2">Etage</label>
+                        <input type="number" name="etage" id="id_etage" value="{{ form.etage.value|default:'' }}" min="0"
+                               class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all">
+                    </div>
+                    <div>
+                        <label for="id_exterieur" class="block text-sm font-medium text-gray-700 mb-2">Exterieur</label>
+                        <select name="exterieur" id="id_exterieur"
+                                class="w-full px-4 py-3 bg-apple-bg border border-transparent rounded-xl text-apple-text focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all">
+                            {% for val, lib in form.exterieur.field.choices %}
+                            <option value="{{ val }}" {% if form.exterieur.value|default:'' == val %}selected{% endif %}>{{ lib }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <!-- Equipements -->
+                <div class="flex flex-wrap gap-4 mb-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="ascenseur" id="id_ascenseur" {% if form.ascenseur.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500">
+                        <span class="text-sm text-gray-700">Ascenseur</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="parking" id="id_parking" {% if form.parking.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500">
+                        <span class="text-sm text-gray-700">Parking / garage</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="meuble" id="id_meuble" {% if form.meuble.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500">
+                        <span class="text-sm text-gray-700">Meuble</span>
+                    </label>
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-gray-800 mb-1">Diagnostic de performance énergétique (DPE)</p>

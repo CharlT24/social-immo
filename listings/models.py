@@ -71,6 +71,19 @@ class Annonce(models.Model):
     surface_terrain = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     annee_construction = models.PositiveIntegerField(null=True, blank=True)
 
+    # Caracteristiques complementaires (filtres acheteur). Booleens nullables :
+    # None = non renseigne, True/False = renseigne.
+    EXTERIEUR_CHOICES = [
+        ('', '—'), ('balcon', 'Balcon'), ('terrasse', 'Terrasse'),
+        ('jardin', 'Jardin'), ('loggia', 'Loggia'),
+    ]
+    etage = models.PositiveIntegerField(null=True, blank=True, verbose_name='Etage')
+    ascenseur = models.BooleanField(null=True, blank=True, verbose_name='Ascenseur')
+    parking = models.BooleanField(null=True, blank=True, verbose_name='Parking / garage')
+    meuble = models.BooleanField(null=True, blank=True, verbose_name='Meuble')
+    exterieur = models.CharField(max_length=20, blank=True, default='',
+                                 choices=EXTERIEUR_CHOICES, verbose_name='Exterieur')
+
     # Diagnostics énergétiques (DPE 2021+)
     dpe_etiquette_conso = models.CharField(max_length=1, blank=True)
     dpe_valeur_conso = models.PositiveIntegerField(null=True, blank=True)

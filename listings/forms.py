@@ -303,6 +303,7 @@ class ParticulierAnnonceForm(forms.ModelForm):
             'prix', 'loyer_mensuel', 'charges_locatives',
             'ville', 'code_postal',
             'nb_pieces', 'nb_chambres', 'surface', 'surface_terrain',
+            'etage', 'ascenseur', 'parking', 'meuble', 'exterieur',
             'dpe_etiquette_conso', 'dpe_valeur_conso',
             'dpe_etiquette_ges', 'dpe_valeur_ges',
             'visite_virtuelle_url',

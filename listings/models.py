@@ -77,6 +77,8 @@ class Annonce(models.Model):
         ('', '—'), ('balcon', 'Balcon'), ('terrasse', 'Terrasse'),
         ('jardin', 'Jardin'), ('loggia', 'Loggia'),
     ]
+    photos_illimitees = models.BooleanField(
+        default=False, verbose_name='Photos illimitees (option payante)')
     etage = models.PositiveIntegerField(null=True, blank=True, verbose_name='Etage')
     ascenseur = models.BooleanField(null=True, blank=True, verbose_name='Ascenseur')
     parking = models.BooleanField(null=True, blank=True, verbose_name='Parking / garage')

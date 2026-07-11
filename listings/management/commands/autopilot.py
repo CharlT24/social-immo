@@ -213,8 +213,8 @@ class Command(BaseCommand):
         """Retire la mise en avant des Pack Vendeur arrives a terme."""
         from listings.models import Abonnement, Annonce
         finis = Abonnement.objects.filter(
-            type_abonnement='pack_vendeur', statut='actif',
-            date_fin__isnull=False, date_fin__lt=timezone.now(),
+            type_abonnement__in=['pack_vendeur', 'vendeur_alaune_7', 'vendeur_alaune_30'],
+            statut='actif', date_fin__isnull=False, date_fin__lt=timezone.now(),
         )
         n = 0
         for abo in finis:

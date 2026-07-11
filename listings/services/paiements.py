@@ -28,11 +28,26 @@ def actif():
     return bool(getattr(settings, 'STRIPE_SECRET_KEY', ''))
 
 
+# Offres a paiement unique (le reste = abonnement mensuel)
+UNIQUE = {'pack_vendeur', 'vendeur_photos', 'vendeur_alaune_7', 'vendeur_alaune_30'}
+# Offres liees a une annonce precise du vendeur
+LIEES_ANNONCE = {'pack_vendeur', 'vendeur_photos', 'vendeur_alaune_7', 'vendeur_alaune_30'}
+TYPES_VALIDES = {
+    'agence', 'agence_illimite', 'pro', 'pro_priorite_secteur',
+    'pack_vendeur', 'vendeur_photos', 'vendeur_alaune_7', 'vendeur_alaune_30',
+}
+
+
 def price_id(type_abonnement):
     return {
         'agence': getattr(settings, 'STRIPE_PRICE_AGENCE', ''),
+        'agence_illimite': getattr(settings, 'STRIPE_PRICE_AGENCE_ILLIMITE', ''),
         'pro': getattr(settings, 'STRIPE_PRICE_PRO', ''),
+        'pro_priorite_secteur': getattr(settings, 'STRIPE_PRICE_PRO_PRIORITE', ''),
         'pack_vendeur': getattr(settings, 'STRIPE_PRICE_PACK', ''),
+        'vendeur_photos': getattr(settings, 'STRIPE_PRICE_VENDEUR_PHOTOS', ''),
+        'vendeur_alaune_7': getattr(settings, 'STRIPE_PRICE_VENDEUR_ALAUNE_7', ''),
+        'vendeur_alaune_30': getattr(settings, 'STRIPE_PRICE_VENDEUR_ALAUNE_30', ''),
     }.get(type_abonnement, '')
 
 
@@ -51,7 +66,7 @@ def creer_session_checkout(type_abonnement, user, success_url, cancel_url, annon
     pid = price_id(type_abonnement)
     if not (actif() and pid):
         return None
-    mode = 'payment' if type_abonnement == 'pack_vendeur' else 'subscription'
+    mode = 'payment' if type_abonnement in UNIQUE else 'subscription'
     data = {
         'mode': mode,
         'line_items[0][price]': pid,
@@ -134,8 +149,10 @@ def activer_avantages(abonnement):
     from django.utils import timezone
     from listings.models import Agence, ProProfile, AgenceOptions
 
+    from listings.models import Annonce
     user = abonnement.user
-    if abonnement.type_abonnement == 'agence':
+    t = abonnement.type_abonnement
+    if t in ('agence', 'agence_illimite'):
         for agence in Agence.objects.filter(responsable=user):
             agence.mise_en_avant = True
             agence.save(update_fields=['mise_en_avant'])
@@ -144,14 +161,23 @@ def activer_avantages(abonnement):
                 if hasattr(options, opt):
                     setattr(options, opt, True)
             options.save()
-    elif abonnement.type_abonnement == 'pro':
+    elif t in ('pro', 'pro_priorite_secteur'):
         ProProfile.objects.filter(user=user).update(mise_en_avant=True, nb_inspirations_une=10)
-    elif abonnement.type_abonnement == 'pack_vendeur':
+    elif t == 'pack_vendeur':
         if abonnement.annonce_id:
-            from listings.models import Annonce
-            Annonce.objects.filter(id=abonnement.annonce_id).update(mise_en_avant=True)
+            Annonce.objects.filter(id=abonnement.annonce_id).update(
+                mise_en_avant=True, photos_illimitees=True)
             abonnement.date_fin = timezone.now() + timedelta(days=30)
             abonnement.save(update_fields=['date_fin'])
+    elif t in ('vendeur_alaune_7', 'vendeur_alaune_30'):
+        if abonnement.annonce_id:
+            jours = 7 if t == 'vendeur_alaune_7' else 30
+            Annonce.objects.filter(id=abonnement.annonce_id).update(mise_en_avant=True)
+            abonnement.date_fin = timezone.now() + timedelta(days=jours)
+            abonnement.save(update_fields=['date_fin'])
+    elif t == 'vendeur_photos':
+        if abonnement.annonce_id:
+            Annonce.objects.filter(id=abonnement.annonce_id).update(photos_illimitees=True)
 
 
 def desactiver_avantages(abonnement):
@@ -159,7 +185,8 @@ def desactiver_avantages(abonnement):
     from listings.models import Agence, ProProfile, AgenceOptions
 
     user = abonnement.user
-    if abonnement.type_abonnement == 'agence':
+    t = abonnement.type_abonnement
+    if t in ('agence', 'agence_illimite'):
         for agence in Agence.objects.filter(responsable=user):
             agence.mise_en_avant = False
             agence.save(update_fields=['mise_en_avant'])
@@ -169,9 +196,9 @@ def desactiver_avantages(abonnement):
                     if hasattr(options, opt):
                         setattr(options, opt, False)
                 options.save()
-    elif abonnement.type_abonnement == 'pro':
+    elif t in ('pro', 'pro_priorite_secteur'):
         ProProfile.objects.filter(user=user).update(mise_en_avant=False, nb_inspirations_une=3)
-    elif abonnement.type_abonnement == 'pack_vendeur':
+    elif t in ('pack_vendeur', 'vendeur_alaune_7', 'vendeur_alaune_30'):
         if abonnement.annonce_id:
             from listings.models import Annonce
             Annonce.objects.filter(id=abonnement.annonce_id).update(mise_en_avant=False)

@@ -1853,3 +1853,59 @@ class RendezVousTests(TestCase):
         self.client.post(f'/rdv/{rdv.id}/repondre/', {'reponse': 'accepte'})  # meme user
         rdv.refresh_from_db()
         self.assertEqual(rdv.statut, 'propose')  # inchange
+
+
+class MonetisationPhase2Tests(TestCase):
+    """Phase 2 : options a la carte (a la une vendeur, photos, priorite pro)."""
+
+    def setUp(self):
+        cache.clear()
+        self.u = User.objects.create_user('mon2', 'mon2@t.fr', 'x')
+
+    def test_alaune_7_booste_et_date_fin(self):
+        from listings.services import paiements
+        from listings.models import Abonnement
+        from django.utils import timezone
+        from datetime import timedelta
+        a = creer_annonce('MON-1', user=self.u, source='particulier', is_active=True)
+        abo = Abonnement.objects.create(user=self.u, type_abonnement='vendeur_alaune_7',
+                                        annonce_id=a.id, statut='actif',
+                                        checkout_session_id='cs_1')
+        paiements.activer_avantages(abo)
+        a.refresh_from_db(); abo.refresh_from_db()
+        self.assertTrue(a.mise_en_avant)
+        self.assertIsNotNone(abo.date_fin)
+        self.assertLess(abo.date_fin, timezone.now() + timedelta(days=8))
+
+    def test_photos_illimitees(self):
+        from listings.services import paiements
+        from listings.models import Abonnement
+        a = creer_annonce('MON-2', user=self.u, source='particulier', is_active=True)
+        abo = Abonnement.objects.create(user=self.u, type_abonnement='vendeur_photos',
+                                        annonce_id=a.id, statut='actif', checkout_session_id='cs_2')
+        paiements.activer_avantages(abo)
+        a.refresh_from_db()
+        self.assertTrue(a.photos_illimitees)
+
+    def test_priorite_pro(self):
+        from listings.services import paiements
+        from listings.models import Abonnement, ProProfile
+        pro = ProProfile.objects.create(user=self.u, nom_entreprise='X', metier='peintre',
+                                        is_active=True)
+        abo = Abonnement.objects.create(user=self.u, type_abonnement='pro_priorite_secteur',
+                                        statut='actif', checkout_session_id='cs_3')
+        paiements.activer_avantages(abo)
+        pro.refresh_from_db()
+        self.assertTrue(pro.mise_en_avant)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test', STRIPE_PRICE_VENDEUR_ALAUNE_7='price_x',
+                       STRIPE_PRICE_AGENCE_ILLIMITE='price_y')
+    def test_mode_paiement_vs_abonnement(self):
+        from listings.services import paiements
+        captures = {}
+        with mock.patch.object(paiements, '_post', side_effect=lambda e, d: captures.update(d) or {'url': 'u'}):
+            paiements.creer_session_checkout('vendeur_alaune_7', self.u, 's', 'c', annonce_id=1)
+            self.assertEqual(captures['mode'], 'payment')
+            captures.clear()
+            paiements.creer_session_checkout('agence_illimite', self.u, 's', 'c')
+            self.assertEqual(captures['mode'], 'subscription')

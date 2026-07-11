@@ -301,6 +301,12 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_AGENCE = os.environ.get('STRIPE_PRICE_AGENCE', '')
 STRIPE_PRICE_PRO = os.environ.get('STRIPE_PRICE_PRO', '')
 STRIPE_PRICE_PACK = os.environ.get('STRIPE_PRICE_PACK', '')
+# Phase 2 : options a la carte
+STRIPE_PRICE_AGENCE_ILLIMITE = os.environ.get('STRIPE_PRICE_AGENCE_ILLIMITE', '')
+STRIPE_PRICE_PRO_PRIORITE = os.environ.get('STRIPE_PRICE_PRO_PRIORITE', '')
+STRIPE_PRICE_VENDEUR_PHOTOS = os.environ.get('STRIPE_PRICE_VENDEUR_PHOTOS', '')
+STRIPE_PRICE_VENDEUR_ALAUNE_7 = os.environ.get('STRIPE_PRICE_VENDEUR_ALAUNE_7', '')
+STRIPE_PRICE_VENDEUR_ALAUNE_30 = os.environ.get('STRIPE_PRICE_VENDEUR_ALAUNE_30', '')
 
 # ===== Alertes erreurs : les exceptions 500 partent par email =====
 _admin_email = os.environ.get('ADMIN_EMAIL', '')

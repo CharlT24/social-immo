@@ -156,8 +156,20 @@
                         {% endif %}
                         {% endwith %}
                         {% endif %}
+                        <!-- Booster (options payantes) -->
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            {% if annonce.mise_en_avant %}
+                            <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full">⭐ A la une</span>
+                            {% else %}
+                            <a href="{% url 'listings:souscrire' 'vendeur_alaune_7' %}?annonce={{ annonce.id }}" class="text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-full transition-colors">⭐ A la une 7j — 9,90€</a>
+                            <a href="{% url 'listings:souscrire' 'vendeur_alaune_30' %}?annonce={{ annonce.id }}" class="text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-full transition-colors">30j — 19,90€</a>
+                            {% endif %}
+                            {% if not annonce.photos_illimitees %}
+                            <a href="{% url 'listings:souscrire' 'vendeur_photos' %}?annonce={{ annonce.id }}" class="text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-full transition-colors">📷 Photos+ — 4,90€</a>
+                            {% endif %}
+                        </div>
                         <!-- Actions -->
-                        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                        <div class="flex gap-2 mt-3 pt-4 border-t border-gray-100">
                             <a href="{% url 'listings:detail' annonce.reference %}" class="flex-1 text-center text-sm font-medium text-gray-600 hover:text-gray-900 py-2 rounded-lg hover:bg-gray-50 transition-colors">Voir</a>
                             <a href="{% url 'listings:particulier_modifier_annonce' annonce.id %}" class="flex-1 text-center text-sm font-medium text-teal-600 hover:text-teal-700 py-2 rounded-lg hover:bg-teal-50 transition-colors">Modifier</a>
                             <a href="{% url 'listings:annonce_panneau' annonce.id %}" target="_blank" title="Panneau A4 avec QR code" class="text-sm font-medium text-gray-500 hover:text-gray-800 py-2 px-2 rounded-lg hover:bg-gray-50 transition-colors">🖨️</a>

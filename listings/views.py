@@ -2862,15 +2862,18 @@ def tarifs(request):
 def souscrire(request, type_abonnement):
     """Redirige vers Stripe Checkout pour un abonnement/achat."""
     from .services import paiements
-    if type_abonnement not in ('agence', 'pro', 'pack_vendeur'):
+    if type_abonnement not in paiements.TYPES_VALIDES:
         return redirect('listings:tarifs')
     if not paiements.actif():
         messages.info(request, 'Les paiements ouvrent tres bientot — revenez vite !')
         return redirect('listings:tarifs')
 
     annonce_id = request.GET.get('annonce') or None
-    if annonce_id:
-        # Le pack ne peut booster qu'une annonce du user
+    # Les offres liees a une annonce exigent une annonce du user
+    if type_abonnement in paiements.LIEES_ANNONCE:
+        if not annonce_id:
+            messages.error(request, 'Cette option concerne une annonce precise.')
+            return redirect('listings:particulier_dashboard')
         get_object_or_404(Annonce, id=annonce_id, user=request.user)
 
     try:
@@ -4474,7 +4477,8 @@ def particulier_modifier_annonce(request, annonce_id):
             nb_photos_actuelles = annonce.photos.count()
             nouvelles_photos = request.FILES.getlist('photos')
             ameliorer = request.POST.get('ameliorer_photos') == 'on'
-            LIMITE = 10
+            # Option payante "photos illimitees" -> plafond eleve, sinon gratuit
+            LIMITE = 30 if annonce.photos_illimitees else 5
             places_dispo = LIMITE - nb_photos_actuelles
             ajoutees = 0
             for i, photo_file in enumerate(nouvelles_photos[:max(0, places_dispo)]):

@@ -34,6 +34,7 @@
                class="block text-center bg-apple-blue text-white font-bold py-3.5 rounded-2xl hover:bg-blue-600 transition-colors">
                 {% if stripe_actif %}S'abonner{% else %}Etre prevenu de l'ouverture{% endif %}
             </a>
+            <a href="{% url 'listings:souscrire' 'agence_illimite' %}" class="block text-center text-xs text-apple-gray mt-2 hover:text-apple-blue">Plus de 250 biens ? Passer a l'illimite — 299 €/mois</a>
         </div>
 
         <!-- Artisan -->
@@ -54,6 +55,7 @@
                class="block text-center bg-purple-600 text-white font-bold py-3.5 rounded-2xl hover:bg-purple-700 transition-colors">
                 {% if stripe_actif %}S'abonner{% else %}Etre prevenu de l'ouverture{% endif %}
             </a>
+            <a href="{% url 'listings:souscrire' 'pro_priorite_secteur' %}" class="block text-center text-xs text-apple-gray mt-2 hover:text-purple-600">Priorite secteur : 1re position dans les mises en relation — 19 €/mois</a>
         </div>
 
         <!-- Pack vendeur -->

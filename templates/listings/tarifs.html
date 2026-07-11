@@ -6,13 +6,31 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
 
-    <div class="text-center mb-12">
-        <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-4">Des offres simples</h1>
-        <p class="text-lg text-apple-gray max-w-2xl mx-auto">La diffusion de base est <strong class="text-apple-text">gratuite pour tout le monde</strong>. Les offres ci-dessous accelerent votre visibilite.</p>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-5xl font-semibold tracking-tight mb-4">Gratuit pour commencer, payant pour aller plus loin</h1>
+        <p class="text-lg text-apple-gray max-w-2xl mx-auto">Publier et chercher un bien est <strong class="text-apple-text">100 % gratuit</strong>. Les options ci-dessous sont facultatives : elles boostent votre visibilite quand vous le souhaitez.</p>
         {% if not stripe_actif %}
         <p class="inline-block mt-4 text-sm font-semibold text-amber-700 bg-amber-50 px-4 py-2 rounded-full">🚀 Ouverture des paiements tres bientot — les tarifs de lancement s'appliqueront aux premiers inscrits.</p>
         {% endif %}
     </div>
+
+    <!-- OFFRE GRATUITE (mise en avant) -->
+    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl p-6 sm:p-8 mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div>
+                <span class="inline-block text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full mb-2">GRATUIT · SANS ENGAGEMENT</span>
+                <h2 class="text-2xl font-bold text-apple-text">Le socle, offert a tous</h2>
+            </div>
+            <a href="{% url 'listings:particulier_creer_annonce' %}" class="flex-shrink-0 bg-emerald-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors text-sm text-center">Deposer une annonce gratuite</a>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4 mt-6 text-sm">
+            <div><p class="font-semibold text-apple-text mb-1">👤 Vendeur particulier</p><p class="text-apple-gray">Annonce en ligne, jusqu'a 5 photos, estimation, contacts acheteurs.</p></div>
+            <div><p class="font-semibold text-apple-text mb-1">🏢 Agence</p><p class="text-apple-gray">Diffusion de vos annonces via flux XML, page vitrine, inspirations.</p></div>
+            <div><p class="font-semibold text-apple-text mb-1">🛠️ Artisan / pro</p><p class="text-apple-gray">Profil, badge verifie SIRET, realisations, demandes de devis.</p></div>
+        </div>
+    </div>
+
+    <p class="text-center text-sm font-semibold text-apple-gray uppercase tracking-wide mb-6">Options payantes — chacune pour un profil</p>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 reveal-stagger">
 
@@ -38,8 +56,7 @@
         </div>
 
         <!-- Artisan -->
-        <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-purple-500 relative">
-            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">Le plus populaire</span>
+        <div class="bg-white rounded-3xl shadow-apple p-8 flex flex-col border-2 border-transparent hover:border-purple-500 transition-colors">
             <p class="text-sm font-bold text-purple-600 uppercase tracking-wide mb-2">Artisans & pros</p>
             <p class="text-3xl font-bold mb-1">Artisan Pro</p>
             <p class="text-2xl font-bold text-purple-600 mb-1">29 €<span class="text-sm font-normal text-apple-gray"> /mois TTC</span></p>

@@ -330,18 +330,20 @@ class Command(BaseCommand):
         return f'{n} page(s) vue(s) purgee(s)'
 
     def _sauvegarde(self):
-        """Dump JSON gzip de la base, retention de 7 fichiers."""
+        """Dump JSON gzip de la base (retention 7 fichiers). Ecrit en FLUX
+        direct dans le gzip (pas de gros StringIO en memoire) et exclut les
+        tables 'cache' volumineuses et re-telechargeables (DVF, analytics)."""
         dossier = Path(settings.BASE_DIR) / 'backups'
         dossier.mkdir(exist_ok=True)
         fichier = dossier / f'backup-{timezone.now():%Y%m%d-%H%M}.json.gz'
-        out = io.StringIO()
-        call_command('dumpdata', '--natural-foreign', '--natural-primary',
-                     '-e', 'contenttypes', '-e', 'auth.permission',
-                     '-e', 'sessions', '-e', 'admin.logentry',
-                     '-e', 'listings.pagevue',  # analytics volumineux, non critique
-                     stdout=out)
         with gzip.open(fichier, 'wt', encoding='utf-8') as f:
-            f.write(out.getvalue())
+            call_command('dumpdata', '--natural-foreign', '--natural-primary',
+                         '-e', 'contenttypes', '-e', 'auth.permission',
+                         '-e', 'sessions', '-e', 'admin.logentry',
+                         '-e', 'listings.pagevue',      # analytics (re-genere)
+                         '-e', 'listings.ventedvf',     # cache DVF volumineux (re-telecharge)
+                         '-e', 'listings.communedvf',   # cache DVF (re-telecharge)
+                         stdout=f)
         # Rotation
         sauvegardes = sorted(dossier.glob('backup-*.json.gz'))
         for ancien in sauvegardes[:-BACKUPS_RETENTION]:

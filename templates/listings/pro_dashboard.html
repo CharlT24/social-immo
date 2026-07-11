@@ -16,6 +16,26 @@
             <p class="text-sm text-gray-500 mt-1">Gerez votre activite et vos realisations</p>
         </div>
 
+        <!-- Booster sa visibilite (options payantes) -->
+        {% if pro.mise_en_avant %}
+        <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4 mb-8 flex items-center gap-2 text-sm text-purple-800">
+            ⭐ <strong>Vous etes mis en avant</strong> — priorite dans les mises en relation et l'annuaire. <a href="{% url 'listings:portail_facturation' %}" class="underline ml-auto">Gerer mon abonnement</a>
+        </div>
+        {% else %}
+        <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-5 mb-8 text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div>
+                    <p class="font-bold">Passez devant vos concurrents</p>
+                    <p class="text-sm text-white/90">Apparaissez en 1re position quand un vendeur cherche votre metier (ex. « pas de DPE »).</p>
+                </div>
+                <div class="flex gap-2 flex-shrink-0">
+                    <a href="{% url 'listings:souscrire' 'pro_priorite_secteur' %}" class="bg-white/20 hover:bg-white/30 text-white font-semibold px-4 py-2 rounded-full text-sm">Priorite secteur — 19€/mois</a>
+                    <a href="{% url 'listings:souscrire' 'pro' %}" class="bg-white text-purple-700 font-semibold px-4 py-2 rounded-full text-sm hover:bg-purple-50">Artisan Pro — 29€/mois</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 reveal-stagger">
             <!-- Realisations -->

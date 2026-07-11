@@ -1234,8 +1234,13 @@ class Abonnement(models.Model):
 
     TYPE_CHOICES = [
         ('agence', 'Abonnement Agence Premium'),
+        ('agence_illimite', 'Abonnement Agence Illimite'),
         ('pro', 'Abonnement Artisan Pro'),
+        ('pro_priorite_secteur', 'Priorite Secteur (pro)'),
         ('pack_vendeur', 'Pack Vendeur Pro (30 jours)'),
+        ('vendeur_photos', 'Photos illimitees'),
+        ('vendeur_alaune_7', 'A la une 7 jours'),
+        ('vendeur_alaune_30', 'A la une 30 jours'),
     ]
     STATUT_CHOICES = [
         ('actif', 'Actif'),

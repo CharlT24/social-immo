@@ -13,6 +13,31 @@
         <a href="{% url 'listings:gestion_agences' %}" class="text-sm text-apple-blue hover:underline">Gestion &rarr;</a>
     </div>
 
+    <!-- Revenus -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white">
+            <p class="text-xs font-medium uppercase tracking-wide text-white/80">Revenu recurrent (MRR)</p>
+            <p class="text-3xl font-bold mt-1">{{ revenus.mrr }} €<span class="text-base font-normal text-white/70">/mois</span></p>
+            <p class="text-xs text-white/80 mt-1">{{ revenus.abonnes }} abonne{{ revenus.abonnes|pluralize }} actif{{ revenus.abonnes|pluralize }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide">Ventes ce mois-ci</p>
+            <p class="text-3xl font-bold mt-1">{{ revenus.mois }} €</p>
+            <p class="text-xs text-apple-gray mt-1">abonnements + options a la carte</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-apple p-5">
+            <p class="text-xs text-apple-gray font-medium uppercase tracking-wide mb-2">Repartition ce mois</p>
+            {% for r in revenus.repartition %}
+            <div class="flex items-center justify-between text-sm py-0.5">
+                <span class="text-apple-text truncate mr-2">{{ r.label }} <span class="text-apple-gray">×{{ r.n }}</span></span>
+                <span class="font-semibold text-apple-gray flex-shrink-0">{{ r.ca|floatformat:2 }} €</span>
+            </div>
+            {% empty %}
+            <p class="text-sm text-apple-gray">Aucune vente ce mois-ci pour le moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Cartes audience -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-2xl shadow-apple p-5">

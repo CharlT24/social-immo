@@ -1909,3 +1909,25 @@ class MonetisationPhase2Tests(TestCase):
             captures.clear()
             paiements.creer_session_checkout('agence_illimite', self.u, 's', 'c')
             self.assertEqual(captures['mode'], 'subscription')
+
+
+class CockpitRevenusTests(TestCase):
+    """Le cockpit calcule MRR, ventes du mois et repartition."""
+
+    def setUp(self):
+        cache.clear()
+        from listings.models import Abonnement
+        u = User.objects.create_user('rev', 'rev@t.fr', 'x')
+        Abonnement.objects.create(user=u, type_abonnement='agence', statut='actif', checkout_session_id='c1')
+        Abonnement.objects.create(user=u, type_abonnement='pro', statut='actif', checkout_session_id='c2')
+        Abonnement.objects.create(user=u, type_abonnement='pack_vendeur', statut='actif', checkout_session_id='c3')
+        Abonnement.objects.create(user=u, type_abonnement='pro', statut='resilie', checkout_session_id='c4')  # pas dans MRR
+
+    def test_mrr_et_ventes(self):
+        staff = User.objects.create_user('cst', 'cst@t.fr', 'x', is_staff=True)
+        self.client.force_login(staff)
+        resp = self.client.get('/gestion/cockpit/')
+        rev = resp.context['revenus']
+        self.assertEqual(rev['mrr'], 178)   # 149 agence + 29 pro actifs (resilie exclu)
+        self.assertEqual(rev['abonnes'], 2)
+        self.assertEqual(rev['mois'], 246.0)  # 149 + 29 + 39 + 29(resilie compte en vente du mois) = 246

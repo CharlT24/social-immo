@@ -532,10 +532,39 @@ def cockpit(request):
     # Agregations lourdes cachees 5 min (COUNT DISTINCT, GROUP BY sur 30j)
     bloc = cache.get_or_set('cockpit:30j', _calcul_cockpit, 300)
 
+    # ===== Revenus (Abonnement) =====
+    from .models import Abonnement
+    PRIX = {'agence': 149, 'agence_illimite': 299, 'pro': 29, 'pro_priorite_secteur': 19,
+            'pack_vendeur': 39, 'vendeur_photos': 4.90, 'vendeur_alaune_7': 9.90,
+            'vendeur_alaune_30': 19.90}
+    LABELS = {'agence': 'Agence Premium', 'agence_illimite': 'Agence Illimite',
+              'pro': 'Artisan Pro', 'pro_priorite_secteur': 'Priorite secteur',
+              'pack_vendeur': 'Pack Vendeur', 'vendeur_photos': 'Photos+',
+              'vendeur_alaune_7': 'A la une 7j', 'vendeur_alaune_30': 'A la une 30j'}
+    RECURRENT = {'agence', 'agence_illimite', 'pro', 'pro_priorite_secteur'}
+    debut_mois = today.replace(day=1)
+    abos = list(Abonnement.objects.all().values('type_abonnement', 'statut', 'created_at'))
+    mrr = sum(PRIX.get(a['type_abonnement'], 0) for a in abos
+              if a['statut'] == 'actif' and a['type_abonnement'] in RECURRENT)
+    ce_mois = [a for a in abos if a['created_at'].date() >= debut_mois]
+    revenus_mois = sum(PRIX.get(a['type_abonnement'], 0) for a in ce_mois)
+    nb_actifs = sum(1 for a in abos if a['statut'] == 'actif' and a['type_abonnement'] in RECURRENT)
+    repart = {}
+    for a in ce_mois:
+        code = a['type_abonnement']
+        r = repart.setdefault(code, {'label': LABELS.get(code, code), 'n': 0, 'ca': 0})
+        r['n'] += 1
+        r['ca'] += PRIX.get(code, 0)
+    repartition = sorted(repart.values(), key=lambda x: -x['ca'])
+
     contexte = {
         **bloc,
         'recent_agences': DemandeAgence.objects.order_by('-created_at')[:6],
         'recent_estimations': Estimation.objects.order_by('-created_at')[:6],
+        'revenus': {
+            'mrr': round(mrr), 'mois': round(revenus_mois, 2), 'abonnes': nb_actifs,
+            'repartition': repartition,
+        },
     }
     return render(request, 'listings/cockpit.html', contexte)
 

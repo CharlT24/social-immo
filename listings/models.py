@@ -230,6 +230,18 @@ class Annonce(models.Model):
         ]
         return [(label, emoji) for present, label, emoji in items if present]
 
+    def plages_indisponibles(self):
+        """Liste de dicts {debut, fin} (ISO) indisponibles à la réservation :
+        réservations acceptées + périodes bloquées par le propriétaire."""
+        plages = []
+        for r in self.reservations.filter(statut='acceptee'):
+            plages.append({'debut': r.date_arrivee.isoformat(),
+                           'fin': r.date_depart.isoformat()})
+        for p in self.indisponibilites.all():
+            plages.append({'debut': p.date_debut.isoformat(),
+                           'fin': p.date_fin.isoformat()})
+        return plages
+
     @property
     def photo_principale(self):
         """Retourne la première photo de l'annonce"""
@@ -867,6 +879,72 @@ class DemandeContact(models.Model):
     @property
     def email_expediteur(self):
         return self.expediteur.email if self.expediteur else self.email
+
+
+class Reservation(models.Model):
+    """Demande de réservation courte durée (type Airbnb) sur une annonce
+    de type 'S'. Calquée sur DemandeContact : l'expéditeur peut être anonyme.
+    Le propriétaire (annonce.user) accepte ou refuse."""
+
+    STATUT_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('acceptee', 'Acceptée'),
+        ('refusee', 'Refusée'),
+    ]
+    annonce = models.ForeignKey(
+        Annonce, on_delete=models.CASCADE, related_name='reservations')
+    expediteur = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reservations_faites')
+    nom = models.CharField(max_length=100, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    telephone = models.CharField(max_length=20, blank=True, default='')
+    date_arrivee = models.DateField()
+    date_depart = models.DateField()
+    nb_voyageurs = models.PositiveSmallIntegerField(default=1)
+    message = models.TextField(blank=True, default='')
+    prix_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut = models.CharField(max_length=12, choices=STATUT_CHOICES, default='en_attente')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Réservation'
+        verbose_name_plural = 'Réservations'
+
+    @property
+    def nom_expediteur(self):
+        if self.expediteur:
+            return self.expediteur.get_full_name() or self.expediteur.username
+        return self.nom or 'Voyageur'
+
+    @property
+    def email_expediteur(self):
+        return self.expediteur.email if self.expediteur else self.email
+
+    @property
+    def nb_nuits(self):
+        if self.date_arrivee and self.date_depart:
+            return (self.date_depart - self.date_arrivee).days
+        return 0
+
+
+class PeriodeIndisponible(models.Model):
+    """Période bloquée par le propriétaire pour une annonce courte durée
+    (indisponible à la réservation). Les réservations acceptées bloquent
+    aussi automatiquement leurs dates (calculé à la volée)."""
+
+    annonce = models.ForeignKey(
+        Annonce, on_delete=models.CASCADE, related_name='indisponibilites')
+    date_debut = models.DateField()
+    date_fin = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date_debut']
+        verbose_name = 'Période indisponible'
+        verbose_name_plural = 'Périodes indisponibles'
 
 
 class DemandeAgence(models.Model):

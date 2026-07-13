@@ -618,9 +618,46 @@
                     </a>
                     {% endif %}
 
+                    <!-- Widget de reservation (location courte duree) -->
+                    {% if annonce.type_transaction == 'S' %}
+                    <div id="booking-widget" class="border border-gray-200 rounded-2xl p-4">
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-apple-gray mb-1">ARRIVEE</label>
+                                <input type="date" id="resa-arrivee" class="w-full px-3 py-2 bg-apple-bg border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-apple-gray mb-1">DEPART</label>
+                                <input type="date" id="resa-depart" class="w-full px-3 py-2 bg-apple-bg border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-[11px] font-semibold text-apple-gray mb-1">VOYAGEURS</label>
+                            <input type="number" id="resa-voyageurs" min="1" value="1" {% if annonce.nb_voyageurs %}max="{{ annonce.nb_voyageurs }}"{% endif %} class="w-full px-3 py-2 bg-apple-bg border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                        </div>
+                        <div id="resa-recap" class="hidden text-sm mb-3 space-y-1"></div>
+                        {% if not user.is_authenticated %}
+                        <div class="grid grid-cols-1 gap-2 mb-2">
+                            <input type="text" id="resa-nom" placeholder="Votre nom *" autocomplete="name" class="w-full px-3 py-2 bg-apple-bg rounded-xl text-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                            <input type="email" id="resa-email" placeholder="Votre email *" autocomplete="email" class="w-full px-3 py-2 bg-apple-bg rounded-xl text-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-apple-blue">
+                        </div>
+                        {% endif %}
+                        <input type="tel" id="resa-tel" value="{{ mon_tel }}" placeholder="Votre telephone *" autocomplete="tel" class="w-full px-3 py-2 bg-apple-bg rounded-xl text-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-apple-blue mb-2">
+                        <textarea id="resa-message" rows="2" placeholder="Un message pour l'hote (optionnel)" class="w-full px-3 py-2 bg-apple-bg rounded-xl text-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none mb-2"></textarea>
+                        <button type="button" onclick="envoyerReservation({{ annonce.id }})" class="w-full bg-teal-600 text-white font-semibold py-3.5 px-6 rounded-xl hover:bg-teal-700 transition-colors text-sm">Demander a reserver</button>
+                        <p id="resa-erreur" class="hidden text-xs text-red-600 text-center mt-2"></p>
+                        <p class="text-[11px] text-apple-gray text-center mt-2">Aucun paiement en ligne : l'hote confirme votre demande, vous reglez ensuite directement.</p>
+                        <div id="resa-success" class="hidden text-center py-4">
+                            <svg class="w-10 h-10 text-teal-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <p class="text-sm font-medium text-apple-text">Demande envoyee !</p>
+                            <p class="text-xs text-apple-gray mt-1">L'hote va vous repondre rapidement.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Contact Form (ouvert a tous, tracke) -->
                     <div class="border-t border-gray-100 pt-4 mt-4">
-                        <p class="text-sm font-semibold text-apple-text mb-3 text-center">Interesse ? Contactez directement</p>
+                        <p class="text-sm font-semibold text-apple-text mb-3 text-center">{% if annonce.type_transaction == 'S' %}Une question ? Contactez l'hote{% else %}Interesse ? Contactez directement{% endif %}</p>
                         <div id="contact-form-container">
                             {% if not user.is_authenticated %}
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
@@ -1224,4 +1261,81 @@ document.addEventListener('keydown', function(e) {
     }, { passive: true });
 })();
 </script>
+
+{% if annonce.type_transaction == 'S' %}
+<script>
+(function() {
+  // unlocalize : point decimal, sinon la virgule FR casse le JS
+  const PRIX_NUIT = {{ annonce.prix_nuit|default:"0"|unlocalize }};
+  const FRAIS_MENAGE = {{ annonce.frais_menage|default:"0"|unlocalize }};
+  const NUITS_MIN = {{ annonce.nuits_min|default:"1" }};
+  const BLOQUEES = {{ dates_bloquees|safe }};
+  const arr = document.getElementById('resa-arrivee');
+  const dep = document.getElementById('resa-depart');
+  if (!arr || !dep) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  arr.min = today; dep.min = today;
+
+  const chevauche = (d1, d2) => BLOQUEES.some(p => d1 < p.fin && p.debut < d2);
+  const nbNuits = (d1, d2) => Math.round((new Date(d2) - new Date(d1)) / 86400000);
+  const fmt = n => n.toLocaleString('fr-FR');
+
+  function recalc() {
+    const recap = document.getElementById('resa-recap');
+    const err = document.getElementById('resa-erreur');
+    err.classList.add('hidden');
+    if (!arr.value || !dep.value) { recap.classList.add('hidden'); return; }
+    if (dep.value <= arr.value) { dep.min = arr.value; }
+    const n = nbNuits(arr.value, dep.value);
+    if (n < 1) { recap.classList.add('hidden'); return; }
+    if (chevauche(arr.value, dep.value)) {
+      recap.classList.add('hidden');
+      err.textContent = 'Ces dates ne sont pas disponibles.'; err.classList.remove('hidden'); return;
+    }
+    if (n < NUITS_MIN) {
+      recap.classList.add('hidden');
+      err.textContent = 'Sejour minimum : ' + NUITS_MIN + ' nuits.'; err.classList.remove('hidden'); return;
+    }
+    const total = PRIX_NUIT * n + FRAIS_MENAGE;
+    let html = '<div class="flex justify-between"><span class="text-apple-gray">' + fmt(PRIX_NUIT) + ' € × ' + n + ' nuit' + (n > 1 ? 's' : '') + '</span><span>' + fmt(PRIX_NUIT * n) + ' €</span></div>';
+    if (FRAIS_MENAGE) html += '<div class="flex justify-between"><span class="text-apple-gray">Frais de menage</span><span>' + fmt(FRAIS_MENAGE) + ' €</span></div>';
+    html += '<div class="flex justify-between font-bold pt-1 border-t border-gray-100"><span>Total</span><span>' + fmt(total) + ' €</span></div>';
+    recap.innerHTML = html; recap.classList.remove('hidden');
+  }
+  arr.addEventListener('change', recalc);
+  dep.addEventListener('change', recalc);
+
+  window.envoyerReservation = function(annonceId) {
+    const err = document.getElementById('resa-erreur');
+    err.classList.add('hidden');
+    const nomEl = document.getElementById('resa-nom');
+    const emailEl = document.getElementById('resa-email');
+    const tel = document.getElementById('resa-tel').value.trim();
+    const nom = nomEl ? nomEl.value.trim() : '';
+    const email = emailEl ? emailEl.value.trim() : '';
+    if (!arr.value || !dep.value) { err.textContent = 'Choisissez vos dates.'; err.classList.remove('hidden'); return; }
+    if ((nomEl && !nom) || (emailEl && !email) || !tel) { err.textContent = 'Nom, email et telephone requis.'; err.classList.remove('hidden'); return; }
+    fetch("{% url 'listings:envoyer_reservation' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({
+        annonce_id: annonceId,
+        date_arrivee: arr.value, date_depart: dep.value,
+        nb_voyageurs: parseInt(document.getElementById('resa-voyageurs').value) || 1,
+        nom: nom, email: email, telephone: tel,
+        message: document.getElementById('resa-message').value.trim()
+      })
+    }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+      if (ok && d.success) {
+        Array.from(document.getElementById('booking-widget').children).forEach(c => { if (c.id !== 'resa-success') c.style.display = 'none'; });
+        document.getElementById('resa-success').classList.remove('hidden');
+      } else {
+        err.textContent = d.error || 'Une erreur est survenue.'; err.classList.remove('hidden');
+      }
+    }).catch(() => { err.textContent = 'Erreur reseau.'; err.classList.remove('hidden'); });
+  };
+})();
+</script>
+{% endif %}
 {% endblock %}

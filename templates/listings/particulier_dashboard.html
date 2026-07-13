@@ -50,6 +50,9 @@
             <a href="?tab=messages" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'messages' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Messages {% if nb_messages_non_lus %}<span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ nb_messages_non_lus }}</span>{% endif %}
             </a>
+            <a href="?tab=reservations" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'reservations' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+                Reservations {% if nb_reservations_attente %}<span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ nb_reservations_attente }}</span>{% endif %}
+            </a>
             <a href="?tab=profil" class="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {% if current_tab == 'profil' %}bg-teal-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-50{% endif %}">
                 Profil
             </a>
@@ -389,6 +392,82 @@
                 <div class="text-6xl mb-4">&#128172;</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Pas de messages</h3>
                 <p class="text-gray-500">Les messages de contact sur vos annonces apparaitront ici.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ ONGLET RESERVATIONS ============ -->
+        {% elif current_tab == 'reservations' %}
+        <div class="space-y-8">
+            <div>
+                <h2 class="text-xl font-bold mb-6">Demandes de reservation</h2>
+                {% if reservations_recues %}
+                <div class="space-y-3 reveal-stagger">
+                    {% for r in reservations_recues %}
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 {% if r.statut == 'en_attente' %}border-l-4 border-l-amber-500{% endif %}">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span class="font-semibold text-gray-900">{{ r.nom_expediteur }}</span>
+                                    {% if r.statut == 'en_attente' %}<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">En attente</span>
+                                    {% elif r.statut == 'acceptee' %}<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Acceptee</span>
+                                    {% else %}<span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">Refusee</span>{% endif %}
+                                </div>
+                                <p class="text-xs text-gray-400 mb-2">{{ r.annonce.titre }}</p>
+                                <p class="text-sm text-gray-700"><strong>{{ r.date_arrivee|date:'d/m/Y' }}</strong> &rarr; <strong>{{ r.date_depart|date:'d/m/Y' }}</strong> · {{ r.nb_nuits }} nuit{{ r.nb_nuits|pluralize }} · {{ r.nb_voyageurs }} voyageur{{ r.nb_voyageurs|pluralize }}{% if r.prix_total %} · <span class="text-teal-700 font-semibold">{{ r.prix_total|floatformat:0 }} &euro;</span>{% endif %}</p>
+                                {% if r.message %}<p class="text-sm text-gray-600 mt-2 line-clamp-2">{{ r.message }}</p>{% endif %}
+                                <p class="text-sm text-teal-600 mt-2 font-medium">{{ r.email_expediteur }}{% if r.telephone %} · {{ r.telephone }}{% endif %}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-xs text-gray-400 whitespace-nowrap">{{ r.created_at|timesince }}</span>
+                                {% if r.statut == 'en_attente' %}
+                                <div class="flex gap-2">
+                                    <form method="post" action="{% url 'listings:repondre_reservation' r.id %}">{% csrf_token %}<input type="hidden" name="action" value="accepter"><button class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-full">Accepter</button></form>
+                                    <form method="post" action="{% url 'listings:repondre_reservation' r.id %}">{% csrf_token %}<input type="hidden" name="action" value="refuser"><button class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-full">Refuser</button></form>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 reveal">
+                    <div class="text-6xl mb-4">&#128197;</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Pas encore de reservation</h3>
+                    <p class="text-gray-500">Les demandes de reservation sur vos locations courte duree apparaitront ici.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if annonces_courte_duree %}
+            <div>
+                <h2 class="text-xl font-bold mb-2">Gerer mes disponibilites</h2>
+                <p class="text-sm text-gray-500 mb-4">Bloquez les periodes ou vos logements courte duree ne sont pas disponibles a la reservation.</p>
+                <div class="space-y-4">
+                    {% for a in annonces_courte_duree %}
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                        <p class="font-semibold text-gray-900 mb-3">{{ a.titre }}</p>
+                        <form method="post" action="{% url 'listings:bloquer_periode' %}" class="flex flex-wrap items-end gap-3 mb-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="annonce_id" value="{{ a.id }}">
+                            <div><label class="block text-xs text-gray-500 mb-1">Du</label><input type="date" name="date_debut" required class="px-3 py-2 border border-gray-200 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs text-gray-500 mb-1">Au</label><input type="date" name="date_fin" required class="px-3 py-2 border border-gray-200 rounded-lg text-sm"></div>
+                            <button class="bg-gray-800 hover:bg-black text-white text-sm font-semibold px-4 py-2 rounded-lg">Bloquer</button>
+                        </form>
+                        {% if a.indisponibilites.all %}
+                        <div class="flex flex-wrap gap-2">
+                            {% for p in a.indisponibilites.all %}
+                            <span class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-full">
+                                {{ p.date_debut|date:'d/m/Y' }} &rarr; {{ p.date_fin|date:'d/m/Y' }}
+                                <form method="post" action="{% url 'listings:debloquer_periode' p.id %}" class="inline">{% csrf_token %}<button class="text-red-500 hover:text-red-700 font-bold" title="Debloquer">&#10005;</button></form>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
             {% endif %}
         </div>

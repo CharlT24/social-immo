@@ -3,7 +3,7 @@ from .models import (
     Annonce, Photo, Commentaire, Favori, Agence,
     ProProfile, ProRealisation, ProRealisationPhoto, ProAvis,
     PhotoFavori, PhotoNote, DemandeContact, Conseiller, Estimation,
-    DemandeAgence, Desabonnement,
+    DemandeAgence, Desabonnement, Reservation, PeriodeIndisponible,
 )
 
 
@@ -99,6 +99,20 @@ class DemandeContactAdmin(admin.ModelAdmin):
     list_display = ['expediteur', 'annonce', 'pro', 'is_read', 'created_at']
     list_filter = ['is_read', 'created_at']
     search_fields = ['expediteur__username', 'message']
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ['annonce', 'nom_expediteur', 'date_arrivee', 'date_depart',
+                    'nb_voyageurs', 'prix_total', 'statut', 'created_at']
+    list_filter = ['statut', 'created_at']
+    search_fields = ['annonce__titre', 'nom', 'email', 'expediteur__username']
+
+
+@admin.register(PeriodeIndisponible)
+class PeriodeIndisponibleAdmin(admin.ModelAdmin):
+    list_display = ['annonce', 'date_debut', 'date_fin', 'created_at']
+    search_fields = ['annonce__titre']
 
 
 @admin.register(DemandeAgence)

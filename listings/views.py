@@ -432,6 +432,8 @@ def listing_detail(request, reference, slug=None):
         prof = getattr(request.user, 'profile', None)
         mon_tel = getattr(prof, 'telephone', '') if prof else ''
 
+    dates_bloquees = json.dumps(annonce.plages_indisponibles()) if annonce.type_transaction == 'S' else '[]'
+
     context = {
         'annonce': annonce,
         'commentaires': annonce.commentaires.all(),
@@ -441,6 +443,7 @@ def listing_detail(request, reference, slug=None):
         'similaires': similaires,
         'user_favorites': user_favorites,
         'mon_tel': mon_tel,
+        'dates_bloquees': dates_bloquees,
     }
     return render(request, 'listings/listing_detail.html', context)
 
@@ -2344,6 +2347,178 @@ def mark_contact_read(request):
     return JsonResponse({'success': True})
 
 
+# ================== Reservations courte duree (type Airbnb) ==================
+
+def envoyer_reservation(request):
+    """Demande de reservation courte duree (annonce type 'S'). Ouverte aux
+    visiteurs anonymes (nom + email + telephone requis)."""
+    from django.core.mail import send_mail
+    from datetime import date, datetime
+    from .services.protection import trop_de_requetes, est_un_bot
+    from .models import Reservation
+    if est_un_bot(request) or trop_de_requetes(request, 'reservation', maximum=15, fenetre_secondes=3600):
+        return JsonResponse({'error': 'Trop de demandes — reessayez plus tard.'}, status=429)
+    try:
+        data = json.loads(request.body)
+        annonce_id = data.get('annonce_id')
+        da = (data.get('date_arrivee') or '').strip()
+        dd = (data.get('date_depart') or '').strip()
+        nb_voyageurs = int(data.get('nb_voyageurs') or 1)
+        message_text = (data.get('message') or '').strip()
+        nom = (data.get('nom') or '').strip()[:100]
+        email = (data.get('email') or '').strip()[:254]
+        telephone = (data.get('telephone') or '').strip()[:20]
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return JsonResponse({'error': 'Donnees invalides'}, status=400)
+
+    annonce = get_object_or_404(Annonce, id=annonce_id)
+    if annonce.type_transaction != 'S':
+        return JsonResponse({'error': "Cette annonce n'est pas une location courte duree."}, status=400)
+    if not request.user.is_authenticated and (not nom or not email or not telephone):
+        return JsonResponse({'error': 'Nom, email et telephone requis.'}, status=400)
+
+    try:
+        d_arr = datetime.strptime(da, '%Y-%m-%d').date()
+        d_dep = datetime.strptime(dd, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Dates invalides.'}, status=400)
+    if d_arr < date.today():
+        return JsonResponse({'error': "La date d'arrivee est passee."}, status=400)
+    nuits = (d_dep - d_arr).days
+    if nuits < 1:
+        return JsonResponse({'error': 'La date de depart doit etre apres l\'arrivee.'}, status=400)
+    if annonce.nuits_min and nuits < annonce.nuits_min:
+        return JsonResponse({'error': f'Sejour minimum : {annonce.nuits_min} nuits.'}, status=400)
+    if annonce.nb_voyageurs and nb_voyageurs > annonce.nb_voyageurs:
+        return JsonResponse({'error': f'Capacite maximum : {annonce.nb_voyageurs} voyageurs.'}, status=400)
+
+    # Chevauchement avec les dates indisponibles (on ne fait pas confiance au client)
+    for plage in annonce.plages_indisponibles():
+        pd = datetime.strptime(plage['debut'], '%Y-%m-%d').date()
+        pf = datetime.strptime(plage['fin'], '%Y-%m-%d').date()
+        if d_arr < pf and pd < d_dep:
+            return JsonResponse({'error': 'Ces dates ne sont plus disponibles.'}, status=409)
+
+    prix_total = None
+    if annonce.prix_nuit:
+        prix_total = float(annonce.prix_nuit) * nuits + float(annonce.frais_menage or 0)
+
+    resa = Reservation(
+        annonce=annonce,
+        expediteur=request.user if request.user.is_authenticated else None,
+        nom='' if request.user.is_authenticated else nom,
+        email='' if request.user.is_authenticated else email,
+        telephone=telephone,
+        date_arrivee=d_arr, date_depart=d_dep,
+        nb_voyageurs=nb_voyageurs, message=message_text,
+        prix_total=prix_total,
+    )
+    resa.save()
+
+    dest = (annonce.user.email if annonce.user else '') or annonce.contact_email
+    if dest:
+        try:
+            total_txt = f'Total estime : {prix_total:.0f} EUR' if prix_total else ''
+            subject = f"Nouvelle demande de reservation — {annonce.titre} | SocialImmo"
+            body = f"""Bonjour,
+
+Vous avez recu une demande de reservation pour votre logement « {annonce.titre} ».
+
+Voyageur : {resa.nom_expediteur}
+Email : {resa.email_expediteur}
+Telephone : {telephone or '—'}
+Dates : du {d_arr:%d/%m/%Y} au {d_dep:%d/%m/%Y} ({nuits} nuit(s))
+Voyageurs : {nb_voyageurs}
+{total_txt}
+
+{('Message : ' + message_text) if message_text else ''}
+
+---
+Connectez-vous sur SocialImmo (Mon compte -> Reservations) pour accepter ou refuser.
+"""
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [dest], fail_silently=True)
+        except Exception:
+            pass
+
+    return JsonResponse({'success': True})
+
+
+@login_required
+def repondre_reservation(request, reservation_id):
+    """Le proprietaire accepte ou refuse une demande de reservation."""
+    from django.core.mail import send_mail
+    from .models import Reservation
+    resa = get_object_or_404(Reservation, id=reservation_id, annonce__user=request.user)
+    action = request.POST.get('action')
+    if action == 'accepter':
+        resa.statut = 'acceptee'
+    elif action == 'refuser':
+        resa.statut = 'refusee'
+    else:
+        return redirect('/mon-compte/?tab=reservations')
+    resa.is_read = True
+    resa.save(update_fields=['statut', 'is_read'])
+
+    dest = resa.email_expediteur
+    if dest:
+        try:
+            if resa.statut == 'acceptee':
+                subject = f"Votre reservation est acceptee — {resa.annonce.titre}"
+                body = f"""Bonne nouvelle !
+
+Votre demande de reservation pour « {resa.annonce.titre} » (du {resa.date_arrivee:%d/%m/%Y} au {resa.date_depart:%d/%m/%Y}) a ete ACCEPTEE.
+
+Le proprietaire va vous recontacter pour finaliser les details.
+
+— SocialImmo
+"""
+            else:
+                subject = f"Votre demande de reservation — {resa.annonce.titre}"
+                body = f"""Bonjour,
+
+Votre demande de reservation pour « {resa.annonce.titre} » (du {resa.date_arrivee:%d/%m/%Y} au {resa.date_depart:%d/%m/%Y}) n'a pas pu etre retenue cette fois.
+
+N'hesitez pas a decouvrir d'autres logements sur SocialImmo.
+
+— SocialImmo
+"""
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [dest], fail_silently=True)
+        except Exception:
+            pass
+    messages.success(request, 'Reponse envoyee au voyageur.')
+    return redirect('/mon-compte/?tab=reservations')
+
+
+@login_required
+def bloquer_periode(request):
+    """Le proprietaire bloque une periode d'indisponibilite sur son annonce."""
+    from datetime import datetime
+    from .models import PeriodeIndisponible
+    annonce = get_object_or_404(Annonce, id=request.POST.get('annonce_id'), user=request.user)
+    try:
+        d1 = datetime.strptime(request.POST.get('date_debut'), '%Y-%m-%d').date()
+        d2 = datetime.strptime(request.POST.get('date_fin'), '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        messages.error(request, 'Dates invalides.')
+        return redirect('/mon-compte/?tab=reservations')
+    if d2 <= d1:
+        messages.error(request, 'La date de fin doit etre apres le debut.')
+        return redirect('/mon-compte/?tab=reservations')
+    PeriodeIndisponible.objects.create(annonce=annonce, date_debut=d1, date_fin=d2)
+    messages.success(request, 'Periode bloquee.')
+    return redirect('/mon-compte/?tab=reservations')
+
+
+@login_required
+def debloquer_periode(request, periode_id):
+    """Le proprietaire retire une periode d'indisponibilite."""
+    from .models import PeriodeIndisponible
+    p = get_object_or_404(PeriodeIndisponible, id=periode_id, annonce__user=request.user)
+    p.delete()
+    messages.success(request, 'Periode debloquee.')
+    return redirect('/mon-compte/?tab=reservations')
+
+
 @login_required
 @staff_required
 def gestion_utilisateurs(request):
@@ -4217,6 +4392,9 @@ def particulier_dashboard(request):
     nb_inspi_likes = PhotoFavori.objects.filter(user=request.user).count()
     messages_recus = DemandeContact.objects.filter(annonce__user=request.user)
     nb_messages_non_lus = messages_recus.filter(is_read=False).count()
+    from .models import Reservation
+    reservations_recues = Reservation.objects.filter(annonce__user=request.user)
+    nb_reservations_attente = reservations_recues.filter(statut='en_attente').count()
 
     context = {
         'current_tab': current_tab,
@@ -4224,6 +4402,7 @@ def particulier_dashboard(request):
         'nb_favoris': nb_favoris,
         'nb_inspi_likes': nb_inspi_likes,
         'nb_messages_non_lus': nb_messages_non_lus,
+        'nb_reservations_attente': nb_reservations_attente,
     }
 
     # --- Onglet Vendeur ---
@@ -4279,6 +4458,16 @@ def particulier_dashboard(request):
         context['messages_recus'] = messages_recus.select_related(
             'expediteur', 'annonce'
         ).order_by('-created_at')[:50]
+
+    # --- Onglet Reservations (courte duree) ---
+    elif current_tab == 'reservations':
+        context['reservations_recues'] = reservations_recues.select_related(
+            'expediteur', 'annonce'
+        ).order_by('-created_at')[:100]
+        # Annonces courte duree du vendeur + leurs periodes bloquees
+        context['annonces_courte_duree'] = mes_annonces.filter(
+            type_transaction='S', is_active=True
+        ).prefetch_related('indisponibilites')
 
     # --- Onglet Profil ---
     elif current_tab == 'profil':

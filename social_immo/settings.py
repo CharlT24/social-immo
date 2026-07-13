@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -163,6 +164,16 @@ else:
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
+    }
+
+# Tests : toujours une base SQLite en memoire, quel que soit l'environnement.
+# Rapide, et surtout evite l'erreur "Access denied ... CREATE DATABASE" sur
+# l'hebergement mutualise o2switch (l'utilisateur MySQL ne peut pas creer la
+# base de test). N'affecte QUE `manage.py test`, jamais la prod.
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
     }
 
 

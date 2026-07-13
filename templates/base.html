@@ -123,13 +123,19 @@
                     Social<span class="text-apple-blue">Immo</span>
                 </a>
 
-                <!-- Desktop Navigation -->
-                <div class="hidden md:flex items-center gap-6">
-                    <a href="{% url 'listings:search_results' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'search_results' or request.resolver_match.url_name == 'detail' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
-                        Biens
+                <!-- Desktop Navigation (parcours) -->
+                <div class="hidden lg:flex items-center gap-6">
+                    <a href="{% url 'listings:search_results' %}?type=V" class="text-sm font-medium {% if request.resolver_match.url_name == 'search_results' and request.GET.type == 'V' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Acheter
                     </a>
-                    <a href="{% url 'listings:locaux_pro' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'locaux_pro' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
-                        Locaux pro
+                    <a href="{% url 'listings:search_results' %}?type=L" class="text-sm font-medium {% if request.resolver_match.url_name == 'search_results' and request.GET.type == 'L' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Louer
+                    </a>
+                    <a href="{% url 'listings:search_results' %}?type=S" class="text-sm font-medium {% if request.resolver_match.url_name == 'search_results' and request.GET.type == 'S' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
+                        Courte durée
+                    </a>
+                    <a href="{% url 'listings:estimation' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'estimation' %}text-orange-600{% else %}text-orange-500{% endif %} hover:text-orange-600 transition-colors">
+                        Estimer
                     </a>
                     <a href="{% url 'listings:decoration_list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'decoration_list' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
                         Inspirations
@@ -137,16 +143,11 @@
                     <a href="{% url 'listings:partenaire_list' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'partenaire_list' or request.resolver_match.url_name == 'agence_profil' %}text-apple-text{% else %}text-apple-gray{% endif %} hover:text-apple-text transition-colors">
                         Pros
                     </a>
-                    <a href="{% url 'listings:estimation' %}" class="text-sm font-medium {% if request.resolver_match.url_name == 'estimation' %}text-orange-600{% else %}text-orange-500{% endif %} hover:text-orange-600 transition-colors">
-                        Estimer
-                    </a>
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-px h-5 bg-gray-200"></div>
-
+                <!-- Desktop auth + CTA -->
+                <div class="hidden lg:flex items-center gap-4">
                     {% if user.is_authenticated %}
-                    <!-- Logged In -->
-                    <div class="flex items-center gap-4">
                         {% if user.is_staff %}
                         <a href="{% url 'listings:dashboard' %}"
                            class="inline-flex items-center gap-1.5 text-sm font-medium text-apple-blue hover:text-blue-700 transition-colors">
@@ -215,26 +216,30 @@
                            class="text-sm font-medium text-apple-gray hover:text-red-500 transition-colors">
                             Deconnexion
                         </a>
-                    </div>
+                        {% if not user.is_staff %}
+                        <a href="{% url 'listings:particulier_creer_annonce' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors whitespace-nowrap">
+                            Deposer une annonce
+                        </a>
+                        {% endif %}
                     {% else %}
                     <!-- Logged Out -->
-                    <a href="{% url 'account_login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
-                        Se connecter
-                    </a>
                     <a href="{% url 'listings:agence_immo' %}" class="text-sm font-medium text-apple-blue hover:text-blue-700 transition-colors">
-                        Agence immo
+                        Agence
                     </a>
                     <a href="{% url 'listings:pro_inscription' %}" class="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
-                        Espace Pro
+                        Pro
                     </a>
-                    <a href="{% url 'listings:signup' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors">
-                        S'inscrire
+                    <a href="{% url 'account_login' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text transition-colors">
+                        Connexion
+                    </a>
+                    <a href="{% url 'listings:particulier_creer_annonce' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors whitespace-nowrap">
+                        Deposer une annonce
                     </a>
                     {% endif %}
                 </div>
 
                 <!-- Mobile hamburger button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="toggleMobileMenu()">
+                <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="toggleMobileMenu()">
                     <svg id="menu-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
@@ -245,13 +250,16 @@
             </div>
 
             <!-- Mobile Navigation Panel -->
-            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-100 pt-4">
+            <div id="mobile-menu" class="hidden lg:hidden mt-4 pb-4 border-t border-gray-100 pt-4">
                 <div class="flex flex-col gap-3">
-                    <a href="{% url 'listings:search_results' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Biens</a>
-                    <a href="{% url 'listings:locaux_pro' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Locaux pro</a>
+                    <a href="{% url 'listings:search_results' %}?type=V" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Acheter</a>
+                    <a href="{% url 'listings:search_results' %}?type=L" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Louer</a>
+                    <a href="{% url 'listings:search_results' %}?type=S" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Louer courte durée</a>
+                    <a href="{% url 'listings:estimation' %}" class="text-sm font-medium text-orange-500 hover:text-orange-600 py-2">Estimer</a>
                     <a href="{% url 'listings:decoration_list' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Inspirations</a>
                     <a href="{% url 'listings:partenaire_list' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Pros</a>
-                    <a href="{% url 'listings:estimation' %}" class="text-sm font-medium text-orange-500 hover:text-orange-600 py-2">Estimer</a>
+                    <a href="{% url 'listings:locaux_pro' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Locaux pro</a>
+                    <a href="{% url 'listings:tarifs' %}" class="text-sm font-medium text-apple-gray hover:text-apple-text py-2">Tarifs</a>
                     <hr class="border-gray-100">
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}
@@ -270,15 +278,18 @@
                         <a href="{% url 'listings:particulier_dashboard' %}" class="text-sm font-medium text-teal-600 py-2">Mon compte</a>
                         {% endif %}
                         <a href="{% url 'listings:messages_inbox' %}" class="text-sm font-medium text-apple-gray py-2">Messagerie{% if messages_non_lus %} <span class="bg-apple-blue text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ messages_non_lus }}</span>{% endif %}</a>
+                        {% if not user.is_staff %}
+                        <a href="{% url 'listings:particulier_creer_annonce' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors text-center mt-2">Deposer une annonce</a>
+                        {% endif %}
                         <div class="flex items-center justify-between pt-2">
                             <span class="text-sm text-apple-gray">{{ user.username }}</span>
                             <a href="{% url 'account_logout' %}" class="text-sm font-medium text-red-500">Deconnexion</a>
                         </div>
                     {% else %}
                         <a href="{% url 'account_login' %}" class="text-sm font-medium text-apple-gray py-2">Se connecter</a>
-                        <a href="{% url 'listings:agence_immo' %}" class="text-sm font-medium text-apple-blue py-2">Agence immo</a>
+                        <a href="{% url 'listings:agence_immo' %}" class="text-sm font-medium text-apple-blue py-2">Espace agence</a>
                         <a href="{% url 'listings:pro_inscription' %}" class="text-sm font-medium text-purple-600 py-2">Espace Pro</a>
-                        <a href="{% url 'listings:signup' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors text-center mt-2">S'inscrire</a>
+                        <a href="{% url 'listings:particulier_creer_annonce' %}" class="bg-apple-blue text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-blue-600 transition-colors text-center mt-2">Deposer une annonce</a>
                     {% endif %}
                 </div>
             </div>

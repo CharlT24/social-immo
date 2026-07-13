@@ -42,6 +42,11 @@
                             onclick="switchTab('L')">
                         Louer
                     </button>
+                    <button type="button" role="tab" aria-selected="false" id="tab-court"
+                            class="search-tab flex-1 py-4 text-sm font-bold text-center transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-600"
+                            onclick="switchTab('S')">
+                        Courte durée
+                    </button>
                 </div>
 
                 <!-- Search Form -->
@@ -124,46 +129,68 @@
 
 <!-- ==================== SERVICES SECTION ==================== -->
 <section class="max-w-7xl mx-auto px-6 -mt-8 relative z-10 mb-16">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Vente -->
-        <a href="{% url 'listings:search_results' %}?type=V" class="md:col-span-1 flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Acheter -->
+        <a href="{% url 'listings:search_results' %}?type=V" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
             <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             </div>
             <div>
-                <p class="text-sm font-bold text-apple-text">{{ count_vente }} biens en vente</p>
-                <p class="text-xs text-apple-gray">Appartements, maisons...</p>
+                <p class="text-sm font-bold text-apple-text">Acheter</p>
+                <p class="text-xs text-apple-gray">{{ count_vente }} biens en vente</p>
             </div>
         </a>
 
-        <!-- Inspirations (au milieu, plus grand) -->
-        <a href="{% url 'listings:decoration_list' %}" class="md:col-span-2 relative bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all overflow-hidden group">
-            <div class="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
-            <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-            <div class="absolute bottom-0 left-1/2 w-32 h-32 bg-white/5 rounded-full translate-y-1/2"></div>
-            <div class="relative flex items-center justify-center gap-5">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                </div>
-                <div>
-                    <p class="text-lg font-bold text-white">Inspirations deco</p>
-                    <p class="text-sm text-white/70">Explorez des interieurs qui font rever et trouvez votre style</p>
-                </div>
-                <svg class="w-6 h-6 text-white/60 group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </div>
-        </a>
-
-        <!-- Location -->
-        <a href="{% url 'listings:search_results' %}?type=L" class="md:col-span-1 flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+        <!-- Louer -->
+        <a href="{% url 'listings:search_results' %}?type=L" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
             <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             </div>
             <div>
-                <p class="text-sm font-bold text-apple-text">{{ count_location }} en location</p>
-                <p class="text-xs text-apple-gray">Studios, T2, maisons...</p>
+                <p class="text-sm font-bold text-apple-text">Louer</p>
+                <p class="text-xs text-apple-gray">{{ count_location }} en location</p>
+            </div>
+        </a>
+
+        <!-- Courte durée (Airbnb) -->
+        <a href="{% url 'listings:search_results' %}?type=S" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+            <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-apple-text">Courte durée</p>
+                <p class="text-xs text-apple-gray">Sejours & week-ends</p>
+            </div>
+        </a>
+
+        <!-- Estimer -->
+        <a href="{% url 'listings:estimation' %}" class="flex items-center gap-4 bg-white rounded-2xl p-5 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all">
+            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-apple-text">Estimer</p>
+                <p class="text-xs text-apple-gray">Gratuit & instantane</p>
             </div>
         </a>
     </div>
+
+    <!-- Inspirations (banniere pleine largeur) -->
+    <a href="{% url 'listings:decoration_list' %}" class="mt-4 block relative bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-apple hover:shadow-apple-hover hover:-translate-y-0.5 transition-all overflow-hidden group">
+        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
+        <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+        <div class="absolute bottom-0 left-1/2 w-32 h-32 bg-white/5 rounded-full translate-y-1/2"></div>
+        <div class="relative flex items-center gap-5">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="flex-1">
+                <p class="text-lg font-bold text-white">Inspirations deco</p>
+                <p class="text-sm text-white/70">Explorez des interieurs qui font rever et trouvez votre style</p>
+            </div>
+            <svg class="w-6 h-6 text-white/60 group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+    </a>
 </section>
 
 <!-- ==================== REASSURANCE / PREUVE SOCIALE ==================== -->
@@ -416,7 +443,7 @@ function switchTab(type) {
         t.classList.add('border-transparent', 'text-gray-400');
         t.setAttribute('aria-selected', 'false');
     });
-    const activeTab = type === 'V' ? document.getElementById('tab-buy') : document.getElementById('tab-rent');
+    const activeTab = document.getElementById({'V': 'tab-buy', 'L': 'tab-rent', 'S': 'tab-court'}[type] || 'tab-buy');
     activeTab.classList.add('border-apple-blue', 'text-apple-blue');
     activeTab.classList.remove('border-transparent', 'text-gray-400');
     activeTab.setAttribute('aria-selected', 'true');

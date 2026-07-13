@@ -411,6 +411,13 @@ class ParticulierAnnonceForm(forms.ModelForm):
             'dpe_valeur_ges': 'Valeur GES (kgCO2/m2/an)',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Le prix (vente) ne doit pas etre requis au niveau du champ : selon le
+        # type d'annonce c'est le loyer (L) ou le prix/nuit (S) qui compte. La
+        # bonne exigence est verifiee par type dans clean().
+        self.fields['prix'].required = False
+
     def clean(self):
         cleaned = super().clean()
         transaction = cleaned.get('type_transaction')

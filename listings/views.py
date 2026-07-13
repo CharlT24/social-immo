@@ -2547,7 +2547,7 @@ def sauvegarder_recherche(request):
 
     ville = (request.POST.get('ville') or '').strip()[:100]
     type_transaction = request.POST.get('type', '')
-    if type_transaction not in ('V', 'L'):
+    if type_transaction not in ('V', 'L', 'S'):
         type_transaction = ''
 
     # Pas de doublon strict

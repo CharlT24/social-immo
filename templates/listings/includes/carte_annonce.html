@@ -97,7 +97,7 @@ Parametres :
     <!-- Contenu -->
     <a href="{{ annonce.get_absolute_url }}" class="block p-5">
         <div class="flex items-start justify-between gap-2 mb-1">
-            <div class="text-xl font-bold tracking-tight">{{ annonce.prix_format }}</div>
+            <div class="text-xl font-bold tracking-tight">{{ annonce.prix_principal }}{% if annonce.prix_suffixe %}<span class="text-sm font-medium text-apple-gray"> {{ annonce.prix_suffixe }}</span>{% endif %}</div>
             {% if annonce.dpe_etiquette_conso %}
             <div class="flex items-center gap-1 flex-shrink-0" title="DPE energie / GES">
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold

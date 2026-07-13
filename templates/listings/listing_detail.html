@@ -522,6 +522,53 @@
             </div>
             {% endif %}
 
+            <!-- Détails location courte durée (type Airbnb) -->
+            {% if annonce.type_transaction == 'S' %}
+            <div>
+                <h2 class="text-xl font-semibold mb-6">Location courte durée</h2>
+                <div class="bg-white rounded-2xl shadow-apple p-6 space-y-5">
+                    <!-- Capacité -->
+                    <div class="flex flex-wrap gap-x-6 gap-y-2">
+                        {% if annonce.nb_voyageurs %}<div class="flex items-center gap-2 text-sm"><span class="text-lg">👥</span> {{ annonce.nb_voyageurs }} voyageur{{ annonce.nb_voyageurs|pluralize }}</div>{% endif %}
+                        {% if annonce.nb_chambres %}<div class="flex items-center gap-2 text-sm"><span class="text-lg">🛏️</span> {{ annonce.nb_chambres }} chambre{{ annonce.nb_chambres|pluralize }}</div>{% endif %}
+                        {% if annonce.nuits_min %}<div class="flex items-center gap-2 text-sm"><span class="text-lg">🌙</span> {{ annonce.nuits_min }} nuit{{ annonce.nuits_min|pluralize }} min.</div>{% endif %}
+                    </div>
+                    <!-- Tarifs -->
+                    <div class="divide-y divide-gray-100">
+                        {% if annonce.prix_nuit %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Prix par nuit</span>
+                            <span class="text-lg font-bold">{{ annonce.prix_nuit|floatformat:0 }} €/nuit</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.frais_menage %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Frais de ménage</span>
+                            <span class="text-sm font-semibold">{{ annonce.frais_menage|floatformat:0 }} €</span>
+                        </div>
+                        {% endif %}
+                        {% if annonce.depot_garantie %}
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-sm text-apple-gray">Caution</span>
+                            <span class="text-sm font-semibold">{{ annonce.depot_garantie|floatformat:0 }} €</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- Équipements -->
+                    {% if annonce.equipements_list %}
+                    <div>
+                        <p class="text-sm font-semibold mb-3">Ce que propose ce logement</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {% for label, emoji in annonce.equipements_list %}
+                            <div class="flex items-center gap-2 text-sm text-apple-text"><span class="text-lg">{{ emoji }}</span> {{ label }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
 
         <!-- Right Column - Contact Card (Sticky) -->
@@ -529,11 +576,13 @@
             <div class="bg-white rounded-3xl p-8 shadow-apple sticky top-28">
                 <!-- Price -->
                 <div class="text-3xl font-semibold tracking-tight mb-1">
-                    {{ annonce.prix_format }}
+                    {{ annonce.prix_principal }}
                 </div>
                 <div class="text-sm text-apple-gray mb-6">
                     {% if annonce.type_transaction == 'V' %}
                         {% if annonce.honoraires_payeurs %}Honoraires {{ annonce.honoraires_payeurs }}{% endif %}
+                    {% elif annonce.type_transaction == 'S' %}
+                        par nuit
                     {% else %}
                         par mois
                     {% endif %}

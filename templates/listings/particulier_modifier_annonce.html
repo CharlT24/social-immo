@@ -78,6 +78,22 @@
                         </div>
                     </div>
                 </div>
+                <div id="prix-courte" class="hidden">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.prix_nuit.label }} *</label>
+                            {{ form.prix_nuit }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.frais_menage.label }}</label>
+                            {{ form.frais_menage }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.depot_garantie.label }}</label>
+                            {{ form.depot_garantie }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -122,6 +138,31 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.surface_terrain.label }}</label>
                     {{ form.surface_terrain }}
                 </div>
+            </div>
+        </div>
+
+        <!-- Section courte durée (capacité + équipements) -->
+        <div id="bloc-courte-duree" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hidden">
+            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">🏖️ Location courte durée</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_voyageurs.label }}</label>
+                    {{ form.nb_voyageurs }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nuits_min.label }}</label>
+                    {{ form.nuits_min }}
+                </div>
+            </div>
+            <p class="text-sm font-medium text-gray-700 mb-2">Équipements</p>
+            <div class="flex flex-wrap gap-x-5 gap-y-3">
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_wifi" {% if form.equip_wifi.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">📶 Wifi</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_cuisine" {% if form.equip_cuisine.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🍳 Cuisine équipée</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_lave_linge" {% if form.equip_lave_linge.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🧺 Lave-linge</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_clim" {% if form.equip_clim.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">❄️ Climatisation</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_tv" {% if form.equip_tv.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">📺 Télévision</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_piscine" {% if form.equip_piscine.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🏊 Piscine</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_animaux" {% if form.equip_animaux.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🐾 Animaux acceptés</span></label>
             </div>
         </div>
 
@@ -203,15 +244,15 @@
 const typeSelect = document.getElementById('id_type_transaction');
 const prixVente = document.getElementById('prix-vente');
 const prixLocation = document.getElementById('prix-location');
+const prixCourte = document.getElementById('prix-courte');
+const blocCourte = document.getElementById('bloc-courte-duree');
 
 function updatePrixFields() {
-    if (typeSelect.value === 'L') {
-        prixVente.classList.add('hidden');
-        prixLocation.classList.remove('hidden');
-    } else {
-        prixVente.classList.remove('hidden');
-        prixLocation.classList.add('hidden');
-    }
+    const t = typeSelect.value;
+    prixVente.classList.toggle('hidden', t !== 'V');
+    prixLocation.classList.toggle('hidden', t !== 'L');
+    prixCourte.classList.toggle('hidden', t !== 'S');
+    if (blocCourte) blocCourte.classList.toggle('hidden', t !== 'S');
 }
 
 typeSelect.addEventListener('change', updatePrixFields);

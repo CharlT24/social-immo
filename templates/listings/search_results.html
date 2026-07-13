@@ -46,6 +46,7 @@
                     <option value="">Type</option>
                     <option value="V" {% if current_type == 'V' %}selected{% endif %}>Acheter</option>
                     <option value="L" {% if current_type == 'L' %}selected{% endif %}>Louer</option>
+                    <option value="S" {% if current_type == 'S' %}selected{% endif %}>Louer courte durée</option>
                 </select>
             </div>
 
@@ -281,7 +282,7 @@
     <!-- H1 SEO -->
     <h1 class="text-xl sm:text-2xl font-bold tracking-tight mb-4">
         {% if current_ville %}Immobilier a {{ current_ville }}{% else %}Annonces immobilieres{% endif %}
-        {% if current_type == 'V' %} — a vendre{% elif current_type == 'L' %} — a louer{% endif %}
+        {% if current_type == 'V' %} — a vendre{% elif current_type == 'L' %} — a louer{% elif current_type == 'S' %} — location courte durée{% endif %}
         <span class="text-apple-gray font-medium text-base">· {{ result_count }} bien{{ result_count|pluralize:"s" }}</span>
     </h1>
 

@@ -281,8 +281,8 @@ class ParticulierAnnonceForm(forms.ModelForm):
         label='Type de bien'
     )
     type_transaction = forms.ChoiceField(
-        choices=[('V', 'Vente'), ('L', 'Location')],
-        widget=forms.Select(attrs={'class': PART_SELECT}),
+        choices=[('V', 'Vente'), ('L', 'Location'), ('S', 'Location courte durée')],
+        widget=forms.Select(attrs={'class': PART_SELECT, 'onchange': 'majTypeCourteDuree()'}),
         label='Type d\'annonce'
     )
     dpe_etiquette_conso = forms.ChoiceField(
@@ -301,6 +301,9 @@ class ParticulierAnnonceForm(forms.ModelForm):
         fields = [
             'titre', 'texte', 'libelle_type', 'type_transaction',
             'prix', 'loyer_mensuel', 'charges_locatives',
+            'prix_nuit', 'nb_voyageurs', 'nuits_min', 'frais_menage', 'depot_garantie',
+            'equip_wifi', 'equip_cuisine', 'equip_lave_linge', 'equip_clim',
+            'equip_tv', 'equip_piscine', 'equip_animaux',
             'ville', 'code_postal',
             'nb_pieces', 'nb_chambres', 'surface', 'surface_terrain',
             'etage', 'ascenseur', 'parking', 'meuble', 'exterieur',
@@ -333,6 +336,26 @@ class ParticulierAnnonceForm(forms.ModelForm):
             'charges_locatives': forms.NumberInput(attrs={
                 'class': PART_INPUT,
                 'placeholder': 'Charges mensuelles en euros'
+            }),
+            'prix_nuit': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Prix par nuit en euros'
+            }),
+            'nb_voyageurs': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Nombre de voyageurs (capacité)'
+            }),
+            'nuits_min': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Nombre de nuits minimum'
+            }),
+            'frais_menage': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Frais de ménage (optionnel)'
+            }),
+            'depot_garantie': forms.NumberInput(attrs={
+                'class': PART_INPUT,
+                'placeholder': 'Caution (optionnel)'
             }),
             'ville': forms.TextInput(attrs={
                 'class': PART_INPUT,
@@ -373,6 +396,11 @@ class ParticulierAnnonceForm(forms.ModelForm):
             'prix': 'Prix (euros)',
             'loyer_mensuel': 'Loyer mensuel (euros)',
             'charges_locatives': 'Charges (euros/mois)',
+            'prix_nuit': 'Prix par nuit (euros)',
+            'nb_voyageurs': 'Voyageurs (capacité)',
+            'nuits_min': 'Nuits minimum',
+            'frais_menage': 'Frais de ménage (euros)',
+            'depot_garantie': 'Caution (euros)',
             'ville': 'Ville',
             'code_postal': 'Code postal',
             'nb_pieces': 'Pieces',
@@ -390,6 +418,8 @@ class ParticulierAnnonceForm(forms.ModelForm):
             self.add_error('prix', 'Le prix est requis pour une vente.')
         if transaction == 'L' and not cleaned.get('loyer_mensuel'):
             self.add_error('loyer_mensuel', 'Le loyer est requis pour une location.')
+        if transaction == 'S' and not cleaned.get('prix_nuit'):
+            self.add_error('prix_nuit', 'Le prix par nuit est requis pour une location courte durée.')
         return cleaned
 
 

@@ -107,6 +107,24 @@ class Annonce(models.Model):
     depot_garantie = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     honoraires_location = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+    # Champs spécifiques location courte durée (saisonnier, type Airbnb)
+    prix_nuit = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                    verbose_name='Prix par nuit')
+    nb_voyageurs = models.PositiveSmallIntegerField(null=True, blank=True,
+                                                    verbose_name='Voyageurs (capacité)')
+    nb_lits = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='Nombre de lits')
+    nuits_min = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='Nuits minimum')
+    frais_menage = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                       verbose_name='Frais de ménage')
+    # Équipements (surtout courte durée, mais réutilisables partout)
+    equip_wifi = models.BooleanField(default=False, verbose_name='Wifi')
+    equip_cuisine = models.BooleanField(default=False, verbose_name='Cuisine équipée')
+    equip_lave_linge = models.BooleanField(default=False, verbose_name='Lave-linge')
+    equip_clim = models.BooleanField(default=False, verbose_name='Climatisation')
+    equip_tv = models.BooleanField(default=False, verbose_name='Télévision')
+    equip_piscine = models.BooleanField(default=False, verbose_name='Piscine')
+    equip_animaux = models.BooleanField(default=False, verbose_name='Animaux acceptés')
+
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -172,6 +190,45 @@ class Annonce(models.Model):
     def prix_format(self):
         """Retourne le prix formaté avec espaces (ex: 500 000 €)"""
         return f"{self.prix:,.0f} €".replace(',', ' ')
+
+    @property
+    def prix_principal(self):
+        """Montant principal à afficher selon le type de transaction :
+        vente -> prix, location -> loyer, courte durée -> prix/nuit."""
+        if self.type_transaction == 'S' and self.prix_nuit:
+            return f"{self.prix_nuit:,.0f} €".replace(',', ' ')
+        if self.type_transaction == 'L' and self.loyer_mensuel:
+            return f"{self.loyer_mensuel:,.0f} €".replace(',', ' ')
+        return self.prix_format
+
+    @property
+    def prix_suffixe(self):
+        """Suffixe d'unité pour le prix principal (/mois, /nuit ou rien)."""
+        if self.type_transaction == 'S':
+            return '/ nuit'
+        if self.type_transaction == 'L':
+            return '/ mois'
+        return ''
+
+    @property
+    def est_courte_duree(self):
+        return self.type_transaction == 'S'
+
+    @property
+    def equipements_list(self):
+        """Liste (label, emoji) des équipements présents — pour l'affichage
+        de la fiche courte durée façon Airbnb."""
+        items = [
+            (self.equip_wifi, 'Wifi', '📶'),
+            (self.equip_cuisine, 'Cuisine équipée', '🍳'),
+            (self.equip_lave_linge, 'Lave-linge', '🧺'),
+            (self.equip_clim, 'Climatisation', '❄️'),
+            (self.equip_tv, 'Télévision', '📺'),
+            (self.parking, 'Parking', '🅿️'),
+            (self.equip_piscine, 'Piscine', '🏊'),
+            (self.equip_animaux, 'Animaux acceptés', '🐾'),
+        ]
+        return [(label, emoji) for present, label, emoji in items if present]
 
     @property
     def photo_principale(self):

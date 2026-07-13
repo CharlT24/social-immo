@@ -111,6 +111,34 @@
                         <span class="text-sm text-gray-700">Meuble</span>
                     </label>
                 </div>
+
+                <!-- Bloc location courte durée (capacité + équipements) -->
+                <div id="bloc-courte-duree" class="hidden space-y-4 border-t border-gray-100 pt-4">
+                    <p class="text-sm font-semibold text-gray-800">🏖️ Location courte durée (type Airbnb)</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nb_voyageurs.label }}</label>
+                            {{ form.nb_voyageurs }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.nuits_min.label }}</label>
+                            {{ form.nuits_min }}
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-2">Équipements</p>
+                        <div class="flex flex-wrap gap-x-5 gap-y-3">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_wifi" {% if form.equip_wifi.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">📶 Wifi</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_cuisine" {% if form.equip_cuisine.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🍳 Cuisine équipée</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_lave_linge" {% if form.equip_lave_linge.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🧺 Lave-linge</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_clim" {% if form.equip_clim.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">❄️ Climatisation</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_tv" {% if form.equip_tv.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">📺 Télévision</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_piscine" {% if form.equip_piscine.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🏊 Piscine</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equip_animaux" {% if form.equip_animaux.value %}checked{% endif %} class="rounded text-teal-600 focus:ring-teal-500"><span class="text-sm text-gray-700">🐾 Animaux acceptés</span></label>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <p class="text-sm font-semibold text-gray-800 mb-1">Diagnostic de performance énergétique (DPE)</p>
                     <p class="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-3">Le DPE est <strong>obligatoire</strong> dans toute annonce immobilière (vente et location), sauf bien légalement exempté. Renseignez au moins la classe énergie et GES.</p>
@@ -223,6 +251,23 @@
                             {{ form.charges_locatives }}
                         </div>
                     </div>
+                </div>
+                <div id="prix-courte" class="hidden">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.prix_nuit.label }} *</label>
+                            {{ form.prix_nuit }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.frais_menage.label }}</label>
+                            {{ form.frais_menage }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.depot_garantie.label }}</label>
+                            {{ form.depot_garantie }}
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Le prix s'affichera « X € / nuit » sur votre annonce. Les frais de ménage et la caution sont optionnels.</p>
                 </div>
             </div>
         </div>
@@ -451,12 +496,20 @@ function validerEtape(n) {
         }
     }
     if (n === 3) {
-        const estLocation = champ('id_type_transaction') === 'L';
-        if (estLocation && !champ('id_loyer_mensuel')) { showToast('Renseignez le loyer mensuel', 'error'); return false; }
-        if (!estLocation && !champ('id_prix')) { showToast('Renseignez le prix de vente', 'error'); return false; }
+        const t = champ('id_type_transaction');
+        if (t === 'L' && !champ('id_loyer_mensuel')) { showToast('Renseignez le loyer mensuel', 'error'); return false; }
+        if (t === 'S' && !champ('id_prix_nuit')) { showToast('Renseignez le prix par nuit', 'error'); return false; }
+        if (t === 'V' && !champ('id_prix')) { showToast('Renseignez le prix de vente', 'error'); return false; }
     }
     return true;
 }
+
+// Affiche/masque le bloc "location courte durée" de l'etape 1 selon le type
+function majTypeCourteDuree() {
+    const bloc = document.getElementById('bloc-courte-duree');
+    if (bloc) bloc.classList.toggle('hidden', champ('id_type_transaction') !== 'S');
+}
+document.addEventListener('DOMContentLoaded', majTypeCourteDuree);
 
 function etapeSuivante() { if (validerEtape(etapeCourante)) afficherEtape(Math.min(etapeCourante + 1, NB_ETAPES)); }
 function etapePrecedente() { afficherEtape(Math.max(etapeCourante - 1, 1)); }
@@ -539,13 +592,15 @@ function typePourEstimation() {
 }
 
 function preparerEtapePrix() {
-    const estLocation = champ('id_type_transaction') === 'L';
-    document.getElementById('prix-vente').classList.toggle('hidden', estLocation);
-    document.getElementById('prix-location').classList.toggle('hidden', !estLocation);
+    const t = champ('id_type_transaction');
+    const estVente = t === 'V';
+    document.getElementById('prix-vente').classList.toggle('hidden', !estVente);
+    document.getElementById('prix-location').classList.toggle('hidden', t !== 'L');
+    document.getElementById('prix-courte').classList.toggle('hidden', t !== 'S');
 
     const bloc = document.getElementById('estimation-bloc');
     const type = typePourEstimation();
-    if (estLocation || !type || !champ('id_surface') || !champ('id_ville')) {
+    if (!estVente || !type || !champ('id_surface') || !champ('id_ville')) {
         bloc.classList.add('hidden');
         return;
     }
@@ -627,7 +682,7 @@ function majScore() {
     if (champ('id_nb_pieces')) score += 5; else conseils.push('Indiquez le nombre de pieces (+5 %)');
     if (champ('id_nb_chambres')) score += 5;
     if (champ('id_dpe_etiquette_conso')) score += 10; else conseils.push('Renseignez le DPE (+10 %)');
-    if (champ('id_prix') || champ('id_loyer_mensuel')) score += 10;
+    if (champ('id_prix') || champ('id_loyer_mensuel') || champ('id_prix_nuit')) score += 10;
 
     score = Math.min(100, score);
     document.getElementById('score-valeur').textContent = score + ' %';
@@ -646,10 +701,11 @@ function majScore() {
 
 // ================== APERCU ==================
 function majApercu() {
-    const estLocation = champ('id_type_transaction') === 'L';
-    const prix = estLocation ? champ('id_loyer_mensuel') : champ('id_prix');
+    const t = champ('id_type_transaction');
+    const prix = t === 'S' ? champ('id_prix_nuit') : t === 'L' ? champ('id_loyer_mensuel') : champ('id_prix');
+    const suffixe = t === 'S' ? ' /nuit' : t === 'L' ? ' /mois' : '';
     document.getElementById('apercu-prix').textContent = prix
-        ? parseInt(prix).toLocaleString('fr-FR') + ' €' + (estLocation ? '/mois' : '') : '—';
+        ? parseInt(prix).toLocaleString('fr-FR') + ' €' + suffixe : '—';
     document.getElementById('apercu-titre').textContent = champ('id_titre').trim() || 'Votre titre apparaitra ici';
     const specs = [];
     if (champ('id_nb_pieces')) specs.push(champ('id_nb_pieces') + ' p.');

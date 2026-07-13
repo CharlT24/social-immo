@@ -171,10 +171,21 @@ else:
 # l'hebergement mutualise o2switch (l'utilisateur MySQL ne peut pas creer la
 # base de test). N'affecte QUE `manage.py test`, jamais la prod.
 if 'test' in sys.argv:
+    # Base SQLite en memoire (pas de permission CREATE DATABASE requise).
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ':memory:',
     }
+    # Neutralise les reglages de PROD qui cassent le client de test quand on
+    # lance les tests sur le serveur (le .env de prod est charge) : sans ca,
+    # SECURE_SSL_REDIRECT renvoie des 301 HTTPS et ALLOWED_HOSTS rejette
+    # 'testserver' -> tous les tests de pages echouent a tort.
+    ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    # Cache local (evite de dependre de la table de cache DB en test).
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 
 
 # Password validation

@@ -105,7 +105,7 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
 GET https://logiciel-immo-clean.vercel.app/api/export/socialimmo/[agenceId]
 ```
 - Retourne XML, pas d'auth requise
-- Appel 1-2x/jour (CRON recommande)
+- CRON prod : toutes les 30 min (voir section "Prod o2switch" pour la forme obligatoire)
 
 ### Usage
 ```bash
@@ -121,6 +121,34 @@ python manage.py import_xml --agence-id OI123 --dry-run # Test sans ecriture
 3. Upsert : create ou update par reference
 4. Apres import : biens actifs absents du flux → `is_active=False`
 5. Si un bien revient dans le flux → reactive (`is_active=True`)
+
+## Prod o2switch (deploye — compte tuch9508, serveur plouf)
+- App : `~/social-immo`, virtualenv cPanel `~/virtualenv/social-immo/3.11/`
+  (son `bin/python` est un script bash wrapper cPanel, pas un binaire)
+- Redemarrer Passenger : `touch ~/social-immo/tmp/restart.txt`
+
+### REGLE CRON (incident 2026-07-14 : saturation limite de processus)
+Toute tache CRON DOIT etre de la forme :
+```
+flock -n ~/locks/<nom>.lock timeout <duree> bash -c 'cd ~/social-immo && ~/virtualenv/social-immo/3.11/bin/python manage.py <commande> >> <log> 2>&1'
+```
+- `bash -c '...'` englobe TOUTE la commande. JAMAIS `flock ... cd dir && python ...` :
+  le `&&` couperait la commande, flock ne verrouillerait que le `cd` et python
+  tournerait hors verrou et hors repertoire (c'est ce qui a cause l'incident).
+- `flock -n` (fichier distinct par tache dans `~/locks/`) = une seule instance a la fois
+- `timeout` = tue un job bloque (25m pour import_xml qui tourne toutes les 30 min,
+  4h pour autopilot quotidien a 6h)
+
+### Crontab en place (2026-07-14)
+- `import_xml` : toutes les 30 min, log `~/social-immo/cron_import.log`
+- `autopilot` : 6h00, log `~/autopilot.log` (enchaine import --all-agences,
+  geocodage, alertes, miniatures, siret, rapports via call_command, 1 seul processus)
+
+### Si le serveur re-sature (`fork: Resource temporarily unavailable` en SSH)
+1. Taper A LA MAIN `kill -9 -1` (builtin bash, marche sans fork ; tue aussi la
+   session SSH — deconnexion brutale = succes, se reconnecter ensuite)
+2. `ps -u $USER -o pid,etime,cmd` pour identifier ce qui s'empilait
+3. Verifier `crontab -l` respecte la regle ci-dessus ; sinon suspecter Passenger
 
 ## Variables d'environnement
 ```

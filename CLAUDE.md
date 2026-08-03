@@ -169,6 +169,13 @@ DATABASE_URL=mysql://user:pass@host:3306/dbname
 ```
 
 ## Auth
+- Connexion par EMAIL uniquement (allauth, pas de username) + login social Google
+- Un compte cree via Google n'a PAS de mot de passe (`has_usable_password()=False`) :
+  le formulaire email+mdp echoue toujours pour ces clients -> bouton "Se connecter
+  avec Google". Un compte Google peut avoir un email non-Gmail (cas reel resolu
+  2026-08-03 : marie_leroy@hotmail.fr). Donner un mdp en plus : `u.set_password(...)`.
+- A VERIFIER en prod : EMAIL_BACKEND retombe sur console si absent du .env
+  -> emails "mot de passe oublie" jamais envoyes. `grep EMAIL ~/social-immo/.env`
 - Django auth standard (login, signup, logout)
 - Dashboard : `@login_required` + `is_staff`
 - Commentaires/Favoris : `@login_required`

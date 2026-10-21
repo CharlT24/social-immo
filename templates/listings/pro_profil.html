@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ pro.nom_entreprise }} - Professionnel | Social Immo{% endblock %}
-{% block meta_description %}{{ pro.nom_entreprise }}{% if pro.ville %} a {{ pro.ville }}{% endif %} - {{ pro.get_metier_display }}. Decouvrez ses realisations sur Social Immo.{% endblock %}
+{% block meta_description %}{{ pro.nom_entreprise }}{% if pro.ville %} à {{ pro.ville }}{% endif %} - {{ pro.get_metier_display }}. Découvrez ses réalisations sur Social Immo.{% endblock %}
 {% block og_title %}{{ pro.nom_entreprise }} - {{ pro.get_metier_display }}{% endblock %}
 {% block canonical %}https://social-immo.com{{ pro.get_absolute_url }}{% endblock %}
 

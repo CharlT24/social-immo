@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.db import models
 from django.db.models import Prefetch, Avg, Sum, Count, F, Value, FloatField
 from django.db.models.functions import Cast
@@ -6,7 +7,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse, Http404
 from django.utils import timezone
 from django.contrib import messages
 from django.core.management import call_command
@@ -353,12 +354,20 @@ def autocomplete(request):
 
 def listing_detail(request, reference, slug=None):
     """Vue détail : affiche une annonce spécifique avec commentaires"""
-    annonce = get_object_or_404(
-        Annonce.objects.select_related('agence__options')
-        .prefetch_related('photos', 'commentaires__auteur'),
-        reference=reference,
-        is_active=True
-    )
+    annonce = Annonce.objects.select_related('agence__options') \
+        .prefetch_related('photos', 'commentaires__auteur') \
+        .filter(reference=reference).first()
+    if annonce is None:
+        raise Http404("Annonce introuvable")
+    if not annonce.is_active:
+        # Bien vendu/retire : plutot qu'une 404 seche (lien mort pour Google et
+        # pour le visiteur), on renvoie vers les biens de la meme ville. 302 et
+        # non 301 : le bien peut revenir dans le flux et etre reactive.
+        from urllib.parse import urlencode
+        cible = reverse('listings:search_results')
+        if annonce.ville:
+            cible += '?' + urlencode({'ville': annonce.ville})
+        return redirect(cible)
 
     # Gestion du formulaire de commentaire
     if request.method == 'POST' and request.user.is_authenticated:
@@ -3364,9 +3373,16 @@ def ville_page(request, ville_slug):
         'nb_comparables': len(valeurs),
         'pros_secteur': pros_secteur,
         'user_favorites': user_favorites,
+        # Contenu trop mince (< VILLE_MIN_BIENS_INDEX biens) : noindex, et
+        # absente du sitemap (cf. VilleSitemap) pour ne pas diluer le crawl.
+        'noindex': (ventes.count() + locations.count()) < VILLE_MIN_BIENS_INDEX,
     }
     return render(request, 'listings/ville_page.html', context)
 
+
+# Seuil d'indexation des pages ville : en dessous, la page est noindex et
+# retiree du sitemap (contenu trop mince = risque "thin content").
+VILLE_MIN_BIENS_INDEX = 3
 
 # Segments SEO longue traine : slug -> (transaction, mots-cles type, libelle H1)
 SEGMENTS_SEO = {
@@ -3445,14 +3461,14 @@ def inspiration_partage(request, photo_type, photo_id):
     if photo_type == 'pro':
         photo = get_object_or_404(ProRealisationPhoto, id=photo_id)
         realisation = photo.realisation
-        titre = realisation.titre if realisation else 'Realisation'
+        titre = realisation.titre if realisation else 'Réalisation'
         auteur = realisation.pro.nom_entreprise if realisation else ''
         lien = f'/pro/{realisation.pro.id}/' if realisation else '/pros/'
         categorie = realisation.get_categorie_display() if realisation and realisation.categorie else ''
     else:
         photo_type = 'annonce'
         photo = get_object_or_404(Photo, id=photo_id, is_inspiration=True)
-        titre = photo.get_inspiration_categorie_display() if photo.inspiration_categorie else 'Inspiration deco'
+        titre = photo.get_inspiration_categorie_display() if photo.inspiration_categorie else 'Inspiration déco'
         auteur = photo.annonce.contact_nom
         lien = f'/annonce/{photo.annonce.reference}/'
         categorie = titre

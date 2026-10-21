@@ -2,15 +2,15 @@
 {% load l10n %}
 
 {% block title %}{{ annonce.titre }} - {{ annonce.ville }} | Social Immo{% endblock %}
-{% block meta_description %}{{ annonce.titre }} a {{ annonce.ville }} ({{ annonce.code_postal }}). {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}. Consultez l'annonce sur Social Immo.{% endblock %}
+{% block meta_description %}{{ annonce.titre }} à {{ annonce.ville }} ({{ annonce.code_postal }}). {% if annonce.surface %}{{ annonce.surface }} m²{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pièces{% endif %} - {{ annonce.prix_format }}. Consultez l'annonce sur Social Immo.{% endblock %}
 {% block canonical %}https://social-immo.com{{ annonce.get_absolute_url }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
-{% block og_description %}{{ annonce.titre }} a {{ annonce.ville }}. {% if annonce.surface %}{{ annonce.surface }} m2{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pieces{% endif %} - {{ annonce.prix_format }}{% endblock %}
+{% block og_description %}{{ annonce.titre }} à {{ annonce.ville }}. {% if annonce.surface %}{{ annonce.surface }} m²{% endif %} {% if annonce.nb_pieces %}{{ annonce.nb_pieces }} pièces{% endif %} - {{ annonce.prix_format }}{% endblock %}
 {% block og_image %}{% if annonce.photo_principale %}<meta property="og:image" content="{{ annonce.photo_principale.src }}">{% endif %}{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
 {% block twitter_title %}{{ annonce.titre }} - {{ annonce.prix_format }}{% endblock %}
-{% block twitter_description %}{{ annonce.titre }} a {{ annonce.ville }} - {{ annonce.prix_format }}{% endblock %}
+{% block twitter_description %}{{ annonce.titre }} à {{ annonce.ville }} - {{ annonce.prix_format }}{% endblock %}
 
 {% block extra_head %}
 <script type="application/ld+json">

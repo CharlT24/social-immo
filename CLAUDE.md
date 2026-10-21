@@ -77,6 +77,18 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
   RechercheSauvegardee.acheteurs_pour(annonce)
 - **CRON rapport_vendeurs** (hebdo) : vues, favoris, conseil prix par email
 
+## SEO moteurs (2026-10)
+- **Bing Webmaster Tools** : site importe depuis Google Search Console (2026-10-21)
+- **IndexNow** : `INDEXNOW_KEY` dans .env -> cle servie sur `/<cle>.txt` ;
+  `import_xml` signale a Bing les annonces creees/modifiees/retirees (listings/services/indexnow.py)
+- **www -> domaine nu** en 301 (CanonicalHostMiddleware, `SITE_URL`)
+- Balises verif optionnelles : `BING_SITE_VERIFICATION`, `GOOGLE_SITE_VERIFICATION`
+- Pages ville < 3 biens (`VILLE_MIN_BIENS_INDEX`) : noindex + hors sitemap
+- Annonce retiree : 302 vers /recherche/?ville=... (au lieu de 404)
+- **Garde-fou import** : refuse de desactiver >50% (et >=20) des biens d'une agence
+  en un import (flux tronque) ; `--forcer-desactivation` pour passer outre.
+  Flux CRM : utiliser l'UUID du RESEAU (l'UUID d'agence ne renvoie que ses biens)
+
 ## Modeles
 ### Annonce
 - `reference` (unique, cle d'import) - ex: "CT-00123"

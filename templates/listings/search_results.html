@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Annonces immobilieres{% endif %} - Social Immo{% endblock %}
-{% block meta_description %}{% if current_ville %}Annonces immobilieres a {{ current_ville }}.{% else %}Toutes les annonces immobilieres.{% endif %} {{ total_count }} biens disponibles en vente et location sur Social Immo.{% endblock %}
-{% block og_title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Recherche immobiliere{% endif %} - Social Immo{% endblock %}
-{% block og_description %}{% if current_ville %}Decouvrez les annonces immobilieres a {{ current_ville }}{% else %}Recherchez parmi {{ total_count }} annonces{% endif %} sur Social Immo.{% endblock %}
+{% block title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Annonces immobilières{% endif %} - Social Immo{% endblock %}
+{% block meta_description %}{% if current_ville %}Annonces immobilières à {{ current_ville }}.{% else %}Toutes les annonces immobilières.{% endif %} {{ total_count }} biens disponibles en vente et location sur Social Immo.{% endblock %}
+{% block og_title %}{% if current_ville %}Immobilier {{ current_ville }}{% else %}Recherche immobilière{% endif %} - Social Immo{% endblock %}
+{% block og_description %}{% if current_ville %}Découvrez les annonces immobilières à {{ current_ville }}{% else %}Recherchez parmi {{ total_count }} annonces{% endif %} sur Social Immo.{% endblock %}
 
 {% block content %}
 
@@ -281,8 +281,8 @@
 
     <!-- H1 SEO -->
     <h1 class="text-xl sm:text-2xl font-bold tracking-tight mb-4">
-        {% if current_ville %}Immobilier a {{ current_ville }}{% else %}Annonces immobilieres{% endif %}
-        {% if current_type == 'V' %} — a vendre{% elif current_type == 'L' %} — a louer{% elif current_type == 'S' %} — location courte durée{% endif %}
+        {% if current_ville %}Immobilier à {{ current_ville }}{% else %}Annonces immobilières{% endif %}
+        {% if current_type == 'V' %} — à vendre{% elif current_type == 'L' %} — à louer{% elif current_type == 'S' %} — location courte durée{% endif %}
         <span class="text-apple-gray font-medium text-base">· {{ result_count }} bien{{ result_count|pluralize:"s" }}</span>
     </h1>
 

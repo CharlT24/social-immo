@@ -16,6 +16,11 @@ from listings.models import Annonce, Photo, Agence, Conseiller
 # URL par defaut du flux XML
 DEFAULT_FEED_URL = 'https://logiciel-immo-clean.vercel.app/api/export/socialimmo/'
 
+# Garde-fou : on refuse de desactiver plus de 50% des biens d'une agence en un
+# seul import (a partir de 20 biens), sauf --forcer-desactivation.
+SEUIL_DESACTIVATION_RATIO = 0.5
+SEUIL_DESACTIVATION_MIN = 20
+
 
 class Command(BaseCommand):
     help = 'Importe les annonces depuis un flux XML (AC3) ou CSV (Poliris), via HTTP, FTP ou fichier local'
@@ -52,6 +57,12 @@ class Command(BaseCommand):
             help='Simuler l\'import sans modifier la base'
         )
         parser.add_argument(
+            '--forcer-desactivation',
+            action='store_true',
+            help='Desactiver les biens absents meme si le flux a fondu '
+                 '(contourne le garde-fou anti-flux-tronque)'
+        )
+        parser.add_argument(
             '--all-agences',
             action='store_true',
             help='Importer pour toutes les agences actives'
@@ -59,6 +70,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        self.forcer_desactivation = options.get('forcer_desactivation', False)
 
         # Mode multi-agences
         if options['all_agences']:
@@ -276,6 +288,7 @@ class Command(BaseCommand):
 
         created = updated = unchanged = errors = 0
         references_recues = set()
+        modifiees = set()
 
         # La racine est <client reference="...">
         xml_client_ref = root.get('reference', '')
@@ -304,6 +317,8 @@ class Command(BaseCommand):
                 ref, result = self._process_ac3_annonce(annonce_xml, client_ref, dry_run)
                 if ref:
                     references_recues.add(ref)
+                if result in ('created', 'updated'):
+                    modifiees.add(ref)
                 if result == 'created':
                     created += 1
                 elif result == 'updated':
@@ -317,6 +332,7 @@ class Command(BaseCommand):
 
         deleted = self._deactivate_missing(client_ref, references_recues, dry_run)
         self._auto_set_departement(client_ref, dry_run)
+        self._signaler_indexnow(modifiees, dry_run)
         self._print_summary(created, updated, unchanged, deleted, errors, dry_run)
 
     # ==================== IMPORT POLIRIS (CSV) ====================
@@ -348,6 +364,7 @@ class Command(BaseCommand):
 
         created = updated = unchanged = errors = 0
         references_recues = set()
+        modifiees = set()
 
         rows = list(reader)
         self.stdout.write(f'Client: {client_ref} - {len(rows)} annonce(s) trouvee(s) (Poliris CSV)')
@@ -364,6 +381,8 @@ class Command(BaseCommand):
                 ref, result = self._process_poliris_row(row, client_ref, dry_run)
                 if ref:
                     references_recues.add(ref)
+                    if result in ('created', 'updated'):
+                        modifiees.add(ref)
                     if result == 'created':
                         created += 1
                     elif result == 'updated':
@@ -377,6 +396,7 @@ class Command(BaseCommand):
 
         deleted = self._deactivate_missing(client_ref, references_recues, dry_run)
         self._auto_set_departement(client_ref, dry_run)
+        self._signaler_indexnow(modifiees, dry_run)
         self._print_summary(created, updated, unchanged, deleted, errors, dry_run)
 
     def _csv_get(self, row, keys, default=''):
@@ -835,18 +855,43 @@ class Command(BaseCommand):
         except Agence.DoesNotExist:
             pass
 
+    def _signaler_indexnow(self, refs_modifiees, dry_run):
+        """Signale a Bing (IndexNow) les annonces creees/modifiees/retirees."""
+        refs = set(refs_modifiees) | set(getattr(self, '_refs_desactivees', []))
+        self._refs_desactivees = []
+        if dry_run or not refs:
+            return
+        from listings.services.indexnow import soumettre
+        chemins = [a.get_absolute_url() for a in Annonce.objects.filter(reference__in=refs)]
+        n = soumettre(chemins)
+        if n:
+            self.stdout.write(f'  IndexNow : {n} URL signalee(s) a Bing')
+
     def _deactivate_missing(self, client_ref, references_recues, dry_run):
         """Desactive les annonces absentes du flux"""
         if dry_run or not references_recues:
             return 0
-        annonces_a_supprimer = Annonce.objects.filter(
-            client_reference=client_ref,
-            is_active=True
-        ).exclude(reference__in=references_recues)
+        actives = Annonce.objects.filter(client_reference=client_ref, is_active=True)
+        annonces_a_supprimer = actives.exclude(reference__in=references_recues)
         deleted = annonces_a_supprimer.count()
+
+        # Garde-fou flux tronque (incident 2026-10 : flux appele avec l'UUID d'une
+        # agence au lieu du reseau -> 133 biens au lieu de 431). Si le flux ferait
+        # disparaitre plus de la moitie du catalogue, c'est presque toujours une
+        # erreur cote source : on n'efface rien et on alerte.
+        nb_actives = actives.count()
+        seuil_ok = deleted < SEUIL_DESACTIVATION_MIN or deleted <= nb_actives * SEUIL_DESACTIVATION_RATIO
+        if not seuil_ok and not getattr(self, 'forcer_desactivation', False):
+            self.stderr.write(self.style.ERROR(
+                f'  [GARDE-FOU] {deleted}/{nb_actives} biens absents du flux pour {client_ref} : '
+                f'desactivation ANNULEE (flux probablement tronque). '
+                f'Verifier la source, ou relancer avec --forcer-desactivation.'))
+            return 0
+
         if deleted > 0:
             refs_supprimees = list(annonces_a_supprimer.values_list('reference', flat=True))
             annonces_a_supprimer.update(is_active=False)
+            self._refs_desactivees = refs_supprimees
             for ref in refs_supprimees:
                 self.stdout.write(self.style.WARNING(f'  [DESACTIVE] {ref}'))
         return deleted

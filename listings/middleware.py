@@ -88,3 +88,23 @@ class StatsMiddleware:
             if path.startswith(prefixe):
                 return section
         return 'autre'
+
+
+class CanonicalHostMiddleware:
+    """Redirige www.social-immo.com -> social-immo.com en 301 (meme chemin et
+    query string). Les deux hotes repondaient 200 : contenu duplique pour
+    Google/Bing. Le domaine canonique vient de settings.SITE_URL."""
+
+    def __init__(self, get_response):
+        from urllib.parse import urlsplit
+        from django.conf import settings
+        self.get_response = get_response
+        self.canonical = urlsplit(settings.SITE_URL).netloc
+
+    def __call__(self, request):
+        host = request.get_host().split(':')[0].lower()
+        if self.canonical and host == f'www.{self.canonical}':
+            from django.conf import settings
+            from django.http import HttpResponsePermanentRedirect
+            return HttpResponsePermanentRedirect(f'{settings.SITE_URL}{request.get_full_path()}')
+        return self.get_response(request)

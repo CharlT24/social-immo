@@ -89,6 +89,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'listings.middleware.CanonicalHostMiddleware',  # www -> domaine nu (301)
     'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise pour fichiers statiques
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -113,6 +114,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'listings.context_processors.user_roles',
+                'listings.context_processors.seo_verification',
             ],
         },
     },
@@ -315,6 +317,16 @@ SOCIALIMMO_FEED_URL = os.environ.get(
     'SOCIALIMMO_FEED_URL',
     'https://logiciel-immo-clean.vercel.app/api/export/socialimmo/'
 )
+
+# ===== SEO / moteurs de recherche =====
+# Domaine canonique (sans www) : toute requete sur www.* est redirigee en 301 ici.
+SITE_URL = os.environ.get('SITE_URL', 'https://social-immo.com').rstrip('/')
+# Valeurs des balises meta de verification (Bing Webmaster Tools / Search Console)
+BING_SITE_VERIFICATION = os.environ.get('BING_SITE_VERIFICATION', '')
+GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
+# IndexNow (Bing, Yandex, Seznam...) : cle publique servie sur /<cle>.txt.
+# Vide = IndexNow desactive (aucun ping envoye).
+INDEXNOW_KEY = os.environ.get('INDEXNOW_KEY', '')
 
 
 # ===== Stripe (dormant tant que les cles ne sont pas definies) =====

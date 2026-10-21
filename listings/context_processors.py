@@ -15,3 +15,13 @@ def user_roles(request):
         'is_particulier_vendeur': Annonce.objects.filter(user=request.user, source='particulier').exists(),
         'messages_non_lus': non_lus,
     }
+
+
+def seo_verification(request):
+    """Balises de verification moteurs (Bing Webmaster Tools, Google Search Console),
+    definies dans le .env : BING_SITE_VERIFICATION / GOOGLE_SITE_VERIFICATION."""
+    from django.conf import settings
+    return {
+        'BING_SITE_VERIFICATION': getattr(settings, 'BING_SITE_VERIFICATION', ''),
+        'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', ''),
+    }

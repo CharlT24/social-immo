@@ -765,6 +765,28 @@ class ImportXmlDeactivationTests(TestCase):
         # C est absent du flux -> bien desactive
         self.assertFalse(self.c.is_active, "REF-C aurait du etre desactive")
 
+    def _import_flux_tronque(self, **attrs):
+        from listings.management.commands.import_xml import Command
+        for i in range(30):
+            creer_annonce(f'REF-X{i}', client_reference=self.client_ref, is_active=True)
+        cmd = Command()
+        for k, v in attrs.items():
+            setattr(cmd, k, v)
+        with mock.patch.object(Command, '_process_ac3_annonce', return_value=(None, None)), \
+             mock.patch.object(Command, '_auto_set_departement'):
+            cmd._import_ac3(self._xml(['REF-A', 'REF-B']), self.client_ref, dry_run=False)
+
+    def test_flux_tronque_ne_desactive_rien(self):
+        """Flux qui fond (31 biens absents sur 33) -> garde-fou, rien n'est desactive."""
+        self._import_flux_tronque()
+        self.assertEqual(Annonce.objects.filter(
+            client_reference=self.client_ref, is_active=True).count(), 33)
+
+    def test_flux_tronque_force(self):
+        self._import_flux_tronque(forcer_desactivation=True)
+        self.assertEqual(Annonce.objects.filter(
+            client_reference=self.client_ref, is_active=True).count(), 2)
+
 
 class RedactionRobustesseTests(TestCase):
     """L'assistant de redaction ne plante jamais sur des entrees non numeriques."""
@@ -1931,3 +1953,51 @@ class CockpitRevenusTests(TestCase):
         self.assertEqual(rev['mrr'], 178)   # 149 agence + 29 pro actifs (resilie exclu)
         self.assertEqual(rev['abonnes'], 2)
         self.assertEqual(rev['mois'], 246.0)  # 149 + 29 + 39 + 29(resilie compte en vente du mois) = 246
+
+
+@override_settings(ALLOWED_HOSTS=['testserver', 'social-immo.com', 'www.social-immo.com'],
+                   SITE_URL='https://social-immo.com', INDEXNOW_KEY='abcdef0123456789')
+class SeoMoteursTests(TestCase):
+    """www -> domaine nu, cle IndexNow, annonces retirees, seuil des pages ville."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_www_redirige_en_301(self):
+        r = self.client.get('/recherche/?ville=Caen', HTTP_HOST='www.social-immo.com')
+        self.assertEqual(r.status_code, 301)
+        self.assertEqual(r['Location'], 'https://social-immo.com/recherche/?ville=Caen')
+
+    def test_cle_indexnow_servie(self):
+        r = self.client.get('/abcdef0123456789.txt')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.content, b'abcdef0123456789')
+        self.assertEqual(self.client.get('/0000000000000000.txt').status_code, 404)
+
+    def test_annonce_retiree_redirige_vers_la_ville(self):
+        creer_annonce('OLD-1', ville='Caen', is_active=False)
+        r = self.client.get('/annonce/OLD-1/')
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/recherche/?ville=Caen', r['Location'])
+        self.assertEqual(self.client.get('/annonce/INEXISTANTE/').status_code, 404)
+
+    def test_ville_mince_noindex_et_hors_sitemap(self):
+        from listings.sitemaps import VilleSitemap
+        creer_annonce('V-1', ville='Brive')
+        for i in range(3):
+            creer_annonce(f'C-{i}', ville='Caen')
+        self.assertEqual(VilleSitemap().items(), ['caen'])
+        self.assertContains(self.client.get('/immobilier/brive/'), 'noindex')
+        self.assertNotContains(self.client.get('/immobilier/caen/'), 'noindex')
+
+    def test_import_signale_indexnow(self):
+        from listings.management.commands.import_xml import Command
+        xml = (b'<client reference="AG"><annonce><reference>IN-1</reference>'
+               b'<titre>Maison</titre></annonce></client>')
+        with mock.patch('listings.services.indexnow.requests.post') as post, \
+             mock.patch.object(Command, '_auto_set_departement'):
+            post.return_value.status_code = 200
+            Command()._import_ac3(xml, 'AG', dry_run=False)
+        urls = post.call_args.kwargs['json']['urlList']
+        self.assertEqual(len(urls), 1)
+        self.assertTrue(urls[0].startswith('https://social-immo.com/annonce/IN-1/'))

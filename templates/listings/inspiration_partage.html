@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ titre }}{% if auteur %} par {{ auteur }}{% endif %} | Inspirations Social Immo{% endblock %}
-{% block meta_description %}{{ titre }}{% if auteur %} par {{ auteur }}{% endif %} — decouvrez cette inspiration et des centaines d'autres interieurs sur Social Immo.{% endblock %}
+{% block meta_description %}{{ titre }}{% if auteur %} par {{ auteur }}{% endif %} — découvrez cette inspiration et des centaines d'autres intérieurs sur Social Immo.{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ titre }}{% if auteur %} par {{ auteur }}{% endif %}{% endblock %}
-{% block og_description %}Une inspiration reperee sur Social Immo. Explorez le feed pour trouver votre style.{% endblock %}
+{% block og_description %}Une inspiration repérée sur Social Immo. Explorez le feed pour trouver votre style.{% endblock %}
 {% block og_image %}<meta property="og:image" content="{{ photo_url }}">{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
 

@@ -56,11 +56,20 @@ class VilleSitemap(Sitemap):
     priority = 0.9
 
     def items(self):
+        from collections import Counter
+        from django.db.models import Count
         from django.utils.text import slugify
-        villes = Annonce.objects.filter(is_active=True).exclude(ville='') \
-            .values_list('ville', flat=True).distinct()
+        from listings.views import VILLE_MIN_BIENS_INDEX
+        # Meme regle que ville_page : seules les villes avec assez de biens
+        # (vente + location) sont indexables, les autres sont en noindex.
+        lignes = Annonce.objects.filter(is_active=True, type_transaction__in=['V', 'L']) \
+            .exclude(ville='').values('ville').annotate(n=Count('id'))
+        par_slug = Counter()
+        for l in lignes:
+            if slugify(l['ville']):
+                par_slug[slugify(l['ville'])] += l['n']
         # Slugs uniques, ordonnes pour un sitemap stable
-        return sorted({slugify(v) for v in villes if slugify(v)})
+        return sorted(s for s, n in par_slug.items() if n >= VILLE_MIN_BIENS_INDEX)
 
     def location(self, slug):
         return reverse('listings:ville_page', args=[slug])

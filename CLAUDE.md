@@ -100,6 +100,16 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
   `pip install anthropic` ; modele via `RECHERCHE_IA_MODEL` (defaut claude-opus-5-5).
   Resultats caches 24h par phrase.
 
+## Import par site web (agence sans flux, 2026-10)
+- Inscription `/agence/inscription/` : choix "flux XML" ou "lire mon site" + case
+  d'autorisation -> `Agence.feed_type='site'`, `feed_url`=site, `autorisation_site_at`
+  (revocable dans /mon-agence/parametres/ ; sans autorisation, rien n'est lu)
+- listings/services/import_site.py : sitemap (ou liens accueil) -> fiches ->
+  JSON-LD schema.org puis repli Open Graph/texte -> XML AC3 -> `_import_ac3`
+  (annule/remplace, garde-fou, IndexNow reutilises). robots.txt, 1 req/s, 200 pages max.
+- Tourne dans `import_xml --all-agences` (autopilot 6h). Evolution prevue : repli Claude
+  pour les pages sans donnees structurees (cf. ROADMAP v8).
+
 ## Modeles
 ### Annonce
 - `reference` (unique, cle d'import) - ex: "CT-00123"

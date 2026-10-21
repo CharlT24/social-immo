@@ -2050,3 +2050,90 @@ class RechercheLangageNaturelTests(TestCase):
         from listings.services.recherche_ia import analyser
         res = analyser('un truc sympa pas trop cher près des écoles')
         self.assertEqual(res['source'], 'regles')
+
+
+class ImportSiteWebTests(TestCase):
+    """Agence sans flux : lecture de son site (JSON-LD / Open Graph), avec autorisation."""
+
+    PAGE_LD = '''<html><head><script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"RealEstateListing","name":"Maison 5 pièces avec jardin",
+     "description":"Belle maison familiale.","image":["https://agence.test/img/1.jpg"],
+     "offers":{"@type":"Offer","price":"245000","priceCurrency":"EUR"},
+     "floorSize":{"value":"132"},"numberOfRooms":5,
+     "address":{"addressLocality":"Périgueux","postalCode":"24000"}}
+    </script></head><body><h1>Maison</h1></body></html>'''
+    PAGE_OG = '''<html><head><meta property="og:title" content="Appartement T2 à louer centre">
+    <meta property="og:image" content="https://agence.test/img/t2.jpg"></head>
+    <body><p>Loyer 650 € / mois - 42 m² - 24000 Périgueux</p></body></html>'''
+    PAGE_CONTACT = '<html><head><title>Contact</title></head><body>Appelez-nous</body></html>'
+
+    def setUp(self):
+        cache.clear()
+
+    def test_extraction_json_ld(self):
+        from listings.services.import_site import extraire_fiche
+        a = extraire_fiche('https://agence.test/vente/maison-1', self.PAGE_LD.encode())
+        self.assertEqual((a['prix'], a['surface'], a['pieces'], a['ville'], a['cp'], a['transaction']),
+                         (245000, 132, 5, 'Périgueux', '24000', 'V'))
+        self.assertEqual(a['photos'], ['https://agence.test/img/1.jpg'])
+
+    def test_extraction_open_graph_location(self):
+        from listings.services.import_site import extraire_fiche
+        a = extraire_fiche('https://agence.test/location/t2', self.PAGE_OG.encode())
+        self.assertEqual((a['prix'], a['surface'], a['transaction'], a['cp']), (650, 42, 'L', '24000'))
+
+    def test_page_sans_annonce_ignoree(self):
+        from listings.services.import_site import extraire_fiche
+        self.assertIsNone(extraire_fiche('https://agence.test/contact', self.PAGE_CONTACT.encode()))
+
+    def _faux_site(self, url, **kw):
+        pages = {
+            'https://agence.test/robots.txt': 'User-agent: *\nDisallow: /prive/\n',
+            'https://agence.test/sitemap.xml': (
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                '<url><loc>https://agence.test/vente/maison-1</loc></url>'
+                '<url><loc>https://agence.test/location/t2</loc></url>'
+                '<url><loc>https://agence.test/prive/vente/x</loc></url>'
+                '<url><loc>https://agence.test/contact</loc></url></urlset>'),
+            'https://agence.test/vente/maison-1': self.PAGE_LD,
+            'https://agence.test/location/t2': self.PAGE_OG,
+        }
+        r = mock.Mock()
+        r.ok = url in pages
+        r.text = pages.get(url, '')
+        r.content = r.text.encode()
+        return r
+
+    def _agence(self, autorisee=True):
+        return Agence.objects.create(
+            nom='Agence Web', reference='WEB1', feed_type='site', feed_url='https://agence.test',
+            autorisation_site_at=timezone.now() if autorisee else None)
+
+    def test_import_bout_en_bout(self):
+        from listings.management.commands.import_xml import Command
+        agence = self._agence()
+        with mock.patch('listings.services.import_site.requests.Session.get', side_effect=self._faux_site), \
+             mock.patch('listings.services.import_site.DELAI', 0):
+            Command()._import_agence(agence, dry_run=False)
+        annonces = Annonce.objects.filter(client_reference='WEB1', is_active=True)
+        self.assertEqual(annonces.count(), 2)  # /prive/ (robots.txt) et /contact exclus
+        maison = annonces.get(type_transaction='V')
+        self.assertEqual((maison.ville, int(maison.prix), maison.agence), ('Périgueux', 245000, agence))
+        self.assertEqual(maison.photos.count(), 1)
+
+    def test_sans_autorisation_rien_n_est_lu(self):
+        from listings.management.commands.import_xml import Command
+        with mock.patch('listings.services.import_site.requests.Session.get') as get:
+            Command()._import_agence(self._agence(autorisee=False), dry_run=False)
+        get.assert_not_called()
+
+    def test_inscription_par_site_exige_autorisation(self):
+        data = {'nom': 'Agence Site', 'email': 'site@agence.test', 'password1': 'motdepasse123',
+                'password2': 'motdepasse123', 'source': 'site', 'site_url': 'https://www.agence.test'}
+        self.client.post('/agence/inscription/', data)
+        self.assertFalse(Agence.objects.filter(nom='Agence Site').exists())
+        data['autorisation_site'] = '1'
+        self.client.post('/agence/inscription/', data)
+        a = Agence.objects.get(nom='Agence Site')
+        self.assertEqual((a.feed_type, a.feed_url), ('site', 'https://www.agence.test'))
+        self.assertIsNotNone(a.autorisation_site_at)

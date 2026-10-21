@@ -160,6 +160,18 @@
             </div>
         </div>
 
+        {% if agence.feed_type == 'site' %}
+        <!-- Lecture du site web (agence sans flux XML) -->
+        <div class="bg-blue-50/60 rounded-2xl p-5 mb-6">
+            <p class="text-sm font-semibold text-apple-text mb-1">Import depuis votre site : {{ agence.feed_url }}</p>
+            <input type="hidden" name="lecture_site_form" value="1">
+            <label class="flex items-start gap-2 text-xs text-apple-text cursor-pointer">
+                <input type="checkbox" name="lecture_site" value="1" class="mt-0.5" {% if agence.autorisation_site_at %}checked{% endif %}>
+                <span>J'autorise Social Immo à lire et diffuser les annonces de ce site{% if agence.autorisation_site_at %} (autorisé le {{ agence.autorisation_site_at|date:"d/m/Y" }}){% endif %}. Décochez pour arrêter l'import.</span>
+            </label>
+        </div>
+        {% endif %}
+
         <!-- Submit -->
         <div class="flex items-center gap-4">
             <button type="submit" class="bg-apple-blue text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 hover:shadow-apple-hover transition-all duration-300 text-sm">

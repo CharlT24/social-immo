@@ -514,6 +514,7 @@ class Agence(models.Model):
     FEED_TYPE_CHOICES = [
         ('url', 'URL publique'),
         ('ftp', 'FTP'),
+        ('site', 'Site web (lecture des annonces)'),
     ]
 
     FEED_FORMAT_CHOICES = [
@@ -528,6 +529,10 @@ class Agence(models.Model):
     feed_url = models.URLField(max_length=500, blank=True)
     feed_type = models.CharField(max_length=10, choices=FEED_TYPE_CHOICES, default='url')
     feed_format = models.CharField(max_length=10, choices=FEED_FORMAT_CHOICES, default='ac3', verbose_name='Format du flux')
+    # feed_type='site' : feed_url = adresse du site lu par services/import_site.py.
+    # Date a laquelle l'agence a autorise la reprise de ses annonces (preuve).
+    autorisation_site_at = models.DateTimeField(null=True, blank=True,
+                                                verbose_name='Autorisation lecture du site')
     # FTP
     ftp_host = models.CharField(max_length=200, blank=True, default='', verbose_name='Serveur FTP')
     ftp_user = models.CharField(max_length=100, blank=True, default='', verbose_name='Utilisateur FTP')

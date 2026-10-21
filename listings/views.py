@@ -1288,6 +1288,12 @@ def agence_settings(request):
             except ImageInvalide:
                 messages.error(request, "Le logo n'est pas une image valide (JPEG/PNG attendu).")
                 return redirect('listings:agence_settings')
+        # Autorisation de lecture du site (revocable)
+        if agence.feed_type == 'site' and request.POST.get('lecture_site_form'):
+            if not request.POST.get('lecture_site'):
+                agence.autorisation_site_at = None
+            elif not agence.autorisation_site_at:
+                agence.autorisation_site_at = timezone.now()
         # Auto-set departement from code_postal
         if agence.code_postal and len(agence.code_postal) >= 2:
             agence.departement = agence.code_postal[:2]
@@ -2926,8 +2932,16 @@ def agence_inscription(request):
         ville = (request.POST.get('ville') or '').strip()
         feed_url = (request.POST.get('feed_url') or '').strip()
         feed_format = request.POST.get('feed_format') or 'ac3'
+        # Pas de flux : on lira le site web de l'agence, avec son autorisation
+        par_site = request.POST.get('source') == 'site'
+        site_url = (request.POST.get('site_url') or '').strip()
 
         erreurs = []
+        if par_site:
+            if not _re.match(r'^https?://[^\s/]+\.[^\s]+', site_url):
+                erreurs.append("Adresse du site invalide (ex : https://www.mon-agence.fr).")
+            if not request.POST.get('autorisation_site'):
+                erreurs.append("Cochez l'autorisation pour que nous puissions lire votre site.")
         if not nom:
             erreurs.append("Le nom de l'agence est requis.")
         if not email or '@' not in email:
@@ -2958,9 +2972,15 @@ def agence_inscription(request):
             agence = Agence.objects.create(
                 nom=nom, reference=reference, responsable=user,
                 contact_email=email, contact_telephone=telephone, ville=ville,
-                feed_url=feed_url, feed_format=feed_format if feed_url else 'ac3',
+                feed_url=site_url if par_site else feed_url,
+                feed_type='site' if par_site else 'url',
+                feed_format=feed_format if (feed_url and not par_site) else 'ac3',
+                site_web=site_url if par_site else '',
+                autorisation_site_at=timezone.now() if par_site else None,
                 is_active=True,
             )
+            if par_site:
+                feed_url = site_url
             AgenceOptions.objects.get_or_create(agence=agence)
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
@@ -2971,8 +2991,8 @@ def agence_inscription(request):
                     message=(
                         f'Bonjour {nom},\n\n'
                         f'Votre espace agence est pret : https://social-immo.com/mon-agence/\n\n'
-                        + (f'Votre flux XML ({feed_url}) sera importe automatiquement '
-                           f'dans les prochaines 24h, puis mis a jour chaque jour.\n\n'
+                        + (f'Vos annonces ({feed_url}) seront importees automatiquement '
+                           f'dans les prochaines 24h, puis mises a jour chaque jour.\n\n'
                            if feed_url else
                            'Ajoutez votre flux XML (AC3 ou Poliris) depuis vos parametres '
                            'pour diffuser vos annonces automatiquement.\n\n')

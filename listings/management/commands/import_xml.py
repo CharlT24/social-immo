@@ -130,6 +130,12 @@ class Command(BaseCommand):
         """Import pour une agence specifique (utilise ses parametres)"""
         content = None
 
+        if agence.feed_type == 'site':
+            content = self._lire_site(agence)
+            if content is None:
+                return
+            self._import_ac3(content, agence.reference, dry_run)
+            return
         if agence.feed_type == 'ftp' and agence.ftp_host:
             content = self._fetch_ftp(agence)
         elif agence.feed_url:
@@ -167,7 +173,9 @@ class Command(BaseCommand):
         if options['url']:
             return self._fetch_url(options['url'])
 
-        # Option 2 : agence avec FTP
+        # Option 2 : agence avec FTP, ou lecture de son site web
+        if agence and agence.feed_type == 'site':
+            return self._lire_site(agence)
         if agence and agence.feed_type == 'ftp' and agence.ftp_host:
             return self._fetch_ftp(agence)
 
@@ -197,6 +205,18 @@ class Command(BaseCommand):
             'Ou definir SOCIALIMMO_AGENCE_ID dans settings.py'
         ))
         return None
+
+    def _lire_site(self, agence):
+        """Lit les annonces du site web de l'agence (services/import_site) et
+        les renvoie en XML AC3. Exige l'autorisation enregistree de l'agence."""
+        if not agence.autorisation_site_at:
+            self.stderr.write(self.style.ERROR(
+                f'  {agence.nom} : lecture du site non autorisee par l\'agence, ignore'))
+            return None
+        from listings.services.import_site import lire_site
+        self.stdout.write(f'Lecture du site : {agence.feed_url}')
+        xml, _ = lire_site(agence.feed_url, agence.reference, journal=self.stdout.write)
+        return xml
 
     def _fetch_url(self, url):
         """Telecharge depuis une URL"""

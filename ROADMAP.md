@@ -104,6 +104,25 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i static/src/input.css -o static/c
 > 📱 Dès la mise en ligne, le site est installable sur téléphone sans store
 > ("Ajouter à l'écran d'accueil"). Google Play : ~1 h via PWABuilder (guide).
 
+## 📋 Avancement v8 — "Moteur de recherche" (2026-10-21)
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| 1 | **SEO moteurs** : Bing Webmaster Tools (import GSC + sitemap), IndexNow à chaque import, www → domaine nu en 301, accents/m² dans les titres, villes < 3 biens en noindex, annonces retirées redirigées, garde-fou flux tronqué | ✅ Terminé |
+| 2 | **Recherche en langage naturel** (« maison à Périgueux 135 m² 200 000 € ») : onglet ✨ Décrire, bandeau « J'ai compris », filtre type de bien — **règles Python seules** | ✅ Terminé |
+| 3 | **Inscription agence par adresse de site** (sans flux) : robot qui lit les annonces du site de l'agence avec son autorisation — **sans IA** : données structurées (JSON-LD) + balises Open Graph + galerie photos ; robots.txt respecté, 1 page/s, 200 pages max ; autorisation horodatée et révocable | ✅ Terminé |
+
+### 🔜 Évolution suivante : brancher Claude (clé API disponible, volontairement non activée)
+
+On teste d'abord **sans IA**. Quand les tests seront concluants, activer Claude sur deux points :
+1. **Recherche en langage naturel** : secours pour les phrases floues (« un truc sympa près des écoles »).
+   Déjà codé et dormant (`listings/services/recherche_ia.py → analyser_claude`).
+   Activer : `ANTHROPIC_API_KEY=...` dans `.env` + `pip install anthropic` + restart.
+2. **Import par site web** : extraction par Claude (prix, surface, ville, photos) des pages d'annonces
+   **sans données structurées** — c'est ce qui permettra de lire *n'importe quel* site d'agence.
+   À coder dans `listings/services/import_site.py` (repli quand JSON-LD / Open Graph ne suffisent pas).
+   Coût estimé : quelques centimes par agence et par jour (pages en cache, seules les nouvelles sont lues).
+
 ## 📌 Prochaine étape : v4
 
 - Backlog UX complet : [AMELIORATIONS-UX.md](AMELIORATIONS-UX.md) — priorité 1 = le dépôt d'annonce "comme un pro" (assistant 4 étapes, prix suggéré en direct, aperçu, kit de diffusion, rapport hebdo vendeur)

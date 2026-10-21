@@ -328,6 +328,11 @@ GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
 # Vide = IndexNow desactive (aucun ping envoye).
 INDEXNOW_KEY = os.environ.get('INDEXNOW_KEY', '')
 
+# Recherche en langage naturel : Claude en secours des regles Python
+# (listings/services/recherche_ia.py). Vide = regles seules, aucun appel externe.
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+RECHERCHE_IA_MODEL = os.environ.get('RECHERCHE_IA_MODEL', 'claude-opus-5-5')
+
 
 # ===== Stripe (dormant tant que les cles ne sont pas definies) =====
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')

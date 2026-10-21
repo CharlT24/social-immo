@@ -47,7 +47,24 @@
                             onclick="switchTab('S')">
                         Courte durée
                     </button>
+                    <button type="button" role="tab" aria-selected="false" id="tab-ia"
+                            class="search-tab flex-1 py-4 text-sm font-bold text-center transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-600"
+                            onclick="switchIa()">
+                        ✨ Décrire
+                    </button>
                 </div>
+
+                <!-- Recherche en langage naturel -->
+                <form id="hero-ia-form" method="get" action="{% url 'listings:search_results' %}" class="p-5 hidden" role="tabpanel">
+                    <label for="hero-q" class="block text-sm font-medium text-gray-500 mb-2">Décrivez le bien que vous cherchez, avec vos mots</label>
+                    <textarea name="q" id="hero-q" rows="3" maxlength="500" required
+                              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-4"
+                              placeholder="Ex. : je cherche une maison à Périgueux de 135 m² avec jardin, budget 200 000 €"></textarea>
+                    <button type="submit"
+                            class="w-full bg-apple-blue text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-600 active:scale-[0.98] transition-all text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25">
+                        ✨ Trouver mon bien
+                    </button>
+                </form>
 
                 <!-- Search Form -->
                 <form id="hero-search-form" method="get" action="{% url 'listings:search_results' %}" class="p-5" role="tabpanel">
@@ -436,13 +453,29 @@
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // Tab switch
+function switchIa() {
+    switchTab(null);
+    document.getElementById('hero-search-form').classList.add('hidden');
+    document.getElementById('hero-ia-form').classList.remove('hidden');
+    const t = document.getElementById('tab-ia');
+    t.classList.add('border-apple-blue', 'text-apple-blue');
+    t.classList.remove('border-transparent', 'text-gray-400');
+    t.setAttribute('aria-selected', 'true');
+    document.getElementById('hero-q').focus();
+}
+
 function switchTab(type) {
-    document.getElementById('search-type').value = type;
+    if (type) {
+        document.getElementById('hero-ia-form').classList.add('hidden');
+        document.getElementById('hero-search-form').classList.remove('hidden');
+    }
+    document.getElementById('search-type').value = type || 'V';
     document.querySelectorAll('.search-tab').forEach(t => {
         t.classList.remove('border-apple-blue', 'text-apple-blue');
         t.classList.add('border-transparent', 'text-gray-400');
         t.setAttribute('aria-selected', 'false');
     });
+    if (!type) return;
     const activeTab = document.getElementById({'V': 'tab-buy', 'L': 'tab-rent', 'S': 'tab-court'}[type] || 'tab-buy');
     activeTab.classList.add('border-apple-blue', 'text-apple-blue');
     activeTab.classList.remove('border-transparent', 'text-gray-400');

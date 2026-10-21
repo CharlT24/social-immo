@@ -89,6 +89,17 @@ ROADMAP.md            # Suivi des travaux v3 (mis a jour a chaque phase)
   en un import (flux tronque) ; `--forcer-desactivation` pour passer outre.
   Flux CRM : utiliser l'UUID du RESEAU (l'UUID d'agence ne renvoie que ses biens)
 
+## Recherche en langage naturel (2026-10)
+- `/recherche/?q=<phrase>` -> listings/services/recherche_ia.py traduit la phrase en
+  criteres (type, bien, ville, prix, surface, pieces, chambres, exterieur...) puis
+  redirige vers l'URL de filtres classique ; bandeau "J'ai compris" + alertes budget.
+- Onglet "✨ Décrire" sur l'accueil + champ en haut de /recherche/
+- Nouveau filtre `bien` (maison/appartement/terrain/local/parking/immeuble, TYPES_BIEN)
+- Etage 1 = regles Python (gratuit). Etage 2 = Claude en secours des phrases floues,
+  DORMANT tant que `ANTHROPIC_API_KEY` est vide ; activer = cle dans .env +
+  `pip install anthropic` ; modele via `RECHERCHE_IA_MODEL` (defaut claude-opus-5-5).
+  Resultats caches 24h par phrase.
+
 ## Modeles
 ### Annonce
 - `reference` (unique, cle d'import) - ex: "CT-00123"

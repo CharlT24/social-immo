@@ -2001,3 +2001,52 @@ class SeoMoteursTests(TestCase):
         urls = post.call_args.kwargs['json']['urlList']
         self.assertEqual(len(urls), 1)
         self.assertTrue(urls[0].startswith('https://social-immo.com/annonce/IN-1/'))
+
+
+class RechercheLangageNaturelTests(TestCase):
+    """?q=phrase -> criteres de recherche (regles Python, sans appel externe)."""
+
+    def setUp(self):
+        cache.clear()
+        creer_annonce('P-1', ville='Périgueux', code_postal='24000', libelle_type='Maison',
+                      titre='Belle maison', surface=130, prix=195000)
+        creer_annonce('P-2', ville='Périgueux', code_postal='24000', libelle_type='Appartement',
+                      titre='Appartement T2', surface=45, prix=90000)
+
+    def test_phrase_exemple(self):
+        from listings.services.recherche_ia import analyser_regles
+        c = analyser_regles('je veux une maison à Périgueux de 135 m² à 200 000 euros')
+        self.assertEqual(c['type'], 'V')
+        self.assertEqual(c['bien'], 'maison')
+        self.assertEqual(c['ville'], 'Périgueux')
+        self.assertEqual(c['surface_min'], 121)   # 135 - 10 %
+        self.assertEqual(c['prix_max'], 210000)   # 200 000 + 5 %
+
+    def test_location_et_fourchette(self):
+        from listings.services.recherche_ia import analyser_regles
+        c = analyser_regles('appartement T3 à louer à Bordeaux moins de 900€ par mois')
+        self.assertEqual((c['type'], c['bien'], c['ville'], c['pieces_min'], c['prix_max']),
+                         ('L', 'appartement', 'Bordeaux', 3, 900))
+        c = analyser_regles('maison avec jardin entre 150 et 250k, 3 chambres')
+        self.assertEqual((c['prix_min'], c['prix_max'], c['chambres_min'], c['exterieur']),
+                         (150000, 250000, 3, 1))
+
+    def test_budget_irrealiste_signale(self):
+        from listings.services.recherche_ia import analyser
+        res = analyser('maison à Périgueux de 135 m² à 20000 euros')
+        self.assertTrue(res['alertes'])
+
+    def test_q_redirige_puis_affiche_resultats(self):
+        r = self.client.get('/recherche/', {'q': 'maison à Périgueux 135 m2 200000 €'})
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('bien=maison', r['Location'])
+        r = self.client.get(r['Location'])
+        self.assertContains(r, "J'ai compris")
+        self.assertContains(r, 'Belle maison')
+        self.assertNotContains(r, 'Appartement T2')
+
+    @override_settings(ANTHROPIC_API_KEY='')
+    def test_phrase_floue_sans_cle_ne_plante_pas(self):
+        from listings.services.recherche_ia import analyser
+        res = analyser('un truc sympa pas trop cher près des écoles')
+        self.assertEqual(res['source'], 'regles')

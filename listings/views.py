@@ -156,6 +156,21 @@ def homepage(request):
 
 def search_results(request):
     """Page de resultats de recherche (SERP) avec filtres avances"""
+    # Recherche en langage naturel (?q=...) : on traduit la phrase en criteres
+    # puis on redirige vers l'URL de filtres classique (partageable, et que la
+    # page sait deja afficher). q est conserve pour le bandeau "J'ai compris".
+    from urllib.parse import urlencode
+    from .services.recherche_ia import analyser, TYPES_BIEN
+    q = request.GET.get('q', '').strip()[:500]
+    recherche_ia = None
+    if q:
+        recherche_ia = analyser(q)
+        filtres = set(request.GET) - {'q', 'page', 'tri'}
+        if not filtres:
+            params = {k: v for k, v in recherche_ia['criteres'].items() if v not in ('', None)}
+            params['q'] = q
+            return redirect(reverse('listings:search_results') + '?' + urlencode(params))
+
     annonces = Annonce.objects.filter(is_active=True).prefetch_related(
         Prefetch('photos', queryset=Photo.objects.order_by('ordre'))
     )
@@ -191,6 +206,13 @@ def search_results(request):
             # Recherche par nom de ville OU par code postal (ex: "24000")
             annonces = annonces.filter(
                 models.Q(ville__icontains=ville) | models.Q(code_postal__icontains=ville))
+
+    bien = request.GET.get('bien', '').strip()
+    if bien in TYPES_BIEN:
+        cond = models.Q()
+        for mot in TYPES_BIEN[bien][1]:
+            cond |= models.Q(libelle_type__icontains=mot) | models.Q(titre__icontains=mot)
+        annonces = annonces.filter(cond)
 
     valid_types = ['V', 'L', 'S', 'F', 'B', 'W', 'G']
     if type_transaction in valid_types:
@@ -323,6 +345,15 @@ def search_results(request):
         'current_parking': request.GET.get('parking') == '1',
         'current_meuble': request.GET.get('meuble') == '1',
         'current_exterieur': request.GET.get('exterieur') == '1',
+        'current_bien': bien if bien in TYPES_BIEN else '',
+        'types_bien': [(slug, lib) for slug, (lib, _) in TYPES_BIEN.items()],
+        'current_q': q,
+        'recherche_ia': recherche_ia,
+        # Recherche IA sans resultat : meme demande sans budget ni surface
+        'url_elargir': reverse('listings:search_results') + '?' + urlencode(
+            {k: v for k, v in recherche_ia['criteres'].items()
+             if k not in ('prix_min', 'prix_max', 'surface_min', 'surface_max')}
+        ) if recherche_ia and result_count == 0 else '',
     }
     return render(request, 'listings/search_results.html', context)
 

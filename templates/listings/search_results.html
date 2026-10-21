@@ -50,6 +50,15 @@
                 </select>
             </div>
 
+            <!-- Type de bien pill -->
+            <div class="flex-shrink-0">
+                <select name="bien" onchange="this.form.submit()" aria-label="Type de bien"
+                        class="px-4 py-2 text-sm font-medium border {% if current_bien %}border-apple-blue bg-blue-50 text-apple-blue{% else %}border-gray-200 bg-white text-apple-text{% endif %} rounded-full focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer transition-all">
+                    <option value="">Bien</option>
+                    {% for slug, lib in types_bien %}<option value="{{ slug }}" {% if current_bien == slug %}selected{% endif %}>{{ lib }}</option>{% endfor %}
+                </select>
+            </div>
+
             <!-- Budget pill -->
             <button type="button" onclick="toggleDrawer()" class="flex-shrink-0 px-4 py-2 text-sm font-medium border {% if current_prix_min or current_prix_max %}border-apple-blue bg-blue-50 text-apple-blue{% else %}border-gray-200 bg-white text-apple-text{% endif %} rounded-full hover:bg-gray-50 transition-all whitespace-nowrap">
                 {% if current_prix_min or current_prix_max %}
@@ -278,6 +287,28 @@
 
 <!-- ==================== RESULTS ==================== -->
 <div class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Recherche en langage naturel -->
+    <form method="get" action="{% url 'listings:search_results' %}" class="mb-4" role="search">
+        <label for="q-ia" class="sr-only">Décrivez ce que vous cherchez</label>
+        <div class="flex gap-2">
+            <input type="text" name="q" id="q-ia" value="{{ current_q }}" maxlength="500"
+                   placeholder="✨ Décrivez votre recherche : « maison à Périgueux, 135 m², 200 000 € »"
+                   class="flex-1 min-w-0 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue">
+            <button type="submit" class="flex-shrink-0 bg-apple-blue text-white font-semibold px-5 py-3 rounded-xl text-sm hover:bg-blue-600 transition-all">Chercher</button>
+        </div>
+    </form>
+    {% if recherche_ia %}
+    <div class="mb-5 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+        <p class="text-sm text-apple-text mb-2"><span class="font-semibold">✨ J'ai compris :</span></p>
+        <div class="flex flex-wrap gap-2">
+            {% for c in recherche_ia.resume %}<span class="px-3 py-1 bg-white border border-blue-100 rounded-full text-xs font-medium text-apple-blue">{{ c }}</span>{% endfor %}
+        </div>
+        {% for a in recherche_ia.alertes %}<p class="mt-2 text-xs text-amber-700">⚠️ {{ a }}</p>{% endfor %}
+        {% if url_elargir %}<p class="mt-2 text-sm"><a href="{{ url_elargir }}" class="font-semibold text-apple-blue hover:underline">Aucun bien exact : voir les biens similaires sans budget ni surface →</a></p>{% endif %}
+        <p class="mt-2 text-xs text-apple-gray">Ajustez avec les filtres ci-dessus si besoin.</p>
+    </div>
+    {% endif %}
 
     <!-- H1 SEO -->
     <h1 class="text-xl sm:text-2xl font-bold tracking-tight mb-4">

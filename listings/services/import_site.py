@@ -39,6 +39,12 @@ _MOTIF_EXCLU = re.compile(
     r'\.(jpe?g|png|gif|webp|pdf|css|js|zip)(\?|$)|/(tag|categorie|category|page|blog|actualite|'
     r'contact|mentions|cgu|recrutement|equipe|agence)s?/?$|[?&](page|tri|sort)=', re.I)
 
+_MOTIF_RUBRIQUE = re.compile(
+    r'(nos-)?(annonces?|biens?|ventes?|locations?|achat|acheter|louer|proprietes?|properties|'
+    r'listings?|immobilier|offres?)', re.I)
+_MOTIF_SITEMAP_BIENS = re.compile(r'bien|annonce|propert|listing|offre|vente|location|realty|estate', re.I)
+_TYPES_ARTICLE = {'article', 'blogposting', 'newsarticle', 'report'}
+
 _TYPES_LD = {'realestatelisting', 'product', 'offer', 'house', 'apartment', 'residence',
              'singlefamilyresidence', 'accommodation', 'place', 'landmarksorhistoricalbuildings',
              'individualproduct', 'room', 'suite'}
@@ -98,8 +104,11 @@ def _urls_sitemap(lecteur, url, profondeur=0):
         return []
     locs = [e.text.strip() for e in racine.iter('{*}loc') if e.text]
     if racine.tag.endswith('sitemapindex'):
+        # Un sitemap dedie aux biens ("bien-sitemap.xml", "property-sitemap.xml")
+        # evite de parcourir blog, pages et categories.
+        dedies = [sm for sm in locs if _MOTIF_SITEMAP_BIENS.search(sm.rsplit('/', 1)[-1])]
         urls = []
-        for sm in locs[:20]:
+        for sm in (dedies or locs)[:20]:
             urls += _urls_sitemap(lecteur, sm, profondeur + 1)
         return urls
     return locs
@@ -130,6 +139,10 @@ def decouvrir_fiches(lecteur):
                     a_visiter.append(u)
     fiches = []
     for u in dict.fromkeys(candidates):
+        # "/biens/" seul = page de liste, pas une fiche
+        segments = [x for x in urlsplit(u).path.split('/') if x]
+        if len(segments) == 1 and _MOTIF_RUBRIQUE.fullmatch(segments[0]):
+            continue
         if lecteur.meme_site(u) and _MOTIF_FICHE.search(u) and not _MOTIF_EXCLU.search(u):
             fiches.append(u)
     return fiches[:MAX_PAGES]
@@ -177,6 +190,28 @@ def _objets_ld(doc):
 
 def normaliser_texte(t):
     return re.sub(r'\s+', ' ', (t or '').strip().lower())
+
+
+_HORS_VILLE = {'maison', 'appartement', 'achat', 'vente', 'location', 'terrain', 'studio', 'villa',
+               'immeuble', 'local', 'prix', 'ref', 'réf', 'contact', 'agence', 'newsletter', 'tel', 'tél'}
+_LIAISONS_VILLE = {'sur', 'sous', 'en', 'de', 'du', 'des', 'la', 'le', 'les', "l'", "d'", 'et', 'lès', 'lez'}
+
+
+def _nettoyer_ville(brut):
+    """'PÉRIGUEUX Newsletter Restez...' -> 'PÉRIGUEUX' ; 'Saint Jean de Luz Maison' ->
+    'Saint Jean de Luz' : on garde les mots de meme casse que le premier."""
+    mots = re.split(r'(?<=[ -])', brut.strip())
+    garde = [mots[0]]
+    majuscules = mots[0].strip(' -').isupper()
+    for m in mots[1:5]:
+        nu = m.strip(' -')
+        if nu.lower() in _HORS_VILLE:
+            break
+        if nu.lower() in _LIAISONS_VILLE or (nu.isupper() if majuscules else nu[:1].isupper() and not nu.isupper()):
+            garde.append(m)
+        else:
+            break
+    return ''.join(garde).strip(' -')
 
 
 def _types(o):
@@ -227,7 +262,8 @@ def extraire_fiche(url, contenu):
             a['pieces'] = int(_nombre(o.get('numberOfRooms')))
         adr = o.get('address')
         if isinstance(adr, dict):
-            a.setdefault('ville', adr.get('addressLocality'))
+            if isinstance(adr.get('addressLocality'), str):
+                a.setdefault('ville', adr['addressLocality'].split(',')[0].strip())
             a.setdefault('cp', adr.get('postalCode'))
         types = _types(o)
         if 'house' in types or 'singlefamilyresidence' in types:
@@ -237,6 +273,10 @@ def extraire_fiche(url, contenu):
 
     # Repli Open Graph + texte de la page
     og = lambda p: (doc.xpath(f'//meta[@property="og:{p}"]/@content') or [None])[0]
+    structuree = 'prix' in a  # annonce decrite en JSON-LD : fiable
+    if not structuree and (og('type') == 'article'
+                           or any(_types(o) & _TYPES_ARTICLE for o in _objets_ld(doc))):
+        return None  # article de blog / actualite, pas une annonce
     a['titre'] = a.get('titre') or og('title') or (doc.xpath('//h1//text()') or [''])[0].strip()
     a['texte'] = a.get('texte') or og('description') or ''
     if og('image'):
@@ -264,10 +304,14 @@ def extraire_fiche(url, contenu):
         if (titre_court and alt.startswith(titre_court)) or \
                 dossiers & set(urlsplit(urljoin(url, src)).path.split('/')):
             a['photos'].append(src)
-    texte_page = ' '.join(doc.xpath('//body//text()'))
+    # Texte du contenu seul : l'adresse de l'agence (en-tete / pied de page)
+    # n'est pas celle du bien
+    texte_page = ' '.join(doc.xpath(
+        '//body//text()[not(ancestor::footer or ancestor::header or ancestor::nav'
+        ' or ancestor::aside or ancestor::script or ancestor::style)]'))
     texte_page = re.sub(r'\s+', ' ', texte_page)
     if 'prix' not in a:
-        m = re.search(r'(\d{1,3}(?:[\s  .]\d{3})+|\d{3,7})\s*(?:€|euros?)', texte_page, re.I)
+        m = re.search(r'(\d{1,3}(?:[\s  .]\d{3})+|\d{3,7})\s*(?:€|euros?)(?!\s*(?:/|par|le|du)\s*m(?:²|2|[eè]tre|\b))', texte_page, re.I)
         if m:
             a['prix'] = _nombre(m.group(1))
     if 'surface' not in a:
@@ -278,13 +322,19 @@ def extraire_fiche(url, contenu):
         m = re.search(r'\b((?:0[1-9]|[1-8]\d|9[0-5]|97)\d{3})\s+([A-ZÉÈ][\w\'éèêàâîôûç -]{2,40})', texte_page)
         if m:
             a['cp'] = m.group(1)
-            a.setdefault('ville', m.group(2).strip().split('  ')[0])
+            a.setdefault('ville', _nettoyer_ville(m.group(2)))
 
-    # Une annonce doit avoir au moins un prix et un titre
-    if not a.get('prix') or not a.get('titre'):
+    # Une annonce doit avoir un titre et un prix ; sans donnees structurees,
+    # on exige aussi une surface (evite pages de prix au m2, simulateurs...)
+    if not a.get('prix') or not a.get('titre') or (not structuree and not a.get('surface')):
         return None
     contexte = f"{url} {a['titre']} {a['texte'][:300]}".lower()
-    a['transaction'] = 'L' if re.search(r'locat|louer|/mois|loyer', contexte) else 'V'
+    # Location : signal dans l'URL/le titre (la description d'un immeuble de
+    # rapport parle de "loyers") ; un prix >= 20 000 est forcement une vente
+    titre_url = f"{url} {a['titre']}".lower()
+    location = re.search(r'\blocation\b|\blouer\b|\bloyer|/\s*mois|par mois', titre_url) \
+        or re.search(r'\ba louer\b|\bà louer\b|/\s*mois\b|par mois', contexte)
+    a['transaction'] = 'L' if location and a['prix'] < 20000 else 'V'
     if not a.get('libelle_type'):
         for mot, lib in (('appartement', 'Appartement'), ('maison', 'Maison'), ('terrain', 'Terrain'),
                          ('studio', 'Appartement'), ('villa', 'Maison'), ('local', 'Local commercial')):

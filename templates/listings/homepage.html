@@ -32,8 +32,13 @@
 
                 <!-- Tabs: Acheter / Louer -->
                 <div class="flex border-b border-gray-100" role="tablist">
-                    <button type="button" role="tab" aria-selected="true" id="tab-buy"
+                    <button type="button" role="tab" aria-selected="true" id="tab-ia"
                             class="search-tab flex-1 py-4 text-sm font-bold text-center transition-all border-b-2 border-apple-blue text-apple-blue"
+                            onclick="switchIa()">
+                        ✨ Décrire
+                    </button>
+                    <button type="button" role="tab" aria-selected="false" id="tab-buy"
+                            class="search-tab flex-1 py-4 text-sm font-bold text-center transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-600"
                             onclick="switchTab('V')">
                         Acheter
                     </button>
@@ -47,15 +52,10 @@
                             onclick="switchTab('S')">
                         Courte durée
                     </button>
-                    <button type="button" role="tab" aria-selected="false" id="tab-ia"
-                            class="search-tab flex-1 py-4 text-sm font-bold text-center transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-600"
-                            onclick="switchIa()">
-                        ✨ Décrire
-                    </button>
                 </div>
 
                 <!-- Recherche en langage naturel -->
-                <form id="hero-ia-form" method="get" action="{% url 'listings:search_results' %}" class="p-5 hidden" role="tabpanel">
+                <form id="hero-ia-form" method="get" action="{% url 'listings:search_results' %}" class="p-5" role="tabpanel">
                     <label for="hero-q" class="block text-sm font-medium text-gray-500 mb-2">Décrivez le bien que vous cherchez, avec vos mots</label>
                     <textarea name="q" id="hero-q" rows="3" maxlength="500" required
                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-apple-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:bg-white transition-all mb-4"
@@ -67,7 +67,7 @@
                 </form>
 
                 <!-- Search Form -->
-                <form id="hero-search-form" method="get" action="{% url 'listings:search_results' %}" class="p-5" role="tabpanel">
+                <form id="hero-search-form" method="get" action="{% url 'listings:search_results' %}" class="p-5 hidden" role="tabpanel">
                     <input type="hidden" name="type" id="search-type" value="V">
 
                     <!-- Location input with autocomplete -->
